@@ -71,7 +71,7 @@ export default function MatchScreen() {
     setLivekitToken(null);
     setRemotePeer(null);
     try {
-      await matchSignalR.enterQueue();
+      await matchSignalR.joinQueue({});
     } catch (e) {
       console.error('Search failed', e);
       setIsSearching(false);
@@ -86,7 +86,7 @@ export default function MatchScreen() {
     setRemotePeer(null);
     setIsSearching(true);
     await matchSignalR.leaveQueue();
-    await matchSignalR.enterQueue();
+    await matchSignalR.joinQueue({});
   };
 
   const handleSendGift = async (gift: any) => {

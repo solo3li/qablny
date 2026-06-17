@@ -58,6 +58,15 @@ public class UsersController(UserService users) : BaseController
         return Ok(new { url });
     }
 
+    public record PushTokenRequest(string Token);
+
+    [HttpPut("me/push-token")]
+    public async Task<IActionResult> UpdatePushToken([FromBody] PushTokenRequest req)
+    {
+        await users.UpdatePushTokenAsync(UserId, req.Token);
+        return Ok();
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<UserDto> GetUser(Guid id) => await users.GetAsync(id);
 

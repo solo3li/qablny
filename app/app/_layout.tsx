@@ -5,11 +5,14 @@ import { useEffect } from 'react';
 import { useAuthStore } from '../src/store/authStore';
 import { IncomingCallModal } from '../components/IncomingCallModal';
 import { ActiveCallModal } from '../components/ActiveCallModal';
+import { usePushNotifications } from '../src/hooks/usePushNotifications';
 
 export default function RootLayout() {
   const { checkAuth, token, isLoading } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+
+  usePushNotifications();
 
   useEffect(() => {
     checkAuth();

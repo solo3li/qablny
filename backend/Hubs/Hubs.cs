@@ -4,11 +4,13 @@ using Qablny.DTOs;
 using Qablny.Services;
 using System.Security.Claims;
 
+using Qablny.Data;
+
 namespace Qablny.Hubs;
 
 /// <summary>Real-time chat: send messages, typing indicator, read receipts</summary>
 [Authorize]
-public class ChatHub(MessageService messages, PresenceService presence) : Hub
+public class ChatHub(MessageService messages, PresenceService presence, AppDbContext db, PushNotificationService pushNotification) : Hub
 {
     public override async Task OnConnectedAsync()
     {
@@ -65,12 +67,26 @@ public class ChatHub(MessageService messages, PresenceService presence) : Hub
         var callerId = CurrentUserId();
         var roomName = $"call_{callerId}_{friendId}_{Guid.NewGuid()}";
         
-        // Notify the target user
+        // Notify the target user via SignalR
         await Clients.User(friendId.ToString()).SendAsync("IncomingCall", new {
             CallerId = callerId,
             RoomName = roomName,
             CallType = callType
         });
+
+        // Send Push Notification
+        var receiver = await db.Users.FindAsync(friendId);
+        var sender = await db.Users.FindAsync(callerId);
+        if (receiver?.ExpoPushToken != null && sender != null)
+        {
+            var callTypeText = callType == "video" ? "فيديو" : "صوتية";
+            await pushNotification.SendPushAsync(
+                receiver.ExpoPushToken,
+                $"مكالمة واردة من {sender.Name}",
+                $"مكالمة {callTypeText} واردة الآن...",
+                new { type = "call", callerId, roomName, callType }
+            );
+        }
     }
 
     public async Task AcceptCall(Guid callerId, string roomName)

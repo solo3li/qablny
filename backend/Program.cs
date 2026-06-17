@@ -102,6 +102,7 @@ builder.Services.AddScoped<PresenceService>();
 builder.Services.AddScoped<MatchService>();
 builder.Services.AddSingleton<LiveKitService>();
 builder.Services.AddSingleton<MinioStorageService>();
+builder.Services.AddHttpClient<PushNotificationService>();
 
 // Background matching service
 builder.Services.AddHostedService<MatchingBackgroundService>();

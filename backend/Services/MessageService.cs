@@ -6,7 +6,7 @@ using Qablny.Enums;
 
 namespace Qablny.Services;
 
-public class MessageService(AppDbContext db, IHttpClientFactory http)
+public class MessageService(AppDbContext db, IHttpClientFactory http, PushNotificationService pushNotification)
 {
     public async Task<List<ConversationDto>> GetConversationsAsync(Guid userId, CancellationToken ct = default)
     {
@@ -73,6 +73,17 @@ public class MessageService(AppDbContext db, IHttpClientFactory http)
         db.Messages.Add(msg);
         conv.LastMessageAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
+
+        // Send push notification
+        var receiver = await db.Users.FindAsync([receiverId], ct);
+        var sender = await db.Users.FindAsync([senderId], ct);
+        if (receiver?.ExpoPushToken != null && sender != null)
+        {
+            var title = $"رسالة جديدة من {sender.Name}";
+            var body = req.Type == MessageType.Text ? req.Content : $"أرسل لك {req.Type}";
+            await pushNotification.SendPushAsync(receiver.ExpoPushToken, title, body ?? "رسالة جديدة", new { type = "message", friendId = senderId });
+        }
+
         return ToDto(msg, senderId);
     }
 

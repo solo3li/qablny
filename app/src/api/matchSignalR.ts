@@ -2,9 +2,22 @@ import * as signalR from '@microsoft/signalr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from './axiosClient';
 
+export interface JoinQueueRequest {
+  GenderPref?: number;
+  MinAge?: number;
+  MaxAge?: number;
+  CallType?: 'video' | 'voice';
+}
+
 class MatchSignalRService {
   private connection: signalR.HubConnection | null = null;
-  private onMatchFoundCallback: ((data: any) => void) | null = null;
+  
+  // Callbacks
+  private onQueueJoinedCallback: (() => void) | null = null;
+  private onQueueLeftCallback: (() => void) | null = null;
+  private onMatchFoundCallback: ((payload: { RoomName: string, LiveKitToken: string, PartnerId: string, PartnerName: string, PartnerImage: string }) => void) | null = null;
+
+  public getConnection() { return this.connection; }
 
   public async connect() {
     if (this.connection) return;
@@ -21,30 +34,44 @@ class MatchSignalRService {
       .withAutomaticReconnect()
       .build();
 
-    this.connection.on("MatchFound", (data: any) => {
-      console.log("SignalR MatchFound:", data);
-      if (this.onMatchFoundCallback) {
-        this.onMatchFoundCallback(data);
-      }
+    this.connection.on("QueueJoined", () => {
+      console.log("Match Queue Joined");
+      this.onQueueJoinedCallback?.();
+    });
+
+    this.connection.on("QueueLeft", () => {
+      console.log("Match Queue Left");
+      this.onQueueLeftCallback?.();
+    });
+
+    this.connection.on("MatchFound", (payload: any) => {
+      console.log("Match Found!", payload);
+      this.onMatchFoundCallback?.(payload);
     });
 
     await this.connection.start();
     console.log("SignalR Connected to Match Hub");
   }
 
-  public setOnMatchFound(callback: (data: any) => void) {
-    this.onMatchFoundCallback = callback;
-  }
+  // Setters for callbacks
+  public setOnQueueJoined(cb: () => void) { this.onQueueJoinedCallback = cb; }
+  public setOnQueueLeft(cb: () => void) { this.onQueueLeftCallback = cb; }
+  public setOnMatchFound(cb: (payload: any) => void) { this.onMatchFoundCallback = cb; }
 
-  public async enterQueue(filters: { filterGender?: number; filterRegion?: string } = {}) {
+  // Actions
+  public async joinQueue(filters: JoinQueueRequest) {
     if (!this.connection) await this.connect();
-    console.log("Entering queue with filters:", filters);
     await this.connection?.invoke("JoinQueue", filters);
   }
 
   public async leaveQueue() {
     if (!this.connection) return;
     await this.connection.invoke("LeaveQueue");
+  }
+
+  public async skip() {
+    if (!this.connection) return;
+    await this.connection.invoke("Skip");
   }
 
   public async disconnect() {

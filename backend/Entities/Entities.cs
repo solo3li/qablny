@@ -23,6 +23,7 @@ public class User
     public DateTime JoinedAt        { get; set; } = DateTime.UtcNow;
     public int      TotalMatches    { get; set; }
     public bool     IsBlocked       { get; set; }
+    public string?  ExpoPushToken   { get; set; }
 
     public ICollection<Friendship>       SentFriendRequests     { get; set; } = [];
     public ICollection<Friendship>       ReceivedFriendRequests { get; set; } = [];

@@ -4,12 +4,14 @@ import {
 } from 'react-native';
 import { useCallStore } from '../src/store/callStore';
 import { LiveKitHandler } from './LiveKitHandler';
+import { GiftModal } from './GiftModal';
 import { Colors } from '../constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   PhoneOff, Mic, MicOff, Volume2, VolumeX,
-  Camera, CameraOff, RotateCcw, Minimize2,
+  Camera, CameraOff, RotateCcw, Minimize2, Gift
 } from 'lucide-react-native';
+import { axiosClient } from '../src/api/axiosClient';
 
 interface CallModalProps {
   visible: boolean;
@@ -29,6 +31,8 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
   const [speaker, setSpeaker] = useState(true);
   const [cameraOn, setCameraOn] = useState(callType === 'video');
   const [minimized, setMinimized] = useState(false);
+  const [giftsOpen, setGiftsOpen] = useState(false);
+  const [sentGift, setSentGift] = useState<string | null>(null);
 
   // Pulse animation rings
   const pulse1 = useRef(new Animated.Value(1)).current;
@@ -86,6 +90,17 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
   const handleEnd = () => {
     clearInterval(timerRef.current);
     onClose();
+  };
+
+  const handleSendGift = async (gift: any) => {
+    setSentGift(gift.emoji);
+    setGiftsOpen(false);
+    setTimeout(() => setSentGift(null), 2000);
+    try {
+      await axiosClient.post('/gifts/send', { giftId: gift.id, receiverId: activeCall?.friendId });
+    } catch (e) {
+      console.error('Gift sending failed', e);
+    }
   };
 
   const formatTime = (s: number) => {
@@ -221,6 +236,11 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
                 <Text style={styles.ctrlLabel}>قلب</Text>
               </TouchableOpacity>
             )}
+
+            <TouchableOpacity style={styles.ctrlBtn} onPress={() => setGiftsOpen(true)}>
+              <Gift color={Colors.gold} size={22} />
+              <Text style={styles.ctrlLabel}>هدية</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Row 2: End call */}
@@ -228,6 +248,18 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
             <PhoneOff color="#fff" size={30} />
           </TouchableOpacity>
         </View>
+
+        {sentGift && (
+          <View style={styles.giftFloat}>
+            <Text style={styles.giftFloatEmoji}>{sentGift}</Text>
+          </View>
+        )}
+
+        <GiftModal
+          visible={giftsOpen}
+          onClose={() => setGiftsOpen(false)}
+          onSendGift={handleSendGift}
+        />
       </View>
     </Modal>
   );
@@ -245,6 +277,8 @@ const styles = StyleSheet.create({
   topBar: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingHorizontal: 20, paddingBottom: 10 },
   minimizeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center' },
   callTypeLabel: { color: Colors.textSecondary, fontSize: 14, fontWeight: '600' },
+  giftFloat: { position: 'absolute', top: '40%', alignSelf: 'center', zIndex: 100 },
+  giftFloatEmoji: { fontSize: 80 },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
 

@@ -15,9 +15,10 @@ import {
   Mic, Image as ImageIcon, Film, MapPin, X, Play, Pause,
   Plus
 } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { uploadMedia } from '../../src/api/axiosClient';
 import { Audio } from 'expo-av';
+import { AudioPlayer } from '../../components/AudioPlayer';
+import * as ImagePicker from 'expo-image-picker';
 
 // ─── Message Bubbles ──────────────────────────────────────────────────────────
 
@@ -38,70 +39,16 @@ function TextBubble({ msg, friend }: { msg: ChatMessage; friend: any }) {
 }
 
 function VoiceBubble({ msg }: { msg: ChatMessage }) {
-  const [playing, setPlaying] = useState(false);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const progress = useRef(new Animated.Value(0)).current;
-
-  const togglePlay = async () => {
-    if (playing && sound) {
-      await sound.pauseAsync();
-      setPlaying(false);
-      progress.stopAnimation();
-    } else {
-      if (!sound) {
-        if (!msg.mediaUrl) return; // Fallback if no mediaUrl
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: msg.mediaUrl },
-          { shouldPlay: true },
-          (status) => {
-            if (status.isLoaded) {
-              if (status.isPlaying) {
-                const perc = status.durationMillis ? (status.positionMillis / status.durationMillis) : 0;
-                progress.setValue(perc);
-              }
-              if (status.didJustFinish) {
-                setPlaying(false);
-                progress.setValue(0);
-              }
-            }
-          }
-        );
-        setSound(newSound);
-        setPlaying(true);
-      } else {
-        await sound.playAsync();
-        setPlaying(true);
-      }
-    }
-  };
-
-  React.useEffect(() => {
-    return sound ? () => { sound.unloadAsync(); } : undefined;
-  }, [sound]);
-
-  const barWidth = progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
-
-  const formatDur = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-
-  return (
-    <View style={[styles.bubble, styles.voiceBubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
-      <TouchableOpacity style={styles.playBtn} onPress={togglePlay}>
-        {playing
-          ? <Pause color={msg.isMe ? Colors.cyan : Colors.text} size={20} />
-          : <Play color={msg.isMe ? Colors.cyan : Colors.text} size={20} />
-        }
-      </TouchableOpacity>
-      <View style={styles.voiceBarWrap}>
-        <View style={styles.voiceTrack}>
-          <Animated.View style={[styles.voiceFill, { width: barWidth, backgroundColor: msg.isMe ? Colors.cyan : Colors.textSecondary }]} />
-          {/* Waveform dots */}
-          {Array.from({ length: 20 }).map((_, i) => (
-            <View key={i} style={[styles.waveBar, { height: 4 + Math.sin(i) * 8 + Math.random() * 6, opacity: 0.5 }]} />
-          ))}
-        </View>
-        <Text style={styles.voiceDur}>{formatDur(msg.duration ?? 0)}</Text>
+  if (!msg.mediaUrl) {
+    return (
+      <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
+        <Text style={styles.bubbleText}>رسالة صوتية مفقودة</Text>
       </View>
-      <Mic color={msg.isMe ? Colors.cyan : Colors.textSecondary} size={16} />
+    );
+  }
+  return (
+    <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
+      <AudioPlayer uri={msg.mediaUrl} durationSeconds={msg.duration} />
     </View>
   );
 }

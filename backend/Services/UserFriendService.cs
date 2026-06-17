@@ -23,7 +23,15 @@ public class UserService(AppDbContext db, MinioStorageService storage)
         if (req.Interests is not null) u.Interests = req.Interests;
         if (req.Age.HasValue)          u.Age       = req.Age.Value;
         await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
         return ToDto(u);
+    }
+
+    public async Task UpdatePushTokenAsync(Guid userId, string token, CancellationToken ct = default)
+    {
+        var u = await db.Users.FindAsync([userId], ct) ?? throw new KeyNotFoundException("المستخدم غير موجود");
+        u.ExpoPushToken = token;
+        await db.SaveChangesAsync(ct);
     }
 
     public async Task<string> UploadImageAsync(Guid userId, Stream stream, string contentType, CancellationToken ct = default)
