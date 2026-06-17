@@ -18,7 +18,7 @@ import { chatSignalR } from '../../src/api/chatSignalR';
 import {
   Send, Languages, ChevronLeft, Phone, Video,
   Mic, Image as ImageIcon, Film, MapPin, X, Play,
-  Plus, Check, CornerUpLeft, Pencil, Trash2, PhoneMissed, PhoneCall,
+  Plus, Check, CornerUpLeft, Pencil, Trash2,
 } from 'lucide-react-native';
 import { uploadMedia } from '../../src/api/axiosClient';
 import { Audio } from 'expo-av';
@@ -200,11 +200,11 @@ function CallBubble({ msg }: { msg: ChatMessage }) {
     <View style={[styles.callBubble, { backgroundColor: bgColor, borderColor }, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
       <View style={[styles.callIconWrap, { backgroundColor: isMissed ? Colors.dangerDim : 'rgba(0,0,0,0.2)' }]}>
         {isMissed ? (
-          <PhoneMissed color={Colors.danger} size={20} />
+          <Phone color={Colors.danger} size={20} />
         ) : isVideo ? (
           <Video color={iconColor} size={20} />
         ) : (
-          <PhoneCall color={iconColor} size={20} />
+          <Phone color={iconColor} size={20} />
         )}
       </View>
       <View style={styles.callInfo}>

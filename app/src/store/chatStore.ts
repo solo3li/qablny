@@ -24,6 +24,7 @@ export interface BackendChatMessage {
   isRead: boolean;
   createdAt: string;
   replyToId?: string;
+  durationSeconds?: number;
 }
 
 // Reply preview embedded in message
@@ -99,6 +100,7 @@ const mapBackendToUI = (msg: BackendChatMessage, myUserId: string): UIChatMessag
     text: type === 'text' ? msg.content : undefined,
     translation: msg.translation,
     mediaUrl: msg.mediaUrl,
+    duration: msg.durationSeconds,
     isMe,
     time,
     readStatus: msg.isRead ? 'read' : isMe ? 'delivered' : undefined,
