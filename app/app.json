@@ -27,7 +27,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "react-native-webrtc",
+        {
+          "cameraPermission": "السماح لتطبيق قابلني باستخدام الكاميرا لمكالمات الفيديو.",
+          "microphonePermission": "السماح لتطبيق قابلني باستخدام الميكروفون للدردشة الصوتية والمرئية."
+        }
+      ]
     ],
     "scheme": "qablny"
   }

@@ -5,19 +5,47 @@ import { GlassButton } from '../../components/GlassButton';
 import { GlassCard } from '../../components/GlassCard';
 import { Colors } from '../../constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
-import { initDummyAuth } from '../../store/useAppStore';
+import { axiosClient } from '../../src/api/axiosClient';
+import { useAuthStore } from '../../src/store/authStore';
 import { User, Lock, Phone } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const login = useAuthStore(s => s.login);
 
-  const handleLogin = () => {
+  const handleSubmit = async () => {
+    if (!email || !password || (tab === 'register' && !name)) {
+      setErrorMsg('الرجاء إدخال جميع الحقول المطلوبة');
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      initDummyAuth();
+    setErrorMsg('');
+    try {
+      if (tab === 'login') {
+        const res = await axiosClient.post('/auth/login', { email, password });
+        await login(res.data.accessToken, res.data.user);
+      } else {
+        const res = await axiosClient.post('/auth/register', { 
+          email, 
+          password, 
+          name,
+          age: 20,
+          gender: 0,
+          location: 'غير محدد'
+        });
+        await login(res.data.accessToken, res.data.user);
+      }
       router.replace('/(tabs)');
-    }, 1200);
+    } catch (err: any) {
+      setErrorMsg(err.response?.data || 'حدث خطأ في الاتصال بالخادم');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,17 +78,19 @@ export default function LoginScreen() {
         {tab === 'register' && (
           <View style={styles.inputRow}>
             <User color={Colors.textMuted} size={18} />
-            <TextInput style={styles.input} placeholder="الاسم الكامل" placeholderTextColor={Colors.textMuted} />
+            <TextInput style={styles.input} placeholder="الاسم الكامل" placeholderTextColor={Colors.textMuted} value={name} onChangeText={setName} />
           </View>
         )}
         <View style={styles.inputRow}>
           <Phone color={Colors.textMuted} size={18} />
-          <TextInput style={styles.input} placeholder="رقم الهاتف أو الإيميل" placeholderTextColor={Colors.textMuted} keyboardType="email-address" />
+          <TextInput style={styles.input} placeholder="الإيميل" placeholderTextColor={Colors.textMuted} keyboardType="email-address" value={email} onChangeText={setEmail} autoCapitalize="none" />
         </View>
         <View style={styles.inputRow}>
           <Lock color={Colors.textMuted} size={18} />
-          <TextInput style={styles.input} placeholder="كلمة المرور" placeholderTextColor={Colors.textMuted} secureTextEntry />
+          <TextInput style={styles.input} placeholder="كلمة المرور" placeholderTextColor={Colors.textMuted} secureTextEntry value={password} onChangeText={setPassword} />
         </View>
+
+        {errorMsg ? <Text style={{color: Colors.error, textAlign: 'center'}}>{errorMsg}</Text> : null}
 
         {tab === 'login' && (
           <TouchableOpacity style={styles.forgot}>
@@ -72,7 +102,7 @@ export default function LoginScreen() {
           title={loading ? 'جاري الدخول...' : tab === 'login' ? 'دخول' : 'إنشاء حساب'}
           size="lg"
           variant="primary"
-          onPress={handleLogin}
+          onPress={handleSubmit}
           disabled={loading}
           style={styles.submitBtn}
         />
@@ -86,7 +116,11 @@ export default function LoginScreen() {
         <GlassButton
           title="دخول تجريبي (Dummy) 🧪"
           variant="ghost"
-          onPress={handleLogin}
+          onPress={() => {
+            setEmail('admin@qablny.com');
+            setPassword('Password123');
+            setTab('login');
+          }}
           style={styles.dummyBtn}
         />
       </GlassCard>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { initDummyAuth } from '../../store/useAppStore';
+import { useAuthStore } from '../../src/store/authStore';
 import { useAppStore } from '../../store/useAppStore';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
@@ -10,12 +10,9 @@ import { router } from 'expo-router';
 import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle } from 'lucide-react-native';
 
 export default function ProfileScreen() {
-  const { user, logout, vipPlans } = useAppStore();
+  const { user, logout } = useAuthStore();
+  const { vipPlans } = useAppStore();
   const [showVip, setShowVip] = useState(false);
-
-  useEffect(() => {
-    if (!user) initDummyAuth();
-  }, [user]);
 
   if (!user) return (
     <View style={{ flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' }}>
@@ -40,7 +37,7 @@ export default function ProfileScreen() {
         {/* Profile Header */}
         <View style={styles.header}>
           <View style={styles.avatarWrap}>
-            <Image source={{ uri: user.image }} style={styles.avatar} />
+            <Image source={{ uri: user.profileImageUrl || 'https://i.pravatar.cc/300' }} style={styles.avatar} />
             {user.isVip && (
               <View style={styles.vipRing}>
                 <Star size={14} color={Colors.gold} fill={Colors.gold} />
@@ -53,26 +50,24 @@ export default function ProfileScreen() {
             <Text style={styles.locationText}>📍 {user.location}</Text>
             <Text style={styles.dot}>·</Text>
             <Text style={styles.locationText}>{user.age} سنة</Text>
-            <Text style={styles.dot}>·</Text>
-            <Text style={styles.locationText}>منذ {user.joinedDate}</Text>
           </View>
 
           {/* Interests */}
-          <View style={styles.interests}>
-            {user.interests.map(i => (
-              <View key={i} style={styles.interestTag}>
-                <Text style={styles.interestText}>{i}</Text>
-              </View>
-            ))}
-          </View>
+          {user.interests && user.interests.length > 0 && (
+            <View style={styles.interests}>
+              {user.interests.map(i => (
+                <View key={i} style={styles.interestTag}>
+                  <Text style={styles.interestText}>{i}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Stats */}
         <GlassCard style={styles.statsCard}>
           {[
-            { label: 'مطابقات', value: user.totalMatches, emoji: '🎥' },
-            { label: 'أصدقاء', value: user.friends, emoji: '👥' },
-            { label: 'عملات', value: user.coins.toLocaleString(), emoji: '🪙' },
+            { label: 'عملات', value: user.coins?.toLocaleString() || '0', emoji: '🪙' },
           ].map((s, i) => (
             <React.Fragment key={s.label}>
               <View style={styles.stat}>
