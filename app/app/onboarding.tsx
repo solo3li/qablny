@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Animated, Dimensions, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { GlassButton } from '../components/GlassButton';
 import { GlassCard } from '../components/GlassCard';
@@ -62,7 +62,14 @@ export default function OnboardingScreen() {
         onMomentumScrollEnd={e => setActiveIdx(Math.round(e.nativeEvent.contentOffset.x / width))}
         renderItem={({ item }) => (
           <View style={styles.slide}>
-            <View style={[styles.emojiCircle, { borderColor: item.color + '55', shadowColor: item.color }]}>
+            <View style={[
+              styles.emojiCircle, 
+              { borderColor: item.color + '55' },
+              Platform.select({
+                web: { boxShadow: `0px 0px 30px ${item.color}` } as any,
+                default: { shadowColor: item.color }
+              })
+            ]}>
               <Text style={styles.emoji}>{item.emoji}</Text>
             </View>
             <Text style={[styles.title, { color: item.color }]}>{item.title}</Text>
@@ -102,7 +109,11 @@ const styles = StyleSheet.create({
     width: 140, height: 140, borderRadius: 70,
     backgroundColor: Colors.surface, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 36, shadowOpacity: 0.4, shadowRadius: 30, shadowOffset: { width: 0, height: 0 },
+    marginBottom: 36,
+    ...Platform.select({
+      web: { boxShadow: '0px 0px 30px rgba(0, 0, 0, 0.4)' } as any,
+      default: { shadowOpacity: 0.4, shadowRadius: 30, shadowOffset: { width: 0, height: 0 } }
+    })
   },
   emoji: { fontSize: 62 },
   title: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginBottom: 16, letterSpacing: 0.5 },
