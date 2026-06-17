@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, Image, Modal, TouchableOpacity, Animated, Easing,
 } from 'react-native';
+import { useCallStore } from '../src/store/callStore';
+import { LiveKitHandler } from './LiveKitHandler';
 import { Colors } from '../constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -21,7 +23,7 @@ interface CallModalProps {
 }
 
 export function CallModal({ visible, onClose, friend, callType }: CallModalProps) {
-  const [status, setStatus] = useState<'ringing' | 'connected'>('ringing');
+  const { callStatus, activeCall } = useCallStore();
   const [seconds, setSeconds] = useState(0);
   const [muted, setMuted] = useState(false);
   const [speaker, setSpeaker] = useState(true);
@@ -38,7 +40,6 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
 
   useEffect(() => {
     if (!visible) {
-      setStatus('ringing');
       setSeconds(0);
       setMuted(false);
       setSpeaker(true);
@@ -46,7 +47,7 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
       return;
     }
 
-    // Start pulse animations
+    // Start pulse animations if ringing
     const startPulse = (anim: Animated.Value, delay: number) => {
       Animated.loop(
         Animated.sequence([
@@ -56,24 +57,31 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
         ])
       ).start();
     };
-    startPulse(pulse1, 0);
-    startPulse(pulse2, 400);
-    startPulse(pulse3, 800);
+    
+    if (callStatus === 'ringing') {
+      startPulse(pulse1, 0);
+      startPulse(pulse2, 400);
+      startPulse(pulse3, 800);
+    } else {
+      pulse1.stopAnimation();
+      pulse2.stopAnimation();
+      pulse3.stopAnimation();
+    }
 
-    // Auto-connect after 2.5 seconds (simulation)
-    const connectTimer = setTimeout(() => {
-      setStatus('connected');
+    // Timer for connected state
+    if (callStatus === 'connected') {
       timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
-    }, 2500);
+    } else {
+      clearInterval(timerRef.current);
+    }
 
     return () => {
-      clearTimeout(connectTimer);
       clearInterval(timerRef.current);
       pulse1.stopAnimation();
       pulse2.stopAnimation();
       pulse3.stopAnimation();
     };
-  }, [visible]);
+  }, [visible, callStatus]);
 
   const handleEnd = () => {
     clearInterval(timerRef.current);
@@ -97,16 +105,13 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
           style={StyleSheet.absoluteFillObject}
         />
 
-        {/* Video call: show blurred avatar as "video feed" */}
-        {callType === 'video' && status === 'connected' && (
-          <Image
-            source={{ uri: friend.image }}
-            style={styles.videoBg}
-            resizeMode="cover"
-            blurRadius={2}
-          />
+        {/* LiveKit Handler */}
+        {callStatus === 'connected' && activeCall?.roomName && (
+          <LiveKitHandler roomName={activeCall.roomName} callType={callType} muted={muted} cameraOn={cameraOn} />
         )}
-        {callType === 'video' && status === 'connected' && (
+
+        {/* Video call blurred background overlay (only if no actual video feed yet, or just to darken) */}
+        {callType === 'video' && callStatus === 'connected' && (
           <View style={styles.videoBgOverlay} />
         )}
 
@@ -121,10 +126,11 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Center: Avatar + Status */}
-        <View style={styles.center}>
-          {/* Pulse rings (only while ringing) */}
-          {status === 'ringing' && (
+        {/* Center: Avatar + Status (Hide if connected video call because LiveKit renders it) */}
+        {!(callType === 'video' && callStatus === 'connected') && (
+          <View style={styles.center}>
+            {/* Pulse rings (only while ringing) */}
+            {callStatus === 'ringing' && (
             <View style={styles.pulseWrap}>
               {[pulse1, pulse2, pulse3].map((anim, i) => (
                 <Animated.View
@@ -138,47 +144,44 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
             </View>
           )}
 
-          {/* Avatar */}
-          <View style={[styles.avatarWrap, status === 'connected' && styles.avatarConnected]}>
-            <Image source={{ uri: friend.image }} style={styles.avatar} />
-            {status === 'connected' && (
-              <View style={styles.connectedRing} />
-            )}
-          </View>
+            {/* Avatar */}
+            <View style={[styles.avatarWrap, callStatus === 'connected' && styles.avatarConnected]}>
+              <Image source={{ uri: friend.image }} style={styles.avatar} />
+              {callStatus === 'connected' && (
+                <View style={styles.connectedRing} />
+              )}
+            </View>
 
           <Text style={styles.name}>{friend.name}</Text>
 
-          {/* Status / timer */}
-          {status === 'ringing' ? (
-            <View style={styles.statusRow}>
-              <View style={styles.statusDot} />
-              <Text style={styles.statusText}>جاري الاتصال...</Text>
-            </View>
-          ) : (
-            <Text style={styles.timer}>{formatTime(seconds)}</Text>
-          )}
-
-          {/* Signal bars (connected) */}
-          {status === 'connected' && (
-            <View style={styles.signalBars}>
-              {[4, 6, 8, 10, 12].map((h, i) => (
-                <View key={i} style={[styles.signalBar, { height: h, opacity: i < 4 ? 1 : 0.3 }]} />
-              ))}
-              <Text style={styles.signalText}>جودة ممتازة</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Self video (video call only) */}
-        {callType === 'video' && status === 'connected' && (
-          <View style={styles.selfVideoWrap}>
-            {cameraOn ? (
-              <Image source={{ uri: 'https://i.pravatar.cc/300?img=11' }} style={styles.selfVideo} resizeMode="cover" />
+            {/* Status / timer */}
+            {callStatus === 'ringing' ? (
+              <View style={styles.statusRow}>
+                <View style={styles.statusDot} />
+                <Text style={styles.statusText}>جاري الاتصال...</Text>
+              </View>
             ) : (
-              <View style={styles.selfVideoOff}>
-                <CameraOff color={Colors.textMuted} size={22} />
+              <Text style={styles.timer}>{formatTime(seconds)}</Text>
+            )}
+
+            {/* Signal bars (connected) */}
+            {callStatus === 'connected' && (
+              <View style={styles.signalBars}>
+                {[4, 6, 8, 10, 12].map((h, i) => (
+                  <View key={i} style={[styles.signalBar, { height: h, opacity: i < 4 ? 1 : 0.3 }]} />
+                ))}
+                <Text style={styles.signalText}>جودة ممتازة</Text>
               </View>
             )}
+          </View>
+        )}
+
+        {/* Self video (video call only, simulated off if camera off - LiveKit handles actual local video in LiveKitHandler) */}
+        {callType === 'video' && callStatus === 'connected' && !cameraOn && (
+          <View style={styles.selfVideoWrap}>
+            <View style={styles.selfVideoOff}>
+              <CameraOff color={Colors.textMuted} size={22} />
+            </View>
           </View>
         )}
 

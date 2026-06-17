@@ -3,6 +3,7 @@ import { Colors } from '../constants/Colors';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useAuthStore } from '../src/store/authStore';
+import { IncomingCallModal } from '../components/IncomingCallModal';
 
 export default function RootLayout() {
   const { checkAuth, token, isLoading } = useAuthStore();
@@ -42,6 +43,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
       </Stack>
+      <IncomingCallModal />
     </>
   );
 }

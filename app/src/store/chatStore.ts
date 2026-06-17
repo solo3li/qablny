@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { axiosClient } from '../api/axiosClient';
 import { chatSignalR } from '../api/chatSignalR';
+import { useCallStore } from './callStore';
 
 export interface Friend {
   id: string;
@@ -178,5 +179,32 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     chatSignalR.setOnUserOnline((userId: string) => get().updateFriendOnlineStatus(userId, true));
     chatSignalR.setOnUserOffline((userId: string) => get().updateFriendOnlineStatus(userId, false));
+
+    // Call Events Setup
+    chatSignalR.setOnIncomingCall((payload) => {
+      // payload: { callerId, roomName, callType }
+      useCallStore.getState().setIncomingCall({
+        callerId: payload.callerId,
+        roomName: payload.roomName,
+        callType: payload.callType
+      });
+    });
+
+    chatSignalR.setOnCallAccepted((payload) => {
+      // payload: { friendId, roomName }
+      const state = useCallStore.getState();
+      if (state.activeCall && state.activeCall.friendId === payload.friendId) {
+        state.setActiveCall({ ...state.activeCall, roomName: payload.roomName });
+        state.setCallStatus('connected');
+      }
+    });
+
+    chatSignalR.setOnCallDeclined((friendId) => {
+      useCallStore.getState().handleCallDeclined();
+    });
+
+    chatSignalR.setOnCallEnded((friendId) => {
+      useCallStore.getState().handleCallDeclined(); // Same effect, ends the call
+    });
   }
 }));

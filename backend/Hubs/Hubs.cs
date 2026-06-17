@@ -58,6 +58,42 @@ public class ChatHub(MessageService messages, PresenceService presence) : Hub
         await presence.RefreshAsync(CurrentUserId());
     }
 
+    // ─── Direct Calling Signaling ─────────────────────────────────────────────
+
+    public async Task InitiateCall(Guid friendId, string callType)
+    {
+        var callerId = CurrentUserId();
+        var roomName = $"call_{callerId}_{friendId}_{Guid.NewGuid()}";
+        
+        // Notify the target user
+        await Clients.User(friendId.ToString()).SendAsync("IncomingCall", new {
+            CallerId = callerId,
+            RoomName = roomName,
+            CallType = callType
+        });
+    }
+
+    public async Task AcceptCall(Guid callerId, string roomName)
+    {
+        var friendId = CurrentUserId();
+        await Clients.User(callerId.ToString()).SendAsync("CallAccepted", new {
+            FriendId = friendId,
+            RoomName = roomName
+        });
+    }
+
+    public async Task DeclineCall(Guid callerId)
+    {
+        var friendId = CurrentUserId();
+        await Clients.User(callerId.ToString()).SendAsync("CallDeclined", friendId);
+    }
+
+    public async Task EndCall(Guid friendId)
+    {
+        var callerId = CurrentUserId();
+        await Clients.User(friendId.ToString()).SendAsync("CallEnded", callerId);
+    }
+
     private Guid CurrentUserId() =>
         Guid.Parse(Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }

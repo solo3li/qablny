@@ -9,6 +9,7 @@ import { GlassCard } from '../../components/GlassCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '../../src/store/authStore';
 import { useChatStore, UIChatMessage as ChatMessage } from '../../src/store/chatStore';
+import { useCallStore } from '../../src/store/callStore';
 import {
   Send, Languages, ChevronLeft, Phone, Video,
   Mic, Image as ImageIcon, Film, MapPin, X, Play, Pause,
@@ -231,14 +232,14 @@ export default function ChatScreen() {
     }
   }, [id, user]);
 
+  const { activeCall, initiateCall, endCall } = useCallStore();
+
   const [input, setInput] = useState('');
   const [showTranslation, setShowTranslation] = useState(true);
   const [showAttach, setShowAttach] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordingObj, setRecordingObj] = useState<Audio.Recording | null>(null);
   const [recordSecs, setRecordSecs] = useState(0);
-  const [callType, setCallType] = useState<'voice' | 'video'>('voice');
-  const [callOpen, setCallOpen] = useState(false);
   const recordInterval = useRef<any>(null);
   const listRef = useRef<FlatList>(null);
 
@@ -383,10 +384,10 @@ export default function ChatScreen() {
           </Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => { setCallType('voice'); setCallOpen(true); }}>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => initiateCall(friend.id, 'voice')}>
             <Phone color={Colors.cyan} size={20} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => { setCallType('video'); setCallOpen(true); }}>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => initiateCall(friend.id, 'video')}>
             <Video color={Colors.cyan} size={20} />
           </TouchableOpacity>
         </View>
@@ -490,10 +491,10 @@ export default function ChatScreen() {
       {/* Call Modal */}
       {friend && (
         <CallModal
-          visible={callOpen}
-          onClose={() => setCallOpen(false)}
-          friend={friend}
-          callType={callType}
+          visible={!!activeCall && activeCall.friendId === friend.id}
+          onClose={endCall}
+          friend={{ name: friend.name, image: friend.profileImageUrl, isOnline: friend.isOnline }}
+          callType={activeCall?.callType || 'voice'}
         />
       )}
     </KeyboardAvoidingView>

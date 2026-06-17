@@ -13,6 +13,14 @@ class ChatSignalRService {
   private onMessagesReadCallback: ((userId: string) => void) | null = null;
   private onUserOnlineCallback: ((userId: string) => void) | null = null;
   private onUserOfflineCallback: ((userId: string) => void) | null = null;
+  
+  // Call Callbacks
+  private onIncomingCallCallback: ((payload: any) => void) | null = null;
+  private onCallAcceptedCallback: ((payload: any) => void) | null = null;
+  private onCallDeclinedCallback: ((friendId: string) => void) | null = null;
+  private onCallEndedCallback: ((friendId: string) => void) | null = null;
+
+  public getConnection() { return this.connection; }
 
   public async connect() {
     if (this.connection) return;
@@ -40,6 +48,12 @@ class ChatSignalRService {
     this.connection.on("UserOnline", (userId: string) => this.onUserOnlineCallback?.(userId));
     this.connection.on("UserOffline", (userId: string) => this.onUserOfflineCallback?.(userId));
 
+    // Call Events
+    this.connection.on("IncomingCall", (payload: any) => this.onIncomingCallCallback?.(payload));
+    this.connection.on("CallAccepted", (payload: any) => this.onCallAcceptedCallback?.(payload));
+    this.connection.on("CallDeclined", (friendId: string) => this.onCallDeclinedCallback?.(friendId));
+    this.connection.on("CallEnded", (friendId: string) => this.onCallEndedCallback?.(friendId));
+
     await this.connection.start();
     console.log("SignalR Connected to Chat Hub");
   }
@@ -52,6 +66,12 @@ class ChatSignalRService {
   public setOnMessagesRead(cb: (userId: string) => void) { this.onMessagesReadCallback = cb; }
   public setOnUserOnline(cb: (userId: string) => void) { this.onUserOnlineCallback = cb; }
   public setOnUserOffline(cb: (userId: string) => void) { this.onUserOfflineCallback = cb; }
+
+  // Call Callbacks Setters
+  public setOnIncomingCall(cb: (payload: any) => void) { this.onIncomingCallCallback = cb; }
+  public setOnCallAccepted(cb: (payload: any) => void) { this.onCallAcceptedCallback = cb; }
+  public setOnCallDeclined(cb: (friendId: string) => void) { this.onCallDeclinedCallback = cb; }
+  public setOnCallEnded(cb: (friendId: string) => void) { this.onCallEndedCallback = cb; }
 
   // Actions
   public async sendMessage(friendId: string, text: string) {
