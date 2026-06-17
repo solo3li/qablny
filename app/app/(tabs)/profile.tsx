@@ -7,12 +7,14 @@ import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle } from 'lucide-react-native';
+import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle, Camera } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
   const { user, logout, checkAuth } = useAuthStore();
   const [showVip, setShowVip] = useState(false);
   const [vipPlans, setVipPlans] = useState<any[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     axiosClient.get('/vip/plans').then(res => setVipPlans(res.data)).catch(console.error);
@@ -27,6 +29,46 @@ export default function ProfileScreen() {
     } catch (e) {
       console.error(e);
       alert('حدث خطأ أثناء الاشتراك');
+    }
+  };
+
+  const handleImagePick = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.length > 0) {
+        setUploadingImage(true);
+        const asset = result.assets[0];
+        
+        const formData = new FormData();
+        if (Platform.OS === 'web') {
+          const res = await fetch(asset.uri);
+          const blob = await res.blob();
+          formData.append('file', blob, 'profile.jpg');
+        } else {
+          formData.append('file', {
+            uri: asset.uri,
+            type: 'image/jpeg',
+            name: 'profile.jpg',
+          } as any);
+        }
+
+        await axiosClient.put('/users/me/image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        await checkAuth(); // refresh user data
+      }
+    } catch (e) {
+      console.error('Image upload failed', e);
+      alert('حدث خطأ أثناء رفع الصورة');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -52,14 +94,18 @@ export default function ProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Profile Header */}
         <View style={styles.header}>
-          <View style={styles.avatarWrap}>
-            <Image source={{ uri: user.profileImageUrl || 'https://i.pravatar.cc/300' }} style={styles.avatar} />
+          <TouchableOpacity style={styles.avatarWrap} onPress={handleImagePick} disabled={uploadingImage}>
+            <Image source={{ uri: user.profileImageUrl || 'https://i.pravatar.cc/300' }} style={[styles.avatar, uploadingImage && { opacity: 0.5 }]} />
+            {uploadingImage && <ActivityIndicator size="small" color={Colors.cyan} style={StyleSheet.absoluteFill} />}
+            <View style={styles.editAvatarBtn}>
+              <Camera size={14} color="#FFF" />
+            </View>
             {user.isVip && (
               <View style={styles.vipRing}>
                 <Star size={14} color={Colors.gold} fill={Colors.gold} />
               </View>
             )}
-          </View>
+          </TouchableOpacity>
           <Text style={styles.name}>{user.name}</Text>
           <Text style={styles.bio}>{user.bio}</Text>
           <View style={styles.locationRow}>
@@ -170,6 +216,7 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24, paddingBottom: 24 },
   avatarWrap: { position: 'relative', marginBottom: 16 },
   avatar: { width: 110, height: 110, borderRadius: 55, borderWidth: 3, borderColor: Colors.glassBorderBright },
+  editAvatarBtn: { position: 'absolute', bottom: 5, left: 0, backgroundColor: Colors.cyan, borderRadius: 14, padding: 6, borderWidth: 2, borderColor: '#070B14' },
   vipRing: { position: 'absolute', bottom: 0, right: 0, backgroundColor: Colors.goldDim, borderRadius: 14, padding: 6, borderWidth: 1, borderColor: Colors.gold + '99' },
   name: { fontSize: 26, fontWeight: '800', color: Colors.text, marginBottom: 6 },
   bio: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 10 },

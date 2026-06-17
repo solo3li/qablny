@@ -8,6 +8,8 @@ class ChatSignalRService {
   // Callbacks
   private onReceiveMessageCallback: ((msg: any) => void) | null = null;
   private onMessageSentCallback: ((msg: any) => void) | null = null;
+  private onMessageEditedCallback: ((msg: any) => void) | null = null;
+  private onMessageDeletedCallback: ((messageId: string) => void) | null = null;
   private onTypingStartedCallback: ((userId: string) => void) | null = null;
   private onTypingStoppedCallback: ((userId: string) => void) | null = null;
   private onMessagesReadCallback: ((userId: string) => void) | null = null;
@@ -45,6 +47,8 @@ class ChatSignalRService {
       this.onReceiveMessageCallback?.(msg);
     });
     this.connection.on("MessageSent", (msg: any) => this.onMessageSentCallback?.(msg));
+    this.connection.on("MessageEdited", (msg: any) => this.onMessageEditedCallback?.(msg));
+    this.connection.on("MessageDeleted", (messageId: string) => this.onMessageDeletedCallback?.(messageId));
     this.connection.on("TypingStarted", (userId: string) => this.onTypingStartedCallback?.(userId));
     this.connection.on("TypingStopped", (userId: string) => this.onTypingStoppedCallback?.(userId));
     this.connection.on("MessagesRead", (userId: string) => this.onMessagesReadCallback?.(userId));
@@ -67,6 +71,8 @@ class ChatSignalRService {
   // Setters for callbacks
   public setOnReceiveMessage(cb: (msg: any) => void) { this.onReceiveMessageCallback = cb; }
   public setOnMessageSent(cb: (msg: any) => void) { this.onMessageSentCallback = cb; }
+  public setOnMessageEdited(cb: (msg: any) => void) { this.onMessageEditedCallback = cb; }
+  public setOnMessageDeleted(cb: (messageId: string) => void) { this.onMessageDeletedCallback = cb; }
   public setOnTypingStarted(cb: (userId: string) => void) { this.onTypingStartedCallback = cb; }
   public setOnTypingStopped(cb: (userId: string) => void) { this.onTypingStoppedCallback = cb; }
   public setOnMessagesRead(cb: (userId: string) => void) { this.onMessagesReadCallback = cb; }
@@ -87,6 +93,16 @@ class ChatSignalRService {
     if (!this.connection) await this.connect();
     // Assuming type 0 = Text
     await this.connection?.invoke("SendMessage", friendId, { type: 0, content: text });
+  }
+
+  public async editMessage(messageId: string, friendId: string, newContent: string) {
+    if (!this.connection) return;
+    await this.connection.invoke("EditMessage", messageId, friendId, newContent);
+  }
+
+  public async deleteMessage(messageId: string, friendId: string) {
+    if (!this.connection) return;
+    await this.connection.invoke("DeleteMessage", messageId, friendId);
   }
 
   public async startTyping(friendId: string) {

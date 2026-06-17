@@ -286,7 +286,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     }));
     try {
-      await axiosClient.delete(`/conversations/${friendId}/messages/${msgId}`);
+      await chatSignalR.deleteMessage(msgId, friendId);
     } catch (e) {
       console.error('deleteMessage failed', e);
       // Could restore message here if needed
@@ -304,7 +304,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     }));
     try {
-      await axiosClient.put(`/conversations/${friendId}/messages/${msgId}`, { content: newText });
+      await chatSignalR.editMessage(msgId, friendId, newText);
     } catch (e) {
       console.error('editMessage failed', e);
     }
@@ -358,6 +358,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
           allConvs[fid] = allConvs[fid].map(m =>
             m.readStatus === 'sent' ? { ...m, readStatus: 'delivered' as ReadStatus } : m
           );
+        }
+        return { chatMessages: allConvs };
+      });
+    });
+
+    chatSignalR.setOnMessageEdited((msg: BackendChatMessage) => {
+      set((state) => {
+        const friendId = msg.senderId === myUserId && msg.receiverId ? msg.receiverId : msg.senderId;
+        const uiMsg = mapBackendToUI(msg, myUserId);
+        uiMsg.isEdited = true;
+        return {
+          chatMessages: {
+            ...state.chatMessages,
+            [friendId]: (state.chatMessages[friendId] || []).map(m => m.id === msg.id ? uiMsg : m)
+          }
+        };
+      });
+    });
+
+    chatSignalR.setOnMessageDeleted((messageId: string) => {
+      set((state) => {
+        const allConvs = { ...state.chatMessages };
+        for (const fid of Object.keys(allConvs)) {
+          allConvs[fid] = allConvs[fid].filter(m => m.id !== messageId);
         }
         return { chatMessages: allConvs };
       });

@@ -58,12 +58,27 @@ public class MatchService(
     {
         var rd = redis.GetDatabase();
 
-        // End active room if any
+        var partnerIdStr = await rd.StringGetAsync($"match:partner:{userId}");
+        if (!partnerIdStr.IsNullOrEmpty)
+        {
+            var partnerId = Guid.Parse(partnerIdStr!);
+            var partnerConn = await rd.StringGetAsync(ConnKey(partnerId));
+            if (!partnerConn.IsNullOrEmpty)
+            {
+                // Send event to partner so their frontend goes back to searching
+                await matchHub.Clients.Client(partnerConn!).SendAsync("MatchSkipped");
+                // Put partner back in queue automatically
+                await rd.ListRightPushAsync(QueueAll, partnerId.ToString());
+            }
+            await rd.KeyDeleteAsync($"match:partner:{userId}");
+            await rd.KeyDeleteAsync($"match:partner:{partnerId}");
+            await rd.KeyDeleteAsync(ActiveKey(partnerId));
+        }
+
         var roomName = await rd.StringGetAsync(ActiveKey(userId));
         if (!roomName.IsNullOrEmpty)
         {
             await rd.KeyDeleteAsync(ActiveKey(userId));
-            await matchHub.Clients.Group(roomName!).SendAsync("MatchSkipped");
         }
 
         // Re-join queue
@@ -130,6 +145,8 @@ public class MatchService(
         // Save active sessions
         await rd.StringSetAsync(ActiveKey(userAId), room, TimeSpan.FromHours(1));
         await rd.StringSetAsync(ActiveKey(userBId), room, TimeSpan.FromHours(1));
+        await rd.StringSetAsync($"match:partner:{userAId}", userBId.ToString(), TimeSpan.FromHours(1));
+        await rd.StringSetAsync($"match:partner:{userBId}", userAId.ToString(), TimeSpan.FromHours(1));
 
         // Save match to DB
         db.MatchSessions.Add(new MatchSession { User1Id = userAId, User2Id = userBId, LiveKitRoomName = room });

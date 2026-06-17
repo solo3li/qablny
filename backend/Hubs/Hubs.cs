@@ -40,6 +40,20 @@ public class ChatHub(MessageService messages, PresenceService presence, AppDbCon
         await Clients.Caller.SendAsync("MessageSent", msg);
     }
 
+    public async Task EditMessage(Guid messageId, Guid friendId, string newContent)
+    {
+        var msg = await messages.EditAsync(CurrentUserId(), messageId, newContent);
+        await Clients.User(friendId.ToString()).SendAsync("MessageEdited", msg);
+        await Clients.Caller.SendAsync("MessageEdited", msg);
+    }
+
+    public async Task DeleteMessage(Guid messageId, Guid friendId)
+    {
+        await messages.DeleteAsync(CurrentUserId(), messageId);
+        await Clients.User(friendId.ToString()).SendAsync("MessageDeleted", messageId);
+        await Clients.Caller.SendAsync("MessageDeleted", messageId);
+    }
+
     public async Task StartTyping(Guid friendId)
     {
         await Clients.User(friendId.ToString()).SendAsync("TypingStarted", CurrentUserId());

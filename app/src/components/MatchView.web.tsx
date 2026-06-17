@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, Animated } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
@@ -9,6 +9,7 @@ import { matchSignalR } from '../../src/api/matchSignalR';
 import { router } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
 import { useAuthStore } from '../../src/store/authStore';
+import { useCallStore } from '../../src/store/callStore';
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
@@ -47,8 +48,22 @@ export default function MatchScreenWeb() {
 
   const [giftsOpen, setGiftsOpen] = useState(false);
   const [sentGift, setSentGift] = useState<string | null>(null);
+  const { incomingGift } = useCallStore();
   const [liked, setLiked] = useState(false);
   const [gifts, setGifts] = useState<any[]>([]);
+
+  // Gift animation
+  const giftScale = React.useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (incomingGift) {
+      Animated.sequence([
+        Animated.spring(giftScale, { toValue: 1.5, friction: 3, useNativeDriver: true }),
+        Animated.delay(1500),
+        Animated.timing(giftScale, { toValue: 0, duration: 500, useNativeDriver: true })
+      ]).start();
+    }
+  }, [incomingGift]);
 
   useEffect(() => {
     axiosClient.get('/gifts').then(res => setGifts(res.data)).catch(console.error);
@@ -57,6 +72,13 @@ export default function MatchScreenWeb() {
       setRemotePeer(data.matchedUser);
       setLivekitToken(data.liveKitToken);
       setIsSearching(false);
+    });
+
+    matchSignalR.setOnMatchSkipped(() => {
+      setLivekitToken(null);
+      setRemotePeer(null);
+      setIsSearching(true);
+      // Wait a bit, then we are already back in queue from the server
     });
 
     return () => {
@@ -82,8 +104,7 @@ export default function MatchScreenWeb() {
     setLivekitToken(null);
     setRemotePeer(null);
     setIsSearching(true);
-    await matchSignalR.leaveQueue();
-    await matchSignalR.joinQueue({});
+    await matchSignalR.skip();
   };
 
   const handleSendGift = async (gift: any) => {
@@ -186,6 +207,14 @@ export default function MatchScreenWeb() {
         <View style={styles.giftFloat}>
           <Text style={styles.giftFloatEmoji}>{sentGift}</Text>
         </View>
+      )}
+
+      {incomingGift && (
+        <Animated.View style={[styles.giftFloat, { transform: [{ scale: giftScale }] }]}>
+          <Text style={[styles.giftFloatEmoji, { fontSize: 120, textShadowColor: 'rgba(255,215,0,0.8)', textShadowRadius: 20 }]}>
+            {incomingGift}
+          </Text>
+        </Animated.View>
       )}
 
       <View style={styles.bottom}>

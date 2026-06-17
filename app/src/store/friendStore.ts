@@ -26,11 +26,11 @@ export const useFriendStore = create<FriendStoreState>((set, get) => ({
       // Backend returns list of pending requests with sender info
       const mapped: FriendRequest[] = res.data.map((r: any) => ({
         id: r.id,
-        senderId: r.senderId || r.sender?.id,
-        senderName: r.senderName || r.sender?.name || 'مستخدم',
-        senderImage: r.senderImage || r.sender?.profileImageUrl,
-        senderBio: r.senderBio || r.sender?.bio,
-        createdAt: r.createdAt || new Date().toISOString(),
+        senderId: r.id,
+        senderName: r.name || 'مستخدم',
+        senderImage: r.profileImageUrl,
+        senderBio: r.location || '',
+        createdAt: new Date().toISOString(),
       }));
       set({ requests: mapped, isLoading: false });
     } catch (e) {

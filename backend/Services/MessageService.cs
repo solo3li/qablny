@@ -87,6 +87,28 @@ public class MessageService(AppDbContext db, IHttpClientFactory http, PushNotifi
         return ToDto(msg, senderId);
     }
 
+    public async Task<MessageDto> EditAsync(Guid userId, Guid messageId, string newContent, CancellationToken ct = default)
+    {
+        var msg = await db.Messages.FindAsync([messageId], ct) ?? throw new KeyNotFoundException("Message not found");
+        if (msg.SenderId != userId) throw new UnauthorizedAccessException("Cannot edit someone else's message");
+        if (msg.Type != MessageType.Text) throw new InvalidOperationException("Can only edit text messages");
+
+        msg.Content = newContent;
+        msg.Translation = await TranslateAsync(newContent, "en", ct);
+        // We might want an IsEdited flag in the future, for now just update content
+        await db.SaveChangesAsync(ct);
+        return ToDto(msg, userId);
+    }
+
+    public async Task DeleteAsync(Guid userId, Guid messageId, CancellationToken ct = default)
+    {
+        var msg = await db.Messages.FindAsync([messageId], ct) ?? throw new KeyNotFoundException("Message not found");
+        if (msg.SenderId != userId) throw new UnauthorizedAccessException("Cannot delete someone else's message");
+
+        db.Messages.Remove(msg);
+        await db.SaveChangesAsync(ct);
+    }
+
     public async Task MarkReadAsync(Guid userId, Guid friendId, CancellationToken ct = default) =>
         await db.Messages
             .Where(m => m.SenderId == friendId && m.ReceiverId == userId && !m.IsRead)
