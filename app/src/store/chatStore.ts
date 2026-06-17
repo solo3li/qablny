@@ -61,18 +61,22 @@ interface ChatState {
   friends: Friend[];
   chatMessages: Record<string, UIChatMessage[]>;
   isLoadingFriends: boolean;
-  typingUsers: Record<string, boolean>; // friendId -> is typing
+  typingUsers: Record<string, boolean>;    // friendId -> is typing
+  voiceUsers: Record<string, boolean>;     // friendId -> is recording voice
   
   fetchFriends: () => Promise<void>;
   fetchMessages: (friendId: string, myUserId: string) => Promise<void>;
   sendMessage: (friendId: string, msg: UIChatMessage) => Promise<void>;
+  addLocalMessage: (friendId: string, msg: UIChatMessage) => void;  // local only, no API
   addIncomingMessage: (msg: BackendChatMessage, myUserId: string) => void;
   updateFriendOnlineStatus: (friendId: string, isOnline: boolean) => void;
   setTyping: (friendId: string, isTyping: boolean) => void;
+  setVoiceRecording: (friendId: string, isRecording: boolean) => void;
   markMessagesRead: (friendId: string) => void;
   deleteMessage: (friendId: string, msgId: string) => Promise<void>;
   editMessage: (friendId: string, msgId: string, newText: string) => Promise<void>;
   updateMessageUrl: (friendId: string, msgId: string, mediaUrl: string) => void;
+  replaceLocalMessage: (friendId: string, localId: string, newMsg: UIChatMessage) => void;
   initSignalR: (myUserId: string) => Promise<void>;
 }
 
@@ -101,6 +105,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   chatMessages: {},
   isLoadingFriends: false,
   typingUsers: {},
+  voiceUsers: {},
 
   fetchFriends: async () => {
     set({ isLoadingFriends: true });
@@ -138,18 +143,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendMessage: async (friendId: string, msg: UIChatMessage) => {
-    // Add optimistically with 'sending' status
-    const msgWithStatus: UIChatMessage = { ...msg, readStatus: 'sending' };
-    set((state) => {
-      const msgs = state.chatMessages[friendId] || [];
-      return { chatMessages: { ...state.chatMessages, [friendId]: [...msgs, msgWithStatus] } };
-    });
+    const skip = (msg as any)._skipLocalAdd === true;
+
+    // Add optimistically to UI ONLY if not skipped
+    // (skip = true when caller already used addLocalMessage + replaceLocalMessage for media)
+    if (!skip) {
+      const msgWithStatus: UIChatMessage = { ...msg, readStatus: 'sending' };
+      set((state) => {
+        const msgs = state.chatMessages[friendId] || [];
+        return { chatMessages: { ...state.chatMessages, [friendId]: [...msgs, msgWithStatus] } };
+      });
+    }
+
     try {
       let typeInt = 0;
       if (msg.type === 'image') typeInt = 1;
       if (msg.type === 'voice') typeInt = 2;
       if (msg.type === 'video') typeInt = 3;
-      
+
       const content = msg.text || (msg.type === 'location' ? msg.locationName : 'Media');
       await axiosClient.post(`/conversations/${friendId}/messages`, {
         type: typeInt,
@@ -158,7 +169,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         replyToId: msg.replyTo?.id,
       });
 
-      // Update status to 'sent'
+      // Update status to 'sent' using msg.id
       set((state) => ({
         chatMessages: {
           ...state.chatMessages,
@@ -185,6 +196,34 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setTyping: (friendId: string, isTyping: boolean) => {
     set((state) => ({
       typingUsers: { ...state.typingUsers, [friendId]: isTyping }
+    }));
+  },
+
+  setVoiceRecording: (friendId: string, isRecording: boolean) => {
+    set((state) => ({
+      voiceUsers: { ...state.voiceUsers, [friendId]: isRecording }
+    }));
+  },
+
+  // Add a message to local UI only - does NOT send to API
+  addLocalMessage: (friendId: string, msg: UIChatMessage) => {
+    set((state) => {
+      const msgs = state.chatMessages[friendId] || [];
+      // Avoid duplicates
+      if (msgs.some(m => m.id === msg.id)) return {};
+      return { chatMessages: { ...state.chatMessages, [friendId]: [...msgs, msg] } };
+    });
+  },
+
+  // Replace a local placeholder message with the real message after upload
+  replaceLocalMessage: (friendId: string, localId: string, newMsg: UIChatMessage) => {
+    set((state) => ({
+      chatMessages: {
+        ...state.chatMessages,
+        [friendId]: (state.chatMessages[friendId] || []).map(m =>
+          m.id === localId ? { ...newMsg } : m
+        )
+      }
     }));
   },
 

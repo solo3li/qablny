@@ -28,22 +28,12 @@ import * as ImagePicker from 'expo-image-picker';
 
 function ReadReceipt({ status }: { status?: ReadStatus }) {
   if (!status || status === 'sending') {
-    // Clock / pending
-    return (
-      <View style={styles.receiptWrap}>
-        <Text style={styles.receiptSending}>○</Text>
-      </View>
-    );
+    return <Text style={styles.receiptSending}>○</Text>;
   }
   if (status === 'sent') {
-    return (
-      <View style={styles.receiptWrap}>
-        <Check color={Colors.textMuted} size={11} strokeWidth={2.5} />
-      </View>
-    );
+    return <Check color="#6B7A99" size={11} strokeWidth={2.5} />;
   }
-  const color = status === 'read' ? Colors.cyan : Colors.textMuted;
-  // delivered or read → double check
+  const color = status === 'read' ? Colors.cyan : '#6B7A99';
   return (
     <View style={styles.receiptDouble}>
       <View style={styles.checkA}><Check color={color} size={11} strokeWidth={2.5} /></View>
@@ -62,6 +52,7 @@ function ReplyQuote({ replyTo }: { replyTo: ChatMessage['replyTo'] }) {
     replyTo.type === 'image' ? '📷 صورة' :
     replyTo.type === 'video' ? '🎬 فيديو' :
     replyTo.type === 'location' ? '📍 موقع' : 'رسالة';
+
   return (
     <View style={styles.replyQuote}>
       <View style={styles.replyAccent} />
@@ -75,39 +66,29 @@ function ReplyQuote({ replyTo }: { replyTo: ChatMessage['replyTo'] }) {
 
 // ─── Message Bubbles ──────────────────────────────────────────────────────────
 
-function TextBubble({ msg, friend }: { msg: ChatMessage; friend: any }) {
+function TextBubble({ msg }: { msg: ChatMessage }) {
   return (
-    <View>
-      <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
-        {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
-        <Text style={styles.bubbleText}>{msg.text}</Text>
-        {msg.isEdited && <Text style={styles.editedLabel}>تم التعديل</Text>}
-      </View>
-      {!msg.isMe && msg.translation && (
-        <View style={styles.translationBox}>
-          <Languages color={Colors.cyan} size={11} />
-          <Text style={styles.translationText}>{msg.translation}</Text>
-        </View>
-      )}
+    <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
+      {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
+      <Text style={styles.bubbleText}>{msg.text}</Text>
+      {msg.isEdited && <Text style={styles.editedLabel}>تم التعديل</Text>}
     </View>
   );
 }
 
 function VoiceBubble({ msg }: { msg: ChatMessage }) {
+  // Uploading state — local only
   if (msg.isUploading) {
     return (
-      <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem, styles.uploadingBubble]}>
+      <View style={[styles.bubble, styles.bubbleMe, styles.uploadingRow]}>
         <ActivityIndicator color={Colors.cyan} size="small" />
-        <Text style={styles.uploadingText}>جاري الرفع...</Text>
+        <Text style={styles.uploadingText}>🎙 جاري الرفع...</Text>
       </View>
     );
   }
   if (!msg.mediaUrl) {
-    return (
-      <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
-        <Text style={styles.bubbleText}>رسالة صوتية مفقودة</Text>
-      </View>
-    );
+    // This should not happen in production — backend always sends mediaUrl
+    return null;
   }
   return (
     <View style={msg.isMe ? styles.bubbleMe : styles.bubbleThem}>
@@ -119,16 +100,24 @@ function VoiceBubble({ msg }: { msg: ChatMessage }) {
 
 function ImageBubble({ msg }: { msg: ChatMessage }) {
   const [expanded, setExpanded] = useState(false);
+  if (msg.isUploading || !msg.mediaUrl) {
+    return (
+      <View style={[styles.bubble, styles.bubbleMe, styles.uploadingRow]}>
+        <ActivityIndicator color={Colors.cyan} size="small" />
+        <Text style={styles.uploadingText}>📷 جاري الرفع...</Text>
+      </View>
+    );
+  }
   return (
     <>
       <TouchableOpacity style={styles.mediaBubble} onPress={() => setExpanded(true)}>
         {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
         <Image source={{ uri: msg.mediaUrl }} style={styles.mediaImg} resizeMode="cover" />
-        {msg.text && (
+        {msg.text ? (
           <View style={[styles.mediaCaption, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
             <Text style={styles.bubbleText}>{msg.text}</Text>
           </View>
-        )}
+        ) : null}
       </TouchableOpacity>
       <Modal visible={expanded} transparent animationType="fade">
         <TouchableOpacity style={styles.imageModal} onPress={() => setExpanded(false)} activeOpacity={1}>
@@ -143,6 +132,14 @@ function ImageBubble({ msg }: { msg: ChatMessage }) {
 }
 
 function VideoBubble({ msg }: { msg: ChatMessage }) {
+  if (msg.isUploading || !msg.mediaUrl) {
+    return (
+      <View style={[styles.bubble, styles.bubbleMe, styles.uploadingRow]}>
+        <ActivityIndicator color={Colors.purple} size="small" />
+        <Text style={styles.uploadingText}>🎬 جاري الرفع...</Text>
+      </View>
+    );
+  }
   return (
     <TouchableOpacity style={styles.mediaBubble}>
       {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
@@ -189,40 +186,32 @@ function LocationBubble({ msg }: { msg: ChatMessage }) {
 
 // ─── Context Menu ─────────────────────────────────────────────────────────────
 
-interface ContextMenuProps {
-  msg: ChatMessage;
-  friendName: string;
-  onReply: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  onClose: () => void;
-}
+function MessageContextMenu({
+  msg, friendName, onReply, onEdit, onDelete, onClose,
+}: {
+  msg: ChatMessage; friendName: string;
+  onReply: () => void; onEdit: () => void; onDelete: () => void; onClose: () => void;
+}) {
+  const previewText =
+    msg.type === 'text' ? msg.text :
+    msg.type === 'voice' ? '🎵 رسالة صوتية' :
+    msg.type === 'image' ? '📷 صورة' :
+    msg.type === 'video' ? '🎬 فيديو' : '📍 موقع';
 
-function MessageContextMenu({ msg, friendName, onReply, onEdit, onDelete, onClose }: ContextMenuProps) {
   return (
     <Pressable style={styles.contextOverlay} onPress={onClose}>
       <View style={[styles.contextMenu, msg.isMe ? styles.contextMenuMe : styles.contextMenuThem]}>
-        {/* Preview of message */}
         <View style={styles.contextPreview}>
-          <Text style={styles.contextPreviewName} numberOfLines={1}>
-            {msg.isMe ? 'أنت' : friendName}
-          </Text>
-          <Text style={styles.contextPreviewText} numberOfLines={2}>
-            {msg.type === 'text' ? msg.text :
-             msg.type === 'voice' ? '🎵 رسالة صوتية' :
-             msg.type === 'image' ? '📷 صورة' :
-             msg.type === 'video' ? '🎬 فيديو' : '📍 موقع'}
-          </Text>
+          <Text style={styles.contextPreviewName}>{msg.isMe ? 'أنت' : friendName}</Text>
+          <Text style={styles.contextPreviewText} numberOfLines={2}>{previewText}</Text>
         </View>
         <View style={styles.contextDivider} />
 
-        {/* Reply (always available) */}
         <TouchableOpacity style={styles.contextItem} onPress={() => { onReply(); onClose(); }}>
           <CornerUpLeft color={Colors.cyan} size={16} />
           <Text style={styles.contextItemText}>رد</Text>
         </TouchableOpacity>
 
-        {/* Edit (only my text messages) */}
         {msg.isMe && msg.type === 'text' && (
           <TouchableOpacity style={styles.contextItem} onPress={() => { onEdit(); onClose(); }}>
             <Pencil color={Colors.gold} size={16} />
@@ -230,8 +219,7 @@ function MessageContextMenu({ msg, friendName, onReply, onEdit, onDelete, onClos
           </TouchableOpacity>
         )}
 
-        {/* Delete (only my messages) */}
-        {msg.isMe && (
+        {msg.isMe && !msg.isUploading && (
           <TouchableOpacity style={styles.contextItem} onPress={() => { onDelete(); onClose(); }}>
             <Trash2 color={Colors.danger} size={16} />
             <Text style={[styles.contextItemText, { color: Colors.danger }]}>حذف</Text>
@@ -242,12 +230,11 @@ function MessageContextMenu({ msg, friendName, onReply, onEdit, onDelete, onClos
   );
 }
 
-// ─── Attachment Menu ──────────────────────────────────────────────────────────
+// ─── Attachment Options ───────────────────────────────────────────────────────
 
 const ATTACH_OPTIONS = [
   { id: 'image', icon: <ImageIcon color={Colors.cyan} size={22} />, label: 'صورة', color: Colors.cyanDim, border: Colors.glassBorderBright },
   { id: 'video', icon: <Film color={Colors.purple} size={22} />, label: 'فيديو', color: Colors.purpleDim, border: Colors.purple + '44' },
-  { id: 'voice', icon: <Mic color={Colors.pink} size={22} />, label: 'صوت', color: Colors.pinkDim, border: Colors.pink + '44' },
   { id: 'location', icon: <MapPin color={Colors.gold} size={22} />, label: 'موقع', color: Colors.goldDim, border: Colors.gold + '44' },
 ];
 
@@ -262,14 +249,16 @@ export default function ChatScreen() {
   const { id, name, image } = useLocalSearchParams<{ id: string; name?: string; image?: string }>();
   const { user } = useAuthStore();
   const {
-    friends, chatMessages, sendMessage, fetchMessages,
-    typingUsers, markMessagesRead, deleteMessage, editMessage, updateMessageUrl,
+    friends, chatMessages, sendMessage, addLocalMessage, replaceLocalMessage,
+    fetchMessages, typingUsers, voiceUsers, markMessagesRead,
+    deleteMessage, editMessage,
   } = useChatStore();
 
   const storeFriend = friends.find(f => f.id === id);
   const friend = storeFriend || (name ? { id, name, profileImageUrl: image, isOnline: true, lastSeen: 'الآن', unread: 0 } : null);
   const messages = chatMessages[id ?? ''] ?? [];
   const isTyping = typingUsers[id ?? ''] ?? false;
+  const isRecordingVoice = voiceUsers[id ?? ''] ?? false; // other user recording
 
   React.useEffect(() => {
     if (id && user) {
@@ -281,18 +270,17 @@ export default function ChatScreen() {
 
   const { initiateCall } = useCallStore();
 
-  // ── State ──
+  // ── Local state ──
   const [input, setInput] = useState('');
   const [showTranslation, setShowTranslation] = useState(true);
   const [showAttach, setShowAttach] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordingObj, setRecordingObj] = useState<Audio.Recording | null>(null);
   const [recordSecs, setRecordSecs] = useState(0);
+  const [isUploadingVoice, setIsUploadingVoice] = useState(false);
   const [replyTo, setReplyTo] = useState<ReplyData | null>(null);
   const [contextMsg, setContextMsg] = useState<ChatMessage | null>(null);
-  // Edit mode
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
-  const [editText, setEditText] = useState('');
 
   const recordInterval = useRef<any>(null);
   const listRef = useRef<FlatList>(null);
@@ -301,7 +289,7 @@ export default function ChatScreen() {
     const d = new Date();
     return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
-  const uid = () => Math.random().toString(36).slice(2);
+  const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
   const handleInputChange = (text: string) => {
     setInput(text);
@@ -312,21 +300,16 @@ export default function ChatScreen() {
   const handleSendText = () => {
     if (!input.trim() || !id) return;
 
-    // Edit mode
     if (editingMsgId) {
       editMessage(id, editingMsgId, input.trim());
       setEditingMsgId(null);
-      setEditText('');
       setInput('');
       return;
     }
 
     const msg: ChatMessage = {
-      id: uid(),
-      type: 'text',
-      text: input.trim(),
-      isMe: true,
-      time: now(),
+      id: uid(), type: 'text', text: input.trim(),
+      isMe: true, time: now(),
       replyTo: replyTo
         ? { id: replyTo.id, text: replyTo.text, type: replyTo.type, isMe: replyTo.isMe, senderName: replyTo.senderName }
         : undefined,
@@ -334,78 +317,81 @@ export default function ChatScreen() {
     sendMessage(id, msg);
     setInput('');
     setReplyTo(null);
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
   };
 
   // ── Reply ──
   const handleReply = (msg: ChatMessage) => {
     setReplyTo({
-      id: msg.id,
-      text: msg.text,
-      type: msg.type,
+      id: msg.id, text: msg.text, type: msg.type,
       isMe: msg.isMe,
-      senderName: (storeFriend?.name || friend?.name) ?? 'مستخدم',
+      senderName: (storeFriend?.name || name) ?? 'مستخدم',
     });
-    setContextMsg(null);
   };
 
   // ── Edit ──
   const handleStartEdit = (msg: ChatMessage) => {
     setEditingMsgId(msg.id);
-    setEditText(msg.text || '');
     setInput(msg.text || '');
-    setContextMsg(null);
   };
-
-  const handleCancelEdit = () => {
-    setEditingMsgId(null);
-    setEditText('');
-    setInput('');
-  };
+  const handleCancelEdit = () => { setEditingMsgId(null); setInput(''); };
 
   // ── Delete ──
   const handleDelete = (msg: ChatMessage) => {
-    setContextMsg(null);
-    Alert.alert(
-      'حذف الرسالة',
-      'هل تريد حذف هذه الرسالة؟',
-      [
-        { text: 'إلغاء', style: 'cancel' },
-        {
-          text: 'حذف', style: 'destructive',
-          onPress: () => id && deleteMessage(id, msg.id),
-        },
-      ]
-    );
+    Alert.alert('حذف الرسالة', 'هل تريد حذف هذه الرسالة؟', [
+      { text: 'إلغاء', style: 'cancel' },
+      { text: 'حذف', style: 'destructive', onPress: () => id && deleteMessage(id, msg.id) },
+    ]);
   };
 
-  // ── Attach ──
+  // ── Attach media ──
   const handleAttach = async (type: string) => {
     if (!id) return;
     setShowAttach(false);
-    try {
-      if (type === 'image' || type === 'video') {
+
+    if (type === 'image' || type === 'video') {
+      try {
         const result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: type === 'image' ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
           allowsEditing: true, quality: 0.8,
         });
         if (!result.canceled && result.assets?.length > 0) {
           const asset = result.assets[0];
-          const msgId = uid();
-          // Show uploading placeholder
-          sendMessage(id, { id: msgId, type: type as any, isMe: true, time: now(), isUploading: true });
+          const localId = uid();
+          // 1. Show local uploading placeholder
+          addLocalMessage(id, {
+            id: localId, type: type as any,
+            isMe: true, time: now(), isUploading: true, readStatus: 'sending',
+          });
+          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+
+          // 2. Upload
           const uploadedUrl = await uploadMedia(asset, type as any);
-          updateMessageUrl(id, msgId, uploadedUrl);
-          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+
+          // 3. Send to API (this fires SignalR to the other user)
+          const finalMsg: ChatMessage = {
+            id: uid(), type: type as any, mediaUrl: uploadedUrl,
+            text: type === 'video' ? '🎬 فيديو' : '',
+            isMe: true, time: now(), readStatus: 'sending',
+            replyTo: replyTo
+              ? { id: replyTo.id, text: replyTo.text, type: replyTo.type, isMe: replyTo.isMe, senderName: (storeFriend?.name || name) ?? '' }
+              : undefined,
+          };
+          // Replace placeholder + send
+          replaceLocalMessage(id, localId, { ...finalMsg });
+          setReplyTo(null);
+          // Send to backend (without re-adding to UI)
+          await sendMessage(id, { ...finalMsg, _skipLocalAdd: true } as any);
         }
-      } else if (type === 'location') {
-        const loc = dummyLocations[Math.floor(Math.random() * dummyLocations.length)];
-        sendMessage(id, { id: uid(), type: 'location', locationName: loc.name, locationLat: loc.lat, locationLng: loc.lng, isMe: true, time: now() });
-      }
-    } catch (e) { console.error('Attach error:', e); }
+      } catch (e) { console.error('Attach error', e); }
+
+    } else if (type === 'location') {
+      const loc = dummyLocations[Math.floor(Math.random() * dummyLocations.length)];
+      sendMessage(id, { id: uid(), type: 'location', locationName: loc.name, locationLat: loc.lat, locationLng: loc.lng, isMe: true, time: now() });
+    }
   };
 
-  // ── Recording ──
+  // ── Voice recording ──
   const startRecording = async () => {
     try {
       const perm = await Audio.requestPermissionsAsync();
@@ -421,8 +407,7 @@ export default function ChatScreen() {
 
   const cancelRecording = async () => {
     clearInterval(recordInterval.current);
-    setRecording(false);
-    setRecordSecs(0);
+    setRecording(false); setRecordSecs(0);
     if (recordingObj) { try { await recordingObj.stopAndUnloadAsync(); } catch (e) {} setRecordingObj(null); }
   };
 
@@ -430,25 +415,25 @@ export default function ChatScreen() {
     if (!id) return;
     clearInterval(recordInterval.current);
     const dur = recordSecs;
-    setRecording(false);
-    setRecordSecs(0);
+    setRecording(false); setRecordSecs(0);
+
     if (recordingObj) {
       try {
         await recordingObj.stopAndUnloadAsync();
         const uri = recordingObj.getURI();
         setRecordingObj(null);
-        if (dur > 0 && uri) {
-          // Immediately add placeholder with uploading state
-          const msgId = uid();
-          const placeholderMsg: ChatMessage = {
-            id: msgId, type: 'voice', duration: dur,
-            isMe: true, time: now(), isUploading: true,
-            readStatus: 'sending',
-          };
-          sendMessage(id, placeholderMsg);
-          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
 
-          // Upload in background
+        if (dur > 0 && uri) {
+          const localId = uid();
+
+          // 1. Show local uploading placeholder ONLY in my UI
+          addLocalMessage(id, {
+            id: localId, type: 'voice', duration: dur,
+            isMe: true, time: now(), isUploading: true, readStatus: 'sending',
+          });
+          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+
+          // 2. Upload
           let assetToUpload: any;
           if (Platform.OS === 'web') {
             const res = await fetch(uri); const blob = await res.blob(); assetToUpload = blob;
@@ -456,8 +441,20 @@ export default function ChatScreen() {
             assetToUpload = { uri, type: 'audio/m4a' };
           }
           const uploadedUrl = await uploadMedia(assetToUpload, 'audio');
-          // Replace placeholder with real URL
-          updateMessageUrl(id, msgId, uploadedUrl);
+
+          // 3. Send to backend with real URL → triggers SignalR to receiver with correct URL
+          const finalMsg: ChatMessage = {
+            id: uid(), type: 'voice', mediaUrl: uploadedUrl, duration: dur,
+            isMe: true, time: now(), readStatus: 'sending',
+            replyTo: replyTo
+              ? { id: replyTo.id, text: replyTo.text, type: replyTo.type, isMe: replyTo.isMe, senderName: (storeFriend?.name || name) ?? '' }
+              : undefined,
+          };
+          // Replace placeholder with real waveform
+          replaceLocalMessage(id, localId, { ...finalMsg });
+          setReplyTo(null);
+          // Send to backend (without re-adding to UI)
+          await sendMessage(id, { ...finalMsg, _skipLocalAdd: true } as any);
         }
       } catch (err) { console.error('Stop recording error', err); }
     }
@@ -468,11 +465,23 @@ export default function ChatScreen() {
   if (!friend) return null;
 
   const avatarUri = (storeFriend?.profileImageUrl || image) ?? 'https://i.pravatar.cc/150';
-  const friendName = storeFriend?.name || friend.name || 'مستخدم';
+  const friendName = storeFriend?.name || name || 'مستخدم';
   const isOnline = storeFriend?.isOnline ?? (friend as any).isOnline;
   const lastSeen = storeFriend?.lastSeen ?? (friend as any).lastSeen;
-  const headerStatus = isTyping ? 'يكتب الآن...' : isOnline ? '● متصل الآن' : `● ${lastSeen}`;
-  const statusColor = isTyping ? Colors.cyan : isOnline ? Colors.online : Colors.textMuted;
+
+  // ── Telegram-style dynamic status ──
+  let headerStatus = '';
+  let statusColor = Colors.textMuted;
+  if (isTyping) {
+    headerStatus = 'يكتب...';
+    statusColor = Colors.cyan;
+  } else if (isOnline) {
+    headerStatus = '● متصل الآن';
+    statusColor = Colors.online;
+  } else {
+    headerStatus = `آخر ظهور: ${lastSeen || 'غير معروف'}`;
+    statusColor = Colors.textMuted;
+  }
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -481,21 +490,23 @@ export default function ChatScreen() {
       {/* Context Menu */}
       {contextMsg && (
         <MessageContextMenu
-          msg={contextMsg}
-          friendName={friendName}
-          onReply={() => handleReply(contextMsg)}
-          onEdit={() => handleStartEdit(contextMsg)}
-          onDelete={() => handleDelete(contextMsg)}
+          msg={contextMsg} friendName={friendName}
+          onReply={() => { handleReply(contextMsg); setContextMsg(null); }}
+          onEdit={() => { handleStartEdit(contextMsg); setContextMsg(null); }}
+          onDelete={() => { handleDelete(contextMsg); setContextMsg(null); }}
           onClose={() => setContextMsg(null)}
         />
       )}
 
-      {/* ── Header ─────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────── */}
       <GlassCard style={styles.header} borderRadius={0} intensity={40}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft color={Colors.text} size={26} />
         </TouchableOpacity>
-        <Image source={{ uri: avatarUri }} style={styles.headerAvatar} />
+        <View style={styles.avatarWrapHeader}>
+          <Image source={{ uri: avatarUri }} style={styles.headerAvatar} />
+          {isOnline && <View style={styles.headerOnlineDot} />}
+        </View>
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>{friendName}</Text>
           <Text style={[styles.headerStatus, { color: statusColor }]}>{headerStatus}</Text>
@@ -518,7 +529,7 @@ export default function ChatScreen() {
         </Text>
       </TouchableOpacity>
 
-      {/* ── Messages ────────────────────────────────── */}
+      {/* ── Messages ────────────────────────────── */}
       <FlatList
         ref={listRef}
         data={messages}
@@ -528,31 +539,29 @@ export default function ChatScreen() {
         renderItem={({ item: msg }) => (
           <Pressable onLongPress={() => setContextMsg(msg)} delayLongPress={350}>
             <View style={[styles.msgRow, msg.isMe && styles.msgRowMe]}>
-              {!msg.isMe && (
-                <Image source={{ uri: avatarUri }} style={styles.msgAvatar} />
-              )}
+              {!msg.isMe && <Image source={{ uri: avatarUri }} style={styles.msgAvatar} />}
               <View style={styles.msgContent}>
-                {msg.type === 'text' && <TextBubble msg={msg} friend={friend} />}
+                {msg.type === 'text' && <TextBubble msg={msg} />}
                 {msg.type === 'voice' && <VoiceBubble msg={msg} />}
                 {msg.type === 'image' && <ImageBubble msg={msg} />}
                 {msg.type === 'video' && <VideoBubble msg={msg} />}
                 {msg.type === 'location' && <LocationBubble msg={msg} />}
 
-                {/* Time + Read Receipt */}
-                <View style={[styles.timeRow, msg.isMe && styles.timeRowMe]}>
-                  <Text style={styles.timeText}>{msg.time}</Text>
-                  {msg.isMe && <ReadReceipt status={msg.readStatus} />}
-                </View>
+                {/* Time + receipt */}
+                {!msg.isUploading && (
+                  <View style={[styles.timeRow, msg.isMe && styles.timeRowMe]}>
+                    <Text style={styles.timeText}>{msg.time}</Text>
+                    {msg.isMe && <ReadReceipt status={msg.readStatus} />}
+                  </View>
+                )}
               </View>
             </View>
           </Pressable>
         )}
-        ListFooterComponent={() =>
-          isTyping ? <TypingIndicator name={friendName} /> : null
-        }
+        ListFooterComponent={() => isTyping ? <TypingIndicator name={friendName} /> : null}
       />
 
-      {/* ── Attachment Sheet ──────────────────────── */}
+      {/* ── Attachment Sheet ────────────────────── */}
       {showAttach && (
         <GlassCard style={styles.attachSheet} borderRadius={20} intensity={60}>
           <View style={styles.attachGrid}>
@@ -568,20 +577,17 @@ export default function ChatScreen() {
         </GlassCard>
       )}
 
-      {/* ── Input Area ────────────────────────────── */}
+      {/* ── Input Area ──────────────────────────── */}
       <View style={styles.inputAreaOuter}>
-        {/* Edit mode bar */}
         {editingMsgId && (
           <View style={styles.editBar}>
             <Pencil color={Colors.gold} size={14} />
             <Text style={styles.editBarText}>تعديل الرسالة</Text>
-            <TouchableOpacity onPress={handleCancelEdit} style={styles.editCancelBtn}>
+            <TouchableOpacity onPress={handleCancelEdit}>
               <X color={Colors.textMuted} size={16} />
             </TouchableOpacity>
           </View>
         )}
-
-        {/* Reply Bar */}
         {!editingMsgId && replyTo && (
           <ReplyBar reply={replyTo} onCancel={() => setReplyTo(null)} />
         )}
@@ -628,7 +634,10 @@ export default function ChatScreen() {
 
               {input.trim() ? (
                 <TouchableOpacity
-                  style={[styles.sendBtn, { backgroundColor: editingMsgId ? 'rgba(255,209,102,0.15)' : Colors.cyanDim, borderColor: editingMsgId ? Colors.gold : Colors.glassBorderBright }]}
+                  style={[styles.sendBtn, {
+                    backgroundColor: editingMsgId ? 'rgba(255,209,102,0.15)' : Colors.cyanDim,
+                    borderColor: editingMsgId ? Colors.gold : Colors.glassBorderBright,
+                  }]}
                   onPress={handleSendText}
                 >
                   {editingMsgId
@@ -654,51 +663,45 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
 
-  // Header
   header: { flexDirection: 'row', alignItems: 'center', paddingTop: 52, paddingBottom: 14, paddingHorizontal: 12, gap: 10, borderBottomWidth: 1, borderBottomColor: Colors.glassBorder },
   backBtn: { padding: 4 },
+  avatarWrapHeader: { position: 'relative' },
   headerAvatar: { width: 42, height: 42, borderRadius: 21 },
+  headerOnlineDot: { position: 'absolute', bottom: 0, right: 0, width: 11, height: 11, borderRadius: 6, backgroundColor: Colors.online, borderWidth: 2, borderColor: '#070B14' },
   headerInfo: { flex: 1 },
   headerName: { fontSize: 16, fontWeight: '700', color: Colors.text },
-  headerStatus: { fontSize: 12, marginTop: 2 },
+  headerStatus: { fontSize: 12, marginTop: 1 },
   headerActions: { flexDirection: 'row', gap: 8 },
   headerBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.cyanDim, borderWidth: 1, borderColor: Colors.glassBorderBright, alignItems: 'center', justifyContent: 'center' },
 
-  // Translation
   translateToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginVertical: 8, backgroundColor: Colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1, borderColor: Colors.glassBorder },
   translateText: { fontSize: 12, fontWeight: '600' },
 
-  // Messages
-  messagesList: { padding: 16, gap: 14 },
+  messagesList: { padding: 16, gap: 14, paddingBottom: 20 },
   msgRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   msgRowMe: { flexDirection: 'row-reverse' },
   msgAvatar: { width: 30, height: 30, borderRadius: 15, marginBottom: 22 },
   msgContent: { maxWidth: '78%', gap: 3 },
 
-  // Time + receipt row
   timeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 4 },
   timeRowMe: { justifyContent: 'flex-end' },
   timeText: { fontSize: 11, color: Colors.textMuted },
 
-  // ── Read Receipts ──
-  receiptWrap: { width: 14, height: 14, alignItems: 'center', justifyContent: 'center' },
-  receiptSending: { fontSize: 10, color: Colors.textMuted },
-  receiptDouble: {
-    width: 20, height: 14,
-    position: 'relative',
-  },
+  // Read receipts
+  receiptSending: { fontSize: 11, color: Colors.textMuted },
+  receiptDouble: { width: 22, height: 13, position: 'relative' },
   checkA: { position: 'absolute', left: 0, top: 0 },
-  checkB: { position: 'absolute', left: 6, top: 0 },
+  checkB: { position: 'absolute', left: 7, top: 0 },
 
-  // Reply quote in bubble
-  replyQuote: { flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 8, overflow: 'hidden', marginBottom: 6 },
+  // Reply quote
+  replyQuote: { flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 8, overflow: 'hidden', marginBottom: 6 },
   replyAccent: { width: 3, backgroundColor: Colors.cyan },
   replyQuoteContent: { flex: 1, paddingHorizontal: 8, paddingVertical: 5 },
   replyQuoteName: { fontSize: 11, fontWeight: '700', color: Colors.cyan, marginBottom: 2 },
   replyQuoteText: { fontSize: 12, color: Colors.textSecondary },
 
   // Context menu
-  contextOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: 'rgba(0,0,0,0.5)' },
+  contextOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: 'rgba(0,0,0,0.55)' },
   contextMenu: { position: 'absolute', top: '35%', backgroundColor: '#0D1529', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: Colors.glassBorder, minWidth: 160, maxWidth: 220 },
   contextMenuMe: { right: 16 },
   contextMenuThem: { left: 60 },
@@ -709,7 +712,7 @@ const styles = StyleSheet.create({
   contextItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 16 },
   contextItemText: { fontSize: 14, fontWeight: '600', color: Colors.text },
 
-  // Text bubble
+  // Bubbles
   bubble: { borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
   bubbleThem: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, borderBottomLeftRadius: 4 },
   bubbleMe: { backgroundColor: Colors.cyanDim, borderWidth: 1, borderColor: Colors.glassBorderBright, borderBottomRightRadius: 4 },
@@ -719,15 +722,13 @@ const styles = StyleSheet.create({
   translationText: { fontSize: 12, color: Colors.cyan, fontStyle: 'italic' },
 
   // Uploading
-  uploadingBubble: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14 },
+  uploadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 160, paddingVertical: 12 },
   uploadingText: { color: Colors.textSecondary, fontSize: 13 },
 
-  // Media bubble
+  // Media
   mediaBubble: { borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: Colors.glassBorder },
   mediaImg: { width: 220, height: 160 },
   mediaCaption: { padding: 10 },
-
-  // Video
   videoWrap: { position: 'relative' },
   videoOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   videoPlayBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)' },
@@ -751,7 +752,7 @@ const styles = StyleSheet.create({
   fullImage: { width: '100%', height: '85%' },
   closeModal: { position: 'absolute', top: 52, right: 20, backgroundColor: Colors.surface, borderRadius: 20, padding: 8, borderWidth: 1, borderColor: Colors.glassBorder },
 
-  // Attachment
+  // Attachment sheet
   attachSheet: { marginHorizontal: 12, marginBottom: 8, padding: 16 },
   attachGrid: { flexDirection: 'row', justifyContent: 'space-around' },
   attachItem: { alignItems: 'center', gap: 8 },
@@ -770,7 +771,6 @@ const styles = StyleSheet.create({
   // Edit bar
   editBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: 'rgba(255,209,102,0.08)', borderBottomWidth: 1, borderBottomColor: Colors.gold + '30' },
   editBarText: { flex: 1, color: Colors.gold, fontSize: 13, fontWeight: '600' },
-  editCancelBtn: { padding: 4 },
 
   // Recording
   cancelRec: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.dangerDim, borderWidth: 1, borderColor: Colors.danger + '55', alignItems: 'center', justifyContent: 'center' },
