@@ -192,10 +192,14 @@ const dummyLocations = [
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
 export default function ChatScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, name, image } = useLocalSearchParams<{ id: string, name?: string, image?: string }>();
   const { user } = useAuthStore();
   const { friends, chatMessages, sendMessage, fetchMessages } = useChatStore();
-  const friend = friends.find(f => f.id === id);
+  
+  // If the user isn't in our friends list, we create a temporary object from the passed params
+  const storeFriend = friends.find(f => f.id === id);
+  const friend = storeFriend || (name ? { id, name, image, isOnline: true, lastSeen: 'الآن' } : null);
+
   const messages = chatMessages[id ?? ''] ?? [];
 
   React.useEffect(() => {

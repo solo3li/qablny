@@ -113,7 +113,10 @@ export default function MatchScreen() {
   const handleSendMessage = () => {
     if (remotePeer) {
       // Navigating to messages will unmount and disconnect LiveKit
-      router.push(`/chat/${remotePeer.id}`);
+      router.push({
+        pathname: `/chat/${remotePeer.id}`,
+        params: { name: remotePeer.name, image: remotePeer.profileImageUrl }
+      });
     }
   };
 
