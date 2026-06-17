@@ -139,7 +139,7 @@ public class MessagesController(MessageService messages, MinioStorageService min
         // Generate a random object name or use user id folder
         var ext = Path.GetExtension(file.FileName);
         var objectName = $"chat/{UserId}/{Guid.NewGuid()}{ext}";
-        var url = await minio.UploadFileAsync("qablny-media", objectName, stream, file.Length, file.ContentType);
+        var url = await minio.UploadAsync(stream, objectName, file.ContentType, "qablny-media");
         return Ok(new { url });
     }
 }

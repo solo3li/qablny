@@ -110,7 +110,10 @@ builder.Services.AddOpenApi();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(opts => opts.AddPolicy("AllowAll", p =>
-    p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+    p.SetIsOriginAllowed(_ => true)
+     .AllowAnyMethod()
+     .AllowAnyHeader()
+     .AllowCredentials()));
 
 // ═════════════════════════════════════════════════════════════════════════════
 var app = builder.Build();
