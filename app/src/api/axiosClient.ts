@@ -28,14 +28,17 @@ axiosClient.interceptors.request.use(
 
 export const uploadMedia = async (asset: any, type: 'image' | 'video' | 'audio'): Promise<string> => {
   const formData = new FormData();
-  const filename = asset.fileName || asset.uri.split('/').pop() || `upload.${type === 'image' ? 'jpg' : 'mp4'}`;
-  let mimeType = asset.mimeType || 'image/jpeg';
-  if (type === 'video') mimeType = 'video/mp4';
-  if (type === 'audio') mimeType = 'audio/m4a';
-
-  if (Platform.OS === 'web' && asset.file) {
+  
+  if (Platform.OS === 'web' && (asset instanceof Blob || asset instanceof File)) {
+    formData.append('file', asset, `upload.${type === 'image' ? 'jpg' : type === 'video' ? 'mp4' : 'm4a'}`);
+  } else if (Platform.OS === 'web' && asset.file) {
     formData.append('file', asset.file);
   } else {
+    const filename = asset.fileName || asset.uri?.split('/').pop() || `upload.${type === 'image' ? 'jpg' : type === 'video' ? 'mp4' : 'm4a'}`;
+    let mimeType = asset.mimeType || 'image/jpeg';
+    if (type === 'video') mimeType = 'video/mp4';
+    if (type === 'audio') mimeType = 'audio/m4a';
+
     formData.append('file', {
       uri: asset.uri,
       name: filename,

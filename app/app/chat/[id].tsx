@@ -17,6 +17,7 @@ import {
 import { CallModal } from '../../components/CallModal';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadMedia } from '../../src/api/axiosClient';
+import { Audio } from 'expo-av';
 
 // ─── Message Bubbles ──────────────────────────────────────────────────────────
 
@@ -38,24 +39,45 @@ function TextBubble({ msg, friend }: { msg: ChatMessage; friend: any }) {
 
 function VoiceBubble({ msg }: { msg: ChatMessage }) {
   const [playing, setPlaying] = useState(false);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
   const progress = useRef(new Animated.Value(0)).current;
 
-  const togglePlay = () => {
-    if (playing) {
+  const togglePlay = async () => {
+    if (playing && sound) {
+      await sound.pauseAsync();
       setPlaying(false);
       progress.stopAnimation();
     } else {
-      setPlaying(true);
-      progress.setValue(0);
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: (msg.duration ?? 10) * 1000,
-        useNativeDriver: false,
-      }).start(({ finished }) => {
-        if (finished) setPlaying(false);
-      });
+      if (!sound) {
+        if (!msg.mediaUrl) return; // Fallback if no mediaUrl
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: msg.mediaUrl },
+          { shouldPlay: true },
+          (status) => {
+            if (status.isLoaded) {
+              if (status.isPlaying) {
+                const perc = status.durationMillis ? (status.positionMillis / status.durationMillis) : 0;
+                progress.setValue(perc);
+              }
+              if (status.didJustFinish) {
+                setPlaying(false);
+                progress.setValue(0);
+              }
+            }
+          }
+        );
+        setSound(newSound);
+        setPlaying(true);
+      } else {
+        await sound.playAsync();
+        setPlaying(true);
+      }
     }
   };
+
+  React.useEffect(() => {
+    return sound ? () => { sound.unloadAsync(); } : undefined;
+  }, [sound]);
 
   const barWidth = progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
 
@@ -213,6 +235,7 @@ export default function ChatScreen() {
   const [showTranslation, setShowTranslation] = useState(true);
   const [showAttach, setShowAttach] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [recordingObj, setRecordingObj] = useState<Audio.Recording | null>(null);
   const [recordSecs, setRecordSecs] = useState(0);
   const [callType, setCallType] = useState<'voice' | 'video'>('voice');
   const [callOpen, setCallOpen] = useState(false);
@@ -269,21 +292,73 @@ export default function ChatScreen() {
     }
   };
 
-  const startRecording = () => {
-    setRecording(true);
-    setRecordSecs(0);
-    recordInterval.current = setInterval(() => setRecordSecs(s => s + 1), 1000);
+  const startRecording = async () => {
+    try {
+      const perm = await Audio.requestPermissionsAsync();
+      if (perm.status !== 'granted') {
+        alert('عذراً، نحتاج إلى صلاحية الميكروفون لتسجيل الصوت');
+        return;
+      }
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      setRecordingObj(recording);
+      setRecording(true);
+      setRecordSecs(0);
+      recordInterval.current = setInterval(() => setRecordSecs(s => s + 1), 1000);
+    } catch (err) {
+      console.error('Failed to start recording', err);
+      alert('حدث خطأ أثناء تشغيل الميكروفون');
+    }
   };
 
-  const stopRecording = () => {
+  const cancelRecording = async () => {
+    clearInterval(recordInterval.current);
+    setRecording(false);
+    setRecordSecs(0);
+    if (recordingObj) {
+      try {
+        await recordingObj.stopAndUnloadAsync();
+        setRecordingObj(null);
+      } catch (e) {}
+    }
+  };
+
+  const stopRecording = async () => {
     if (!id) return;
     clearInterval(recordInterval.current);
     const dur = recordSecs;
     setRecording(false);
     setRecordSecs(0);
-    if (dur > 0) {
-      sendMessage(id, { id: uid(), type: 'voice', duration: dur, isMe: true, time: now() });
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    
+    if (recordingObj) {
+      try {
+        await recordingObj.stopAndUnloadAsync();
+        const uri = recordingObj.getURI();
+        setRecordingObj(null);
+        
+        if (dur > 0 && uri) {
+          let assetToUpload: any;
+          if (Platform.OS === 'web') {
+            const res = await fetch(uri);
+            const blob = await res.blob();
+            assetToUpload = blob;
+          } else {
+            assetToUpload = { uri, type: 'audio/m4a' };
+          }
+          
+          const uploadedUrl = await uploadMedia(assetToUpload, 'audio');
+          sendMessage(id, { id: uid(), type: 'voice', mediaUrl: uploadedUrl, duration: dur, isMe: true, time: now() });
+          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+        }
+      } catch (err) {
+        console.error('Failed to stop/upload recording', err);
+      }
     }
   };
 
@@ -368,7 +443,7 @@ export default function ChatScreen() {
       <View style={styles.inputBarOuter}>
         {recording ? (
           <View style={styles.inputBar}>
-            <TouchableOpacity onPress={stopRecording} style={styles.cancelRec}>
+            <TouchableOpacity onPress={cancelRecording} style={styles.cancelRec}>
               <X color={Colors.danger} size={20} />
             </TouchableOpacity>
             <View style={styles.recordingInfo}>
