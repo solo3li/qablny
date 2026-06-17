@@ -55,9 +55,9 @@ export default function MatchScreen() {
     // Fetch gifts
     axiosClient.get('/gifts').then(res => setGifts(res.data)).catch(console.error);
     matchSignalR.setOnMatchFound((data: any) => {
-      setRoomName(data.room);
-      setRemotePeer(data.peer);
-      setLivekitToken(data.token);
+      setRoomName(data.roomName);
+      setRemotePeer(data.matchedUser);
+      setLivekitToken(data.liveKitToken);
       setIsSearching(false);
     });
 
