@@ -15,7 +15,6 @@ import {
   Mic, Image as ImageIcon, Film, MapPin, X, Play, Pause,
   Plus
 } from 'lucide-react-native';
-import { CallModal } from '../../components/CallModal';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadMedia } from '../../src/api/axiosClient';
 import { Audio } from 'expo-av';
@@ -232,7 +231,7 @@ export default function ChatScreen() {
     }
   }, [id, user]);
 
-  const { activeCall, initiateCall, endCall } = useCallStore();
+  const { initiateCall } = useCallStore();
 
   const [input, setInput] = useState('');
   const [showTranslation, setShowTranslation] = useState(true);
@@ -487,16 +486,6 @@ export default function ChatScreen() {
           </View>
         )}
       </View>
-
-      {/* Call Modal */}
-      {friend && (
-        <CallModal
-          visible={!!activeCall && activeCall.friendId === friend.id}
-          onClose={endCall}
-          friend={{ name: friend.name, image: friend.profileImageUrl, isOnline: friend.isOnline }}
-          callType={activeCall?.callType || 'voice'}
-        />
-      )}
     </KeyboardAvoidingView>
   );
 }
