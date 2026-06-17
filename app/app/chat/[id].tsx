@@ -12,9 +12,10 @@ import { useChatStore, UIChatMessage as ChatMessage } from '../../src/store/chat
 import {
   Send, Languages, ChevronLeft, Phone, Video,
   Mic, Image as ImageIcon, Film, MapPin, X, Play, Pause,
-  Plus,
-} from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 import { CallModal } from '../../components/CallModal';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadMedia } from '../../src/api/axiosClient';
 
 // ─── Message Bubbles ──────────────────────────────────────────────────────────
 
@@ -226,20 +227,40 @@ export default function ChatScreen() {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
-  const handleAttach = (type: string) => {
+  const handleAttach = async (type: string) => {
     if (!id) return;
     setShowAttach(false);
-    if (type === 'image') {
-      const url = dummyImages[Math.floor(Math.random() * dummyImages.length)];
-      sendMessage(id, { id: uid(), type: 'image', mediaUrl: url, isMe: true, time: now() });
-    } else if (type === 'video') {
-      const url = dummyVideos[Math.floor(Math.random() * dummyVideos.length)];
-      sendMessage(id, { id: uid(), type: 'video', mediaUrl: url, text: 'فيديو 🎬', isMe: true, time: now() });
-    } else if (type === 'location') {
-      const loc = dummyLocations[Math.floor(Math.random() * dummyLocations.length)];
-      sendMessage(id, { id: uid(), type: 'location', locationName: loc.name, locationLat: loc.lat, locationLng: loc.lng, isMe: true, time: now() });
+
+    try {
+      if (type === 'image' || type === 'video') {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: type === 'image' ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
+          allowsEditing: true,
+          quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const uri = result.assets[0].uri;
+          // Upload to backend
+          const uploadedUrl = await uploadMedia(uri, type as any);
+          sendMessage(id, { 
+            id: uid(), 
+            type: type as any, 
+            mediaUrl: uploadedUrl, 
+            text: type === 'video' ? 'فيديو 🎬' : '',
+            isMe: true, 
+            time: now() 
+          });
+        }
+      } else if (type === 'location') {
+        const loc = dummyLocations[Math.floor(Math.random() * dummyLocations.length)];
+        sendMessage(id, { id: uid(), type: 'location', locationName: loc.name, locationLat: loc.lat, locationLng: loc.lng, isMe: true, time: now() });
+      }
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch (e) {
+      console.error('Error attaching media:', e);
+      alert('حدث خطأ أثناء رفع الملف');
     }
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
   const startRecording = () => {

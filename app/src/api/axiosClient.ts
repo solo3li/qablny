@@ -23,3 +23,24 @@ axiosClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+export const uploadMedia = async (uri: string, type: 'image' | 'video' | 'audio'): Promise<string> => {
+  const formData = new FormData();
+  const filename = uri.split('/').pop() || `upload.${type === 'image' ? 'jpg' : 'mp4'}`;
+  let mimeType = 'image/jpeg';
+  if (type === 'video') mimeType = 'video/mp4';
+  if (type === 'audio') mimeType = 'audio/m4a';
+
+  formData.append('file', {
+    uri: uri,
+    name: filename,
+    type: mimeType,
+  } as any);
+
+  const res = await axiosClient.post('/conversations/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return res.data.url;
+};

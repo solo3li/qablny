@@ -111,7 +111,7 @@ public class FriendsController(FriendService friends) : BaseController
 
 // ─── Messages ─────────────────────────────────────────────────────────────────
 [Route("api/conversations"), Authorize]
-public class MessagesController(MessageService messages) : BaseController
+public class MessagesController(MessageService messages, MinioStorageService minio) : BaseController
 {
     [HttpGet]
     public async Task<List<ConversationDto>> GetConversations() =>
@@ -130,6 +130,17 @@ public class MessagesController(MessageService messages) : BaseController
     {
         await messages.MarkReadAsync(UserId, friendId);
         return Ok();
+    }
+
+    [HttpPost("upload")]
+    public async Task<IActionResult> UploadMedia(IFormFile file)
+    {
+        await using var stream = file.OpenReadStream();
+        // Generate a random object name or use user id folder
+        var ext = Path.GetExtension(file.FileName);
+        var objectName = $"chat/{UserId}/{Guid.NewGuid()}{ext}";
+        var url = await minio.UploadFileAsync("qablny-media", objectName, stream, file.Length, file.ContentType);
+        return Ok(new { url });
     }
 }
 
