@@ -42,7 +42,9 @@ export default function LoginScreen() {
       }
       router.replace('/(tabs)');
     } catch (err: any) {
-      setErrorMsg(err.response?.data || 'حدث خطأ في الاتصال بالخادم');
+      const data = err.response?.data;
+      const msg = data?.message || data?.error || (typeof data === 'string' ? data : 'حدث خطأ في الاتصال بالخادم');
+      setErrorMsg(msg);
     } finally {
       setLoading(false);
     }
