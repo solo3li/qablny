@@ -29,7 +29,7 @@
     "plugins": [
       "expo-router",
       [
-        "react-native-webrtc",
+        "@config-plugins/react-native-webrtc",
         {
           "cameraPermission": "السماح لتطبيق قابلني باستخدام الكاميرا لمكالمات الفيديو.",
           "microphonePermission": "السماح لتطبيق قابلني باستخدام الميكروفون للدردشة الصوتية والمرئية."
