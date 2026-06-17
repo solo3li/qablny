@@ -103,10 +103,11 @@ export default function MatchScreen() {
   const handleAddFriend = async () => {
     try {
       await axiosClient.post(`/friends/request/${remotePeer.id}`);
-      alert('تم إرسال طلب الصداقة!');
-    } catch (e) {
+      Alert.alert('نجاح', 'تم إرسال طلب الصداقة بنجاح!');
+    } catch (e: any) {
       console.error('Failed to add friend', e);
-      alert('حدث خطأ أثناء إرسال طلب الصداقة');
+      const msg = e.response?.data?.message || e.response?.data?.Message || 'حدث خطأ أثناء إرسال طلب الصداقة';
+      Alert.alert('تنبيه', msg);
     }
   };
 
