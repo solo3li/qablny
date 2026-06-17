@@ -246,9 +246,9 @@ export default function ChatScreen() {
         });
 
         if (!result.canceled && result.assets && result.assets.length > 0) {
-          const uri = result.assets[0].uri;
+          const asset = result.assets[0];
           // Upload to backend
-          const uploadedUrl = await uploadMedia(uri, type as any);
+          const uploadedUrl = await uploadMedia(asset, type as any);
           sendMessage(id, { 
             id: uid(), 
             type: type as any, 
