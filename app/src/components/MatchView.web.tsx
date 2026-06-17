@@ -73,7 +73,13 @@ export default function MatchScreenWeb() {
     setIsSearching(true);
     setLivekitToken(null);
     setRemotePeer(null);
-    await matchSignalR.enterQueue();
+    try {
+      await matchSignalR.enterQueue();
+    } catch (e) {
+      console.error('Search failed', e);
+      setIsSearching(false);
+      alert('يجب تسجيل الدخول أولاً لتتمكن من استخدام ميزة المطابقة الكاميرا.');
+    }
   };
 
   const handleSkip = async () => {

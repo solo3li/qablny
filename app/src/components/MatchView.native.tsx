@@ -75,7 +75,14 @@ export default function MatchScreen() {
     setIsSearching(true);
     setLivekitToken(null);
     setRemotePeer(null);
-    await matchSignalR.enterQueue();
+    try {
+      await matchSignalR.enterQueue();
+    } catch (e) {
+      console.error('Search failed', e);
+      setIsSearching(false);
+      // Try using standard alert for cross-platform safety, or just fail silently in console if Alert isn't imported
+      alert('يجب تسجيل الدخول أولاً لتتمكن من استخدام ميزة المطابقة.');
+    }
   };
 
   const handleSkip = async () => {
