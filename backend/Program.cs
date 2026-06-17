@@ -1,8 +1,8 @@
 using System.Text;
+using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using Minio;
 using Qablny.Data;
 using Qablny.Hubs;
@@ -103,32 +103,10 @@ builder.Services.AddSingleton<MinioStorageService>();
 // Background matching service
 builder.Services.AddHostedService<MatchingBackgroundService>();
 
-// ── Controllers & Swagger ─────────────────────────────────────────────────────
+// ── Controllers & OpenAPI ─────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title       = "Qablny API",
-        Version     = "v1",
-        Description = "Backend for Qablny - Arabic Video Dating App"
-    });
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Type   = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        Description  = "Enter your JWT token"
-    });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        [new OpenApiSecurityScheme
-        {
-            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-        }] = []
-    });
-});
+builder.Services.AddOpenApi();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(opts => opts.AddPolicy("AllowAll", p =>
@@ -148,15 +126,11 @@ using (var scope = app.Services.CreateScope())
 // ── Middleware Pipeline ───────────────────────────────────────────────────────
 app.UseMiddleware<ExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
+app.MapOpenApi();
+app.MapScalarApiReference(opts =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Qablny API v1");
-        c.RoutePrefix = string.Empty; // Swagger at root
-    });
-}
+    opts.WithTitle("Qablny API");
+});
 
 app.UseCors("AllowAll");
 app.UseAuthentication();

@@ -27,8 +27,9 @@
     <!-- MinIO (object storage) -->
     <PackageReference Include="Minio"                                         Version="6.0.4"  />
 
-    <!-- Swagger -->
-    <PackageReference Include="Swashbuckle.AspNetCore"                        Version="7.3.1"  />
+    <!-- OpenAPI & Scalar -->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi"                  Version="9.0.6"  />
+    <PackageReference Include="Scalar.AspNetCore"                             Version="1.2.*"  />
 
     <!-- Logging -->
     <PackageReference Include="Serilog.AspNetCore"                            Version="9.0.0"  />

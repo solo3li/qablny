@@ -9,7 +9,7 @@ services:
     ports:
       - "5000:8080"
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Host=postgres;Database=qablny;Username=postgres;Password=${POSTGRES_PASSWORD}"
       ConnectionStrings__Redis: "redis:6379"
       Jwt__Secret:         ${JWT_SECRET}
@@ -86,7 +86,7 @@ services:
     ports:
       - "7880:7880"   # HTTP/WS API
       - "7881:7881"   # TURN/TLS
-      - "50000-50200:50000-50200/udp"  # WebRTC UDP range
+      # - "50000-50010:50000-50010/udp"  # WebRTC UDP range (reduced for dev)
     environment:
       LIVEKIT_KEYS: "${LIVEKIT_API_KEY}:${LIVEKIT_API_SECRET}"
     command: >
