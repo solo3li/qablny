@@ -63,13 +63,14 @@ interface ChatState {
   isLoadingFriends: boolean;
   typingUsers: Record<string, boolean>;    // friendId -> is typing
   voiceUsers: Record<string, boolean>;     // friendId -> is recording voice
+  onlineUsers: Record<string, { isOnline: boolean; lastSeen?: string }>; // friendId -> online status
   
   fetchFriends: () => Promise<void>;
   fetchMessages: (friendId: string, myUserId: string) => Promise<void>;
   sendMessage: (friendId: string, msg: UIChatMessage) => Promise<void>;
   addLocalMessage: (friendId: string, msg: UIChatMessage) => void;  // local only, no API
   addIncomingMessage: (msg: BackendChatMessage, myUserId: string) => void;
-  updateFriendOnlineStatus: (friendId: string, isOnline: boolean) => void;
+  updateFriendOnlineStatus: (friendId: string, isOnline: boolean, lastSeen?: string) => void;
   setTyping: (friendId: string, isTyping: boolean) => void;
   setVoiceRecording: (friendId: string, isRecording: boolean) => void;
   markMessagesRead: (friendId: string) => void;
@@ -106,6 +107,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoadingFriends: false,
   typingUsers: {},
   voiceUsers: {},
+  onlineUsers: {},
 
   fetchFriends: async () => {
     set({ isLoadingFriends: true });
@@ -120,7 +122,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         isOnline: c.friend.isOnline,
         unread: c.unreadCount
       }));
-      set({ friends: mapped, isLoadingFriends: false });
+      
+      const newOnlineUsers = { ...get().onlineUsers };
+      mapped.forEach((f: any) => {
+        newOnlineUsers[f.id] = { isOnline: f.isOnline, lastSeen: f.lastSeen };
+      });
+
+      set({ friends: mapped, onlineUsers: newOnlineUsers, isLoadingFriends: false });
     } catch (e) {
       console.error('Failed to fetch conversations', e);
       set({ isLoadingFriends: false });
@@ -187,10 +195,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
     // This is handled inside initSignalR's setOnReceiveMessage
   },
 
-  updateFriendOnlineStatus: (friendId: string, isOnline: boolean) => {
-    set((state) => ({
-      friends: state.friends.map(f => f.id === friendId ? { ...f, isOnline } : f)
-    }));
+  updateFriendOnlineStatus: (friendId: string, isOnline: boolean, lastSeen?: string) => {
+    set((state) => {
+      const now = new Date();
+      // Format: 10:30 PM
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const finalLastSeen = lastSeen || (isOnline ? undefined : `اليوم ${timeStr}`);
+
+      return {
+        onlineUsers: {
+          ...state.onlineUsers,
+          [friendId]: { isOnline, lastSeen: finalLastSeen }
+        },
+        friends: state.friends.map(f => {
+          if (f.id === friendId) {
+            return { ...f, isOnline, lastSeen: !isOnline ? finalLastSeen : f.lastSeen };
+          }
+          return f;
+        })
+      };
+    });
   },
 
   setTyping: (friendId: string, isTyping: boolean) => {

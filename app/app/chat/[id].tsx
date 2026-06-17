@@ -250,7 +250,7 @@ export default function ChatScreen() {
   const { user } = useAuthStore();
   const {
     friends, chatMessages, sendMessage, addLocalMessage, replaceLocalMessage,
-    fetchMessages, typingUsers, voiceUsers, markMessagesRead,
+    fetchMessages, typingUsers, voiceUsers, onlineUsers, markMessagesRead,
     deleteMessage, editMessage,
   } = useChatStore();
 
@@ -259,6 +259,11 @@ export default function ChatScreen() {
   const messages = chatMessages[id ?? ''] ?? [];
   const isTyping = typingUsers[id ?? ''] ?? false;
   const isRecordingVoice = voiceUsers[id ?? ''] ?? false; // other user recording
+
+  // Use global real-time online status if available
+  const realTimeStatus = id ? onlineUsers[id] : null;
+  const isOnline = realTimeStatus ? realTimeStatus.isOnline : (storeFriend?.isOnline ?? (friend as any).isOnline);
+  const lastSeen = realTimeStatus ? realTimeStatus.lastSeen : (storeFriend?.lastSeen ?? (friend as any).lastSeen);
 
   React.useEffect(() => {
     if (id && user) {
@@ -466,8 +471,6 @@ export default function ChatScreen() {
 
   const avatarUri = (storeFriend?.profileImageUrl || image) ?? 'https://i.pravatar.cc/150';
   const friendName = storeFriend?.name || name || 'مستخدم';
-  const isOnline = storeFriend?.isOnline ?? (friend as any).isOnline;
-  const lastSeen = storeFriend?.lastSeen ?? (friend as any).lastSeen;
 
   // ── Telegram-style dynamic status ──
   let headerStatus = '';
