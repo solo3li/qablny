@@ -21,6 +21,7 @@ export interface BackendChatMessage {
   translation?: string;
   mediaUrl?: string;
   senderId: string;
+  receiverId?: string;
   isRead: boolean;
   createdAt: string;
   replyToId?: string;
@@ -325,7 +326,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     
     chatSignalR.setOnReceiveMessage((msg: BackendChatMessage) => {
       set((state) => {
-        const friendId = msg.senderId;
+        const friendId = msg.senderId === myUserId && msg.receiverId ? msg.receiverId : msg.senderId;
         const uiMsg = mapBackendToUI(msg, myUserId);
         const msgs = state.chatMessages[friendId] || [];
         

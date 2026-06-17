@@ -133,7 +133,7 @@ public class ChatHub(MessageService messages, PresenceService presence, AppDbCon
 
         // Broadcast Call Log to both users so it appears in Chat instantly
         await Clients.User(friendId.ToString()).SendAsync("ReceiveMessage", msg);
-        await Clients.Caller.SendAsync("MessageSent", msg);
+        await Clients.Caller.SendAsync("ReceiveMessage", msg);
     }
 
     private Guid CurrentUserId() =>
