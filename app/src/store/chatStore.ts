@@ -36,7 +36,7 @@ export interface ReplyPreview {
 }
 
 // UI format
-export type MessageType = 'text' | 'voice' | 'image' | 'video' | 'location';
+export type MessageType = 'text' | 'voice' | 'image' | 'video' | 'location' | 'voiceCall' | 'videoCall' | 'missedCall';
 export type ReadStatus = 'sending' | 'sent' | 'delivered' | 'read';
 
 export interface UIChatMessage {
@@ -85,9 +85,13 @@ const mapBackendToUI = (msg: BackendChatMessage, myUserId: string): UIChatMessag
   const isMe = msg.senderId === myUserId;
   const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   let type: MessageType = 'text';
-  if (msg.type === 1) type = 'image';
-  if (msg.type === 2) type = 'voice';
+  if (msg.type === 1) type = 'voice';
+  if (msg.type === 2) type = 'image';
   if (msg.type === 3) type = 'video';
+  if (msg.type === 4) type = 'location';
+  if (msg.type === 5) type = 'voiceCall';
+  if (msg.type === 6) type = 'videoCall';
+  if (msg.type === 7) type = 'missedCall';
   
   return {
     id: msg.id,
@@ -165,9 +169,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     try {
       let typeInt = 0;
-      if (msg.type === 'image') typeInt = 1;
-      if (msg.type === 'voice') typeInt = 2;
+      if (msg.type === 'voice') typeInt = 1;
+      if (msg.type === 'image') typeInt = 2;
       if (msg.type === 'video') typeInt = 3;
+      if (msg.type === 'location') typeInt = 4;
+      if (msg.type === 'voiceCall') typeInt = 5;
+      if (msg.type === 'videoCall') typeInt = 6;
+      if (msg.type === 'missedCall') typeInt = 7;
 
       const content = msg.text || (msg.type === 'location' ? msg.locationName : 'Media');
       await axiosClient.post(`/conversations/${friendId}/messages`, {

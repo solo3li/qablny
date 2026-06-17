@@ -18,7 +18,7 @@ import { chatSignalR } from '../../src/api/chatSignalR';
 import {
   Send, Languages, ChevronLeft, Phone, Video,
   Mic, Image as ImageIcon, Film, MapPin, X, Play,
-  Plus, Check, CornerUpLeft, Pencil, Trash2,
+  Plus, Check, CornerUpLeft, Pencil, Trash2, PhoneMissed, PhoneCall,
 } from 'lucide-react-native';
 import { uploadMedia } from '../../src/api/axiosClient';
 import { Audio } from 'expo-av';
@@ -184,6 +184,39 @@ function LocationBubble({ msg }: { msg: ChatMessage }) {
   );
 }
 
+// ─── Call Bubble ──────────────────────────────────────────────────────────────
+
+function CallBubble({ msg }: { msg: ChatMessage }) {
+  const isMissed = msg.type === 'missedCall';
+  const isVideo = msg.type === 'videoCall';
+  
+  const iconColor = isMissed ? Colors.danger : (msg.isMe ? Colors.cyan : Colors.text);
+  const bgColor = msg.isMe ? Colors.cyanDim : Colors.surface;
+  const borderColor = msg.isMe ? Colors.glassBorderBright : Colors.glassBorder;
+
+  const durationText = msg.duration ? `(${Math.floor(msg.duration / 60)}:${String(msg.duration % 60).padStart(2, '0')})` : '';
+
+  return (
+    <View style={[styles.callBubble, { backgroundColor: bgColor, borderColor }, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
+      <View style={[styles.callIconWrap, { backgroundColor: isMissed ? Colors.dangerDim : 'rgba(0,0,0,0.2)' }]}>
+        {isMissed ? (
+          <PhoneMissed color={Colors.danger} size={20} />
+        ) : isVideo ? (
+          <Video color={iconColor} size={20} />
+        ) : (
+          <PhoneCall color={iconColor} size={20} />
+        )}
+      </View>
+      <View style={styles.callInfo}>
+        <Text style={[styles.callTitle, { color: isMissed ? Colors.danger : Colors.text }]}>
+          {isMissed ? 'مكالمة لم يرد عليها' : (isVideo ? 'مكالمة فيديو' : 'مكالمة صوتية')}
+        </Text>
+        {!isMissed && <Text style={styles.callDuration}>{durationText}</Text>}
+      </View>
+    </View>
+  );
+}
+
 // ─── Context Menu ─────────────────────────────────────────────────────────────
 
 function MessageContextMenu({
@@ -196,7 +229,10 @@ function MessageContextMenu({
     msg.type === 'text' ? msg.text :
     msg.type === 'voice' ? '🎵 رسالة صوتية' :
     msg.type === 'image' ? '📷 صورة' :
-    msg.type === 'video' ? '🎬 فيديو' : '📍 موقع';
+    msg.type === 'video' ? '🎬 فيديو' :
+    msg.type === 'location' ? '📍 موقع' :
+    msg.type === 'missedCall' ? '📞 مكالمة لم يرد عليها' :
+    msg.type === 'videoCall' ? '📞 مكالمة فيديو' : '📞 مكالمة صوتية';
 
   return (
     <Pressable style={styles.contextOverlay} onPress={onClose}>
@@ -555,6 +591,7 @@ export default function ChatScreen() {
                 {msg.type === 'image' && <ImageBubble msg={msg} />}
                 {msg.type === 'video' && <VideoBubble msg={msg} />}
                 {msg.type === 'location' && <LocationBubble msg={msg} />}
+                {(msg.type === 'voiceCall' || msg.type === 'videoCall' || msg.type === 'missedCall') && <CallBubble msg={msg} />}
 
                 {/* Time + receipt */}
                 {!msg.isUploading && (
@@ -755,6 +792,13 @@ const styles = StyleSheet.create({
   locationInfo: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 10, paddingBottom: 2 },
   locationName: { fontSize: 13, fontWeight: '700', color: Colors.text, flex: 1 },
   locationCoords: { fontSize: 11, color: Colors.textMuted, paddingHorizontal: 10, paddingBottom: 10 },
+
+  // Call Bubble
+  callBubble: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, borderWidth: 1, minWidth: 200 },
+  callIconWrap: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  callInfo: { flex: 1 },
+  callTitle: { fontSize: 14, fontWeight: '700' },
+  callDuration: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
 
   // Image modal
   imageModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', alignItems: 'center', justifyContent: 'center' },

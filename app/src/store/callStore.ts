@@ -93,13 +93,13 @@ export const useCallStore = create<CallState>((set, get) => ({
     if (activeCall) {
       const connection = chatSignalR.getConnection();
       if (connection) {
-        connection.invoke('EndCall', activeCall.friendId).catch(console.error);
+        connection.invoke('EndCall', activeCall.friendId, activeCall.roomName || '', activeCall.callType).catch(console.error);
       }
     }
     set({ activeCall: null, incomingCall: null, callStatus: 'idle' });
   },
 
   handleCallDeclined: () => {
-    set({ activeCall: null, callStatus: 'idle' });
+    set({ activeCall: null, incomingCall: null, callStatus: 'idle' });
   }
 }));

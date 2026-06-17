@@ -5,6 +5,7 @@ using Qablny.Services;
 using System.Security.Claims;
 
 using Qablny.Data;
+using System.Collections.Concurrent;
 
 namespace Qablny.Hubs;
 
@@ -12,6 +13,7 @@ namespace Qablny.Hubs;
 [Authorize]
 public class ChatHub(MessageService messages, PresenceService presence, AppDbContext db, PushNotificationService pushNotification) : Hub
 {
+    private static readonly ConcurrentDictionary<string, DateTime> _activeCalls = new();
     public override async Task OnConnectedAsync()
     {
         await presence.SetOnlineAsync(CurrentUserId());
@@ -92,6 +94,8 @@ public class ChatHub(MessageService messages, PresenceService presence, AppDbCon
     public async Task AcceptCall(Guid callerId, string roomName)
     {
         var friendId = CurrentUserId();
+        _activeCalls[roomName] = DateTime.UtcNow;
+
         await Clients.User(callerId.ToString()).SendAsync("CallAccepted", new {
             FriendId = friendId,
             RoomName = roomName
@@ -104,10 +108,32 @@ public class ChatHub(MessageService messages, PresenceService presence, AppDbCon
         await Clients.User(callerId.ToString()).SendAsync("CallDeclined", friendId);
     }
 
-    public async Task EndCall(Guid friendId)
+    public async Task EndCall(Guid friendId, string roomName, string callType)
     {
         var callerId = CurrentUserId();
         await Clients.User(friendId.ToString()).SendAsync("CallEnded", callerId);
+
+        // Calculate duration
+        int durationSeconds = 0;
+        var msgType = MessageType.MissedCall;
+
+        if (_activeCalls.TryRemove(roomName, out var startTime))
+        {
+            durationSeconds = (int)(DateTime.UtcNow - startTime).TotalSeconds;
+            msgType = callType == "video" ? MessageType.VideoCall : MessageType.VoiceCall;
+        }
+
+        // Save Call Log Message
+        var msg = await messages.SendAsync(callerId, friendId, new SendMessageRequest 
+        {
+            Type = msgType,
+            Content = callType == "video" ? "مكالمة فيديو" : "مكالمة صوتية",
+            DurationSeconds = durationSeconds
+        });
+
+        // Broadcast Call Log to both users so it appears in Chat instantly
+        await Clients.User(friendId.ToString()).SendAsync("ReceiveMessage", msg);
+        await Clients.Caller.SendAsync("MessageSent", msg);
     }
 
     private Guid CurrentUserId() =>
