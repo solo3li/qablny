@@ -11,6 +11,8 @@
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^15.0.1",
     "@expo/metro-runtime": "~6.1.2",
+    "@livekit/components-react": "^2.9.21",
+    "@livekit/components-styles": "^1.2.0",
     "@livekit/react-native": "^2.11.0",
     "@microsoft/signalr": "^10.0.0",
     "@react-native-async-storage/async-storage": "^3.1.1",
