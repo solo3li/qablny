@@ -8,8 +8,18 @@ using Qablny.Data;
 using Qablny.Hubs;
 using Qablny.Middleware;
 using Qablny.Services;
+using Microsoft.AspNetCore.SignalR;
 using Serilog;
 using StackExchange.Redis;
+
+public class CustomUserIdProvider : IUserIdProvider
+{
+    public string? GetUserId(HubConnectionContext connection)
+    {
+        return connection.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+            ?? connection.User?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+    }
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,6 +75,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // ── SignalR + Redis Backplane ──────────────────────────────────────────────────
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 builder.Services.AddSignalR()
     .AddStackExchangeRedis(redisConn, opts =>
         opts.Configuration.ChannelPrefix = RedisChannel.Literal("qablny"));

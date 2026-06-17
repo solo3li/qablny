@@ -29,7 +29,10 @@ class ChatSignalRService {
       .withAutomaticReconnect()
       .build();
 
-    this.connection.on("ReceiveMessage", (msg: any) => this.onReceiveMessageCallback?.(msg));
+    this.connection.on("ReceiveMessage", (msg: any) => {
+      console.log("🔥 SignalR ReceiveMessage:", msg);
+      this.onReceiveMessageCallback?.(msg);
+    });
     this.connection.on("MessageSent", (msg: any) => this.onMessageSentCallback?.(msg));
     this.connection.on("TypingStarted", (userId: string) => this.onTypingStartedCallback?.(userId));
     this.connection.on("TypingStopped", (userId: string) => this.onTypingStoppedCallback?.(userId));
