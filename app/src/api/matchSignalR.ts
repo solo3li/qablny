@@ -4,7 +4,7 @@ import { API_BASE_URL } from './axiosClient';
 
 class MatchSignalRService {
   private connection: signalR.HubConnection | null = null;
-  private onMatchFoundCallback: ((roomName: string, peerInfo: any) => void) | null = null;
+  private onMatchFoundCallback: ((data: any) => void) | null = null;
 
   public async connect() {
     if (this.connection) return;
@@ -21,10 +21,10 @@ class MatchSignalRService {
       .withAutomaticReconnect()
       .build();
 
-    this.connection.on("MatchFound", (roomName: string, peerInfo: any) => {
-      console.log("SignalR MatchFound:", roomName, peerInfo);
+    this.connection.on("MatchFound", (data: any) => {
+      console.log("SignalR MatchFound:", data);
       if (this.onMatchFoundCallback) {
-        this.onMatchFoundCallback(roomName, peerInfo);
+        this.onMatchFoundCallback(data);
       }
     });
 
@@ -32,7 +32,7 @@ class MatchSignalRService {
     console.log("SignalR Connected to Match Hub");
   }
 
-  public setOnMatchFound(callback: (roomName: string, peerInfo: any) => void) {
+  public setOnMatchFound(callback: (data: any) => void) {
     this.onMatchFoundCallback = callback;
   }
 

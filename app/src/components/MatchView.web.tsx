@@ -4,8 +4,9 @@ import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SkipForward, Flag, Gift, Heart, X, Search } from 'lucide-react-native';
+import { SkipForward, Flag, Gift, Heart, X, Search, MessageCircle, UserPlus } from 'lucide-react-native';
 import { matchSignalR } from '../../src/api/matchSignalR';
+import { router } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
 import { useAuthStore } from '../../src/store/authStore';
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks } from '@livekit/components-react';
@@ -51,17 +52,11 @@ export default function MatchScreenWeb() {
 
   useEffect(() => {
     axiosClient.get('/gifts').then(res => setGifts(res.data)).catch(console.error);
-    matchSignalR.setOnMatchFound(async (room, peer) => {
-      setRoomName(room);
-      setRemotePeer(peer);
-      try {
-        const res = await axiosClient.get(`/match/token/${room}`);
-        setLivekitToken(res.data.token);
-        setIsSearching(false);
-      } catch (e) {
-        console.error('Failed to get LiveKit token', e);
-        setIsSearching(false);
-      }
+    matchSignalR.setOnMatchFound((data: any) => {
+      setRoomName(data.room);
+      setRemotePeer(data.peer);
+      setLivekitToken(data.token);
+      setIsSearching(false);
     });
 
     return () => {
@@ -99,6 +94,23 @@ export default function MatchScreenWeb() {
       await axiosClient.post('/gifts/send', { giftId: gift.id, receiverId: remotePeer.id });
     } catch (e) {
       console.error('Gift sending failed', e);
+    }
+  };
+
+  const handleAddFriend = async () => {
+    try {
+      await axiosClient.post(`/friends/request/${remotePeer.id}`);
+      alert('تم إرسال طلب الصداقة!');
+    } catch (e) {
+      console.error('Failed to add friend', e);
+      alert('حدث خطأ أثناء إرسال طلب الصداقة');
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (remotePeer) {
+      // Navigating to messages will unmount and disconnect LiveKit
+      router.push(`/(tabs)/messages/${remotePeer.id}`);
     }
   };
 
@@ -184,13 +196,14 @@ export default function MatchScreenWeb() {
           <TouchableOpacity style={[styles.mainBtn, { borderColor: Colors.glassBorderBright, backgroundColor: Colors.cyanDim }]} onPress={handleSkip}>
             <Text style={styles.mainBtnText}>التالي ⚡</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.circleBtn, { borderColor: liked ? Colors.pink + '55' : Colors.glassBorder, backgroundColor: liked ? Colors.pinkDim : Colors.surface }]} onPress={() => setLiked(!liked)}>
-            <Heart color={liked ? Colors.pink : Colors.textSecondary} size={24} fill={liked ? Colors.pink : 'none'} />
+          <TouchableOpacity style={[styles.circleBtn, { borderColor: Colors.cyan + '55', backgroundColor: Colors.cyanDim }]} onPress={handleAddFriend}>
+            <UserPlus color={Colors.cyan} size={24} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.secondary}>
           <GlassButton icon={<Gift color={Colors.gold} size={18} />} title="إرسال هدية" variant="gold" size="sm" onPress={() => setGiftsOpen(true)} style={{ flex: 1 }} />
+          <GlassButton icon={<MessageCircle color={Colors.text} size={18} />} title="رسالة" variant="ghost" size="sm" onPress={handleSendMessage} style={{ flex: 1 }} />
         </View>
       </View>
 
