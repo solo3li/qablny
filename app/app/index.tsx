@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Colors } from '../constants/Colors';
 import { useAuthStore } from '../src/store/authStore';
@@ -94,10 +94,18 @@ const styles = StyleSheet.create({
     borderRadius: 80,
     borderWidth: 1,
     borderColor: Colors.cyan,
-    shadowColor: Colors.cyan,
-    shadowOpacity: 0.8,
-    shadowRadius: 30,
-    shadowOffset: { width: 0, height: 0 },
+    // Use elevation for Android, shadow for iOS, and boxShadow for Web if needed. 
+    // In React Native Web, boxShadow is preferred to avoid the warning.
+    ...Platform.select({
+      web: { boxShadow: '0px 0px 30px rgba(0, 240, 255, 0.8)' } as any,
+      default: {
+        shadowColor: Colors.cyan,
+        shadowOpacity: 0.8,
+        shadowRadius: 30,
+        shadowOffset: { width: 0, height: 0 },
+        elevation: 10,
+      }
+    }),
   },
   iconCircle: {
     width: 120, height: 120, borderRadius: 60,
