@@ -1,8 +1,8 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, Image, FlatList, TextInput,
   TouchableOpacity, KeyboardAvoidingView, Platform, Modal,
-  Animated, Pressable,
+  Animated, Pressable, Alert, ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Colors } from '../../constants/Colors';
@@ -18,49 +18,50 @@ import { chatSignalR } from '../../src/api/chatSignalR';
 import {
   Send, Languages, ChevronLeft, Phone, Video,
   Mic, Image as ImageIcon, Film, MapPin, X, Play,
-  Plus, Check, CornerUpLeft
+  Plus, Check, CornerUpLeft, Pencil, Trash2,
 } from 'lucide-react-native';
 import { uploadMedia } from '../../src/api/axiosClient';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 
-// ─── Read Receipt Icon ─────────────────────────────────────────────────────────
+// ─── Read Receipt ─────────────────────────────────────────────────────────────
 
 function ReadReceipt({ status }: { status?: ReadStatus }) {
   if (!status || status === 'sending') {
-    return <Text style={styles.receiptText}>○</Text>;
-  }
-  if (status === 'sent') {
-    return <Check color={Colors.textMuted} size={12} strokeWidth={2.5} />;
-  }
-  if (status === 'delivered') {
-    // Two overlapping checks
+    // Clock / pending
     return (
-      <View style={styles.doubleCheck}>
-        <Check color={Colors.textMuted} size={12} strokeWidth={2.5} />
-        <Check color={Colors.textMuted} size={12} strokeWidth={2.5} style={{ marginLeft: -6 }} />
+      <View style={styles.receiptWrap}>
+        <Text style={styles.receiptSending}>○</Text>
       </View>
     );
   }
-  // read
+  if (status === 'sent') {
+    return (
+      <View style={styles.receiptWrap}>
+        <Check color={Colors.textMuted} size={11} strokeWidth={2.5} />
+      </View>
+    );
+  }
+  const color = status === 'read' ? Colors.cyan : Colors.textMuted;
+  // delivered or read → double check
   return (
-    <View style={styles.doubleCheck}>
-      <Check color={Colors.cyan} size={12} strokeWidth={2.5} />
-      <Check color={Colors.cyan} size={12} strokeWidth={2.5} style={{ marginLeft: -6 }} />
+    <View style={styles.receiptDouble}>
+      <View style={styles.checkA}><Check color={color} size={11} strokeWidth={2.5} /></View>
+      <View style={styles.checkB}><Check color={color} size={11} strokeWidth={2.5} /></View>
     </View>
   );
 }
 
-// ─── Reply Quote Box ───────────────────────────────────────────────────────────
+// ─── Reply Quote ──────────────────────────────────────────────────────────────
 
 function ReplyQuote({ replyTo }: { replyTo: ChatMessage['replyTo'] }) {
   if (!replyTo) return null;
-  const preview = replyTo.type === 'text' ? replyTo.text
-    : replyTo.type === 'voice' ? '🎵 رسالة صوتية'
-    : replyTo.type === 'image' ? '📷 صورة'
-    : replyTo.type === 'video' ? '🎬 فيديو'
-    : replyTo.type === 'location' ? '📍 موقع' : 'رسالة';
-
+  const preview =
+    replyTo.type === 'text' ? replyTo.text :
+    replyTo.type === 'voice' ? '🎵 رسالة صوتية' :
+    replyTo.type === 'image' ? '📷 صورة' :
+    replyTo.type === 'video' ? '🎬 فيديو' :
+    replyTo.type === 'location' ? '📍 موقع' : 'رسالة';
   return (
     <View style={styles.replyQuote}>
       <View style={styles.replyAccent} />
@@ -80,6 +81,7 @@ function TextBubble({ msg, friend }: { msg: ChatMessage; friend: any }) {
       <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
         {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
         <Text style={styles.bubbleText}>{msg.text}</Text>
+        {msg.isEdited && <Text style={styles.editedLabel}>تم التعديل</Text>}
       </View>
       {!msg.isMe && msg.translation && (
         <View style={styles.translationBox}>
@@ -92,6 +94,14 @@ function TextBubble({ msg, friend }: { msg: ChatMessage; friend: any }) {
 }
 
 function VoiceBubble({ msg }: { msg: ChatMessage }) {
+  if (msg.isUploading) {
+    return (
+      <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem, styles.uploadingBubble]}>
+        <ActivityIndicator color={Colors.cyan} size="small" />
+        <Text style={styles.uploadingText}>جاري الرفع...</Text>
+      </View>
+    );
+  }
   if (!msg.mediaUrl) {
     return (
       <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
@@ -164,9 +174,7 @@ function LocationBubble({ msg }: { msg: ChatMessage }) {
         <View style={styles.mapGridH}>
           {Array.from({ length: 4 }).map((_, i) => <View key={i} style={styles.mapGridLineH} />)}
         </View>
-        <View style={styles.mapPin}>
-          <MapPin color={Colors.danger} size={28} fill={Colors.danger} />
-        </View>
+        <View style={styles.mapPin}><MapPin color={Colors.danger} size={28} fill={Colors.danger} /></View>
       </View>
       <View style={styles.locationInfo}>
         <MapPin color={Colors.cyan} size={14} />
@@ -183,18 +191,52 @@ function LocationBubble({ msg }: { msg: ChatMessage }) {
 
 interface ContextMenuProps {
   msg: ChatMessage;
+  friendName: string;
   onReply: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   onClose: () => void;
 }
 
-function MessageContextMenu({ msg, onReply, onClose }: ContextMenuProps) {
+function MessageContextMenu({ msg, friendName, onReply, onEdit, onDelete, onClose }: ContextMenuProps) {
   return (
     <Pressable style={styles.contextOverlay} onPress={onClose}>
       <View style={[styles.contextMenu, msg.isMe ? styles.contextMenuMe : styles.contextMenuThem]}>
+        {/* Preview of message */}
+        <View style={styles.contextPreview}>
+          <Text style={styles.contextPreviewName} numberOfLines={1}>
+            {msg.isMe ? 'أنت' : friendName}
+          </Text>
+          <Text style={styles.contextPreviewText} numberOfLines={2}>
+            {msg.type === 'text' ? msg.text :
+             msg.type === 'voice' ? '🎵 رسالة صوتية' :
+             msg.type === 'image' ? '📷 صورة' :
+             msg.type === 'video' ? '🎬 فيديو' : '📍 موقع'}
+          </Text>
+        </View>
+        <View style={styles.contextDivider} />
+
+        {/* Reply (always available) */}
         <TouchableOpacity style={styles.contextItem} onPress={() => { onReply(); onClose(); }}>
           <CornerUpLeft color={Colors.cyan} size={16} />
           <Text style={styles.contextItemText}>رد</Text>
         </TouchableOpacity>
+
+        {/* Edit (only my text messages) */}
+        {msg.isMe && msg.type === 'text' && (
+          <TouchableOpacity style={styles.contextItem} onPress={() => { onEdit(); onClose(); }}>
+            <Pencil color={Colors.gold} size={16} />
+            <Text style={[styles.contextItemText, { color: Colors.gold }]}>تعديل</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Delete (only my messages) */}
+        {msg.isMe && (
+          <TouchableOpacity style={styles.contextItem} onPress={() => { onDelete(); onClose(); }}>
+            <Trash2 color={Colors.danger} size={16} />
+            <Text style={[styles.contextItemText, { color: Colors.danger }]}>حذف</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </Pressable>
   );
@@ -212,7 +254,6 @@ const ATTACH_OPTIONS = [
 const dummyLocations = [
   { name: 'برج خليفة، دبي', lat: 25.1972, lng: 55.2744 },
   { name: 'ميدان التحرير، القاهرة', lat: 30.0444, lng: 31.2357 },
-  { name: 'الحمراء، غرناطة', lat: 37.1760, lng: -3.5881 },
 ];
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
@@ -220,11 +261,13 @@ const dummyLocations = [
 export default function ChatScreen() {
   const { id, name, image } = useLocalSearchParams<{ id: string; name?: string; image?: string }>();
   const { user } = useAuthStore();
-  const { friends, chatMessages, sendMessage, fetchMessages, typingUsers, markMessagesRead } = useChatStore();
+  const {
+    friends, chatMessages, sendMessage, fetchMessages,
+    typingUsers, markMessagesRead, deleteMessage, editMessage, updateMessageUrl,
+  } = useChatStore();
 
   const storeFriend = friends.find(f => f.id === id);
   const friend = storeFriend || (name ? { id, name, profileImageUrl: image, isOnline: true, lastSeen: 'الآن', unread: 0 } : null);
-
   const messages = chatMessages[id ?? ''] ?? [];
   const isTyping = typingUsers[id ?? ''] ?? false;
 
@@ -238,6 +281,7 @@ export default function ChatScreen() {
 
   const { initiateCall } = useCallStore();
 
+  // ── State ──
   const [input, setInput] = useState('');
   const [showTranslation, setShowTranslation] = useState(true);
   const [showAttach, setShowAttach] = useState(false);
@@ -246,6 +290,10 @@ export default function ChatScreen() {
   const [recordSecs, setRecordSecs] = useState(0);
   const [replyTo, setReplyTo] = useState<ReplyData | null>(null);
   const [contextMsg, setContextMsg] = useState<ChatMessage | null>(null);
+  // Edit mode
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+
   const recordInterval = useRef<any>(null);
   const listRef = useRef<FlatList>(null);
 
@@ -260,8 +308,19 @@ export default function ChatScreen() {
     if (id) chatSignalR.notifyTyping(id);
   };
 
+  // ── Send text ──
   const handleSendText = () => {
     if (!input.trim() || !id) return;
+
+    // Edit mode
+    if (editingMsgId) {
+      editMessage(id, editingMsgId, input.trim());
+      setEditingMsgId(null);
+      setEditText('');
+      setInput('');
+      return;
+    }
+
     const msg: ChatMessage = {
       id: uid(),
       type: 'text',
@@ -278,17 +337,49 @@ export default function ChatScreen() {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
+  // ── Reply ──
   const handleReply = (msg: ChatMessage) => {
     setReplyTo({
       id: msg.id,
       text: msg.text,
       type: msg.type,
       isMe: msg.isMe,
-      senderName: friend?.name || 'مستخدم',
+      senderName: (storeFriend?.name || friend?.name) ?? 'مستخدم',
     });
     setContextMsg(null);
   };
 
+  // ── Edit ──
+  const handleStartEdit = (msg: ChatMessage) => {
+    setEditingMsgId(msg.id);
+    setEditText(msg.text || '');
+    setInput(msg.text || '');
+    setContextMsg(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMsgId(null);
+    setEditText('');
+    setInput('');
+  };
+
+  // ── Delete ──
+  const handleDelete = (msg: ChatMessage) => {
+    setContextMsg(null);
+    Alert.alert(
+      'حذف الرسالة',
+      'هل تريد حذف هذه الرسالة؟',
+      [
+        { text: 'إلغاء', style: 'cancel' },
+        {
+          text: 'حذف', style: 'destructive',
+          onPress: () => id && deleteMessage(id, msg.id),
+        },
+      ]
+    );
+  };
+
+  // ── Attach ──
   const handleAttach = async (type: string) => {
     if (!id) return;
     setShowAttach(false);
@@ -296,29 +387,25 @@ export default function ChatScreen() {
       if (type === 'image' || type === 'video') {
         const result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: type === 'image' ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
-          allowsEditing: true,
-          quality: 0.8,
+          allowsEditing: true, quality: 0.8,
         });
         if (!result.canceled && result.assets?.length > 0) {
           const asset = result.assets[0];
+          const msgId = uid();
+          // Show uploading placeholder
+          sendMessage(id, { id: msgId, type: type as any, isMe: true, time: now(), isUploading: true });
           const uploadedUrl = await uploadMedia(asset, type as any);
-          sendMessage(id, {
-            id: uid(), type: type as any, mediaUrl: uploadedUrl,
-            text: type === 'video' ? 'فيديو 🎬' : '', isMe: true, time: now(),
-            replyTo: replyTo || undefined,
-          });
-          setReplyTo(null);
+          updateMessageUrl(id, msgId, uploadedUrl);
+          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
         }
       } else if (type === 'location') {
         const loc = dummyLocations[Math.floor(Math.random() * dummyLocations.length)];
         sendMessage(id, { id: uid(), type: 'location', locationName: loc.name, locationLat: loc.lat, locationLng: loc.lng, isMe: true, time: now() });
       }
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-    } catch (e) {
-      console.error('Attach error:', e);
-    }
+    } catch (e) { console.error('Attach error:', e); }
   };
 
+  // ── Recording ──
   const startRecording = async () => {
     try {
       const perm = await Audio.requestPermissionsAsync();
@@ -351,6 +438,17 @@ export default function ChatScreen() {
         const uri = recordingObj.getURI();
         setRecordingObj(null);
         if (dur > 0 && uri) {
+          // Immediately add placeholder with uploading state
+          const msgId = uid();
+          const placeholderMsg: ChatMessage = {
+            id: msgId, type: 'voice', duration: dur,
+            isMe: true, time: now(), isUploading: true,
+            readStatus: 'sending',
+          };
+          sendMessage(id, placeholderMsg);
+          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+
+          // Upload in background
           let assetToUpload: any;
           if (Platform.OS === 'web') {
             const res = await fetch(uri); const blob = await res.blob(); assetToUpload = blob;
@@ -358,9 +456,8 @@ export default function ChatScreen() {
             assetToUpload = { uri, type: 'audio/m4a' };
           }
           const uploadedUrl = await uploadMedia(assetToUpload, 'audio');
-          sendMessage(id, { id: uid(), type: 'voice', mediaUrl: uploadedUrl, duration: dur, isMe: true, time: now(), replyTo: replyTo || undefined });
-          setReplyTo(null);
-          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+          // Replace placeholder with real URL
+          updateMessageUrl(id, msgId, uploadedUrl);
         }
       } catch (err) { console.error('Stop recording error', err); }
     }
@@ -370,25 +467,25 @@ export default function ChatScreen() {
 
   if (!friend) return null;
 
-  const headerStatus = isTyping
-    ? 'يكتب الآن...'
-    : (storeFriend?.isOnline ?? friend.isOnline)
-      ? '● متصل الآن'
-      : `● ${storeFriend?.lastSeen || friend.lastSeen || 'غير متصل'}`;
-
-  const statusColor = isTyping
-    ? Colors.cyan
-    : (storeFriend?.isOnline ?? friend.isOnline) ? Colors.online : Colors.textMuted;
+  const avatarUri = (storeFriend?.profileImageUrl || image) ?? 'https://i.pravatar.cc/150';
+  const friendName = storeFriend?.name || friend.name || 'مستخدم';
+  const isOnline = storeFriend?.isOnline ?? (friend as any).isOnline;
+  const lastSeen = storeFriend?.lastSeen ?? (friend as any).lastSeen;
+  const headerStatus = isTyping ? 'يكتب الآن...' : isOnline ? '● متصل الآن' : `● ${lastSeen}`;
+  const statusColor = isTyping ? Colors.cyan : isOnline ? Colors.online : Colors.textMuted;
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <LinearGradient colors={['#040710', '#070B14']} style={StyleSheet.absoluteFillObject} />
 
-      {/* Context Menu Overlay */}
+      {/* Context Menu */}
       {contextMsg && (
         <MessageContextMenu
           msg={contextMsg}
+          friendName={friendName}
           onReply={() => handleReply(contextMsg)}
+          onEdit={() => handleStartEdit(contextMsg)}
+          onDelete={() => handleDelete(contextMsg)}
           onClose={() => setContextMsg(null)}
         />
       )}
@@ -398,12 +495,10 @@ export default function ChatScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft color={Colors.text} size={26} />
         </TouchableOpacity>
-        <Image source={{ uri: (storeFriend?.profileImageUrl || friend.profileImageUrl || image) ?? 'https://i.pravatar.cc/150' }} style={styles.headerAvatar} />
+        <Image source={{ uri: avatarUri }} style={styles.headerAvatar} />
         <View style={styles.headerInfo}>
-          <Text style={styles.headerName}>{storeFriend?.name || friend.name}</Text>
-          <Text style={[styles.headerStatus, { color: statusColor }]}>
-            {headerStatus}
-          </Text>
+          <Text style={styles.headerName}>{friendName}</Text>
+          <Text style={[styles.headerStatus, { color: statusColor }]}>{headerStatus}</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerBtn} onPress={() => initiateCall(friend.id, 'voice')}>
@@ -423,7 +518,7 @@ export default function ChatScreen() {
         </Text>
       </TouchableOpacity>
 
-      {/* ── Messages List ───────────────────────────── */}
+      {/* ── Messages ────────────────────────────────── */}
       <FlatList
         ref={listRef}
         data={messages}
@@ -431,16 +526,10 @@ export default function ChatScreen() {
         contentContainerStyle={styles.messagesList}
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
         renderItem={({ item: msg }) => (
-          <Pressable
-            onLongPress={() => setContextMsg(msg)}
-            delayLongPress={350}
-          >
+          <Pressable onLongPress={() => setContextMsg(msg)} delayLongPress={350}>
             <View style={[styles.msgRow, msg.isMe && styles.msgRowMe]}>
               {!msg.isMe && (
-                <Image
-                  source={{ uri: (storeFriend?.profileImageUrl || image) ?? 'https://i.pravatar.cc/150' }}
-                  style={styles.msgAvatar}
-                />
+                <Image source={{ uri: avatarUri }} style={styles.msgAvatar} />
               )}
               <View style={styles.msgContent}>
                 {msg.type === 'text' && <TextBubble msg={msg} friend={friend} />}
@@ -448,7 +537,9 @@ export default function ChatScreen() {
                 {msg.type === 'image' && <ImageBubble msg={msg} />}
                 {msg.type === 'video' && <VideoBubble msg={msg} />}
                 {msg.type === 'location' && <LocationBubble msg={msg} />}
-                <View style={[styles.timeRow, msg.isMe && { flexDirection: 'row-reverse' }]}>
+
+                {/* Time + Read Receipt */}
+                <View style={[styles.timeRow, msg.isMe && styles.timeRowMe]}>
                   <Text style={styles.timeText}>{msg.time}</Text>
                   {msg.isMe && <ReadReceipt status={msg.readStatus} />}
                 </View>
@@ -457,7 +548,7 @@ export default function ChatScreen() {
           </Pressable>
         )}
         ListFooterComponent={() =>
-          isTyping ? <TypingIndicator name={storeFriend?.name || friend.name} /> : null
+          isTyping ? <TypingIndicator name={friendName} /> : null
         }
       />
 
@@ -479,8 +570,21 @@ export default function ChatScreen() {
 
       {/* ── Input Area ────────────────────────────── */}
       <View style={styles.inputAreaOuter}>
+        {/* Edit mode bar */}
+        {editingMsgId && (
+          <View style={styles.editBar}>
+            <Pencil color={Colors.gold} size={14} />
+            <Text style={styles.editBarText}>تعديل الرسالة</Text>
+            <TouchableOpacity onPress={handleCancelEdit} style={styles.editCancelBtn}>
+              <X color={Colors.textMuted} size={16} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Reply Bar */}
-        {replyTo && <ReplyBar reply={replyTo} onCancel={() => setReplyTo(null)} />}
+        {!editingMsgId && replyTo && (
+          <ReplyBar reply={replyTo} onCancel={() => setReplyTo(null)} />
+        )}
 
         <View style={styles.inputBarOuter}>
           {recording ? (
@@ -493,22 +597,27 @@ export default function ChatScreen() {
                 <Text style={styles.recTime}>{formatRec(recordSecs)}</Text>
                 <Text style={styles.recLabel}>جاري التسجيل...</Text>
               </View>
-              <TouchableOpacity style={[styles.sendBtn, { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]} onPress={stopRecording}>
+              <TouchableOpacity
+                style={[styles.sendBtn, { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]}
+                onPress={stopRecording}
+              >
                 <Send color={Colors.cyan} size={20} />
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.inputBar}>
-              <TouchableOpacity
-                style={[styles.attachToggleBtn, showAttach && { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]}
-                onPress={() => setShowAttach(!showAttach)}
-              >
-                <Plus color={showAttach ? Colors.cyan : Colors.textMuted} size={22} />
-              </TouchableOpacity>
+              {!editingMsgId && (
+                <TouchableOpacity
+                  style={[styles.attachToggleBtn, showAttach && { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]}
+                  onPress={() => setShowAttach(!showAttach)}
+                >
+                  <Plus color={showAttach ? Colors.cyan : Colors.textMuted} size={22} />
+                </TouchableOpacity>
+              )}
 
               <TextInput
-                style={styles.input}
-                placeholder="اكتب رسالة..."
+                style={[styles.input, editingMsgId && styles.inputEdit]}
+                placeholder={editingMsgId ? 'تعديل الرسالة...' : 'اكتب رسالة...'}
                 placeholderTextColor={Colors.textMuted}
                 value={input}
                 onChangeText={handleInputChange}
@@ -518,14 +627,20 @@ export default function ChatScreen() {
               />
 
               {input.trim() ? (
-                <TouchableOpacity style={[styles.sendBtn, { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]} onPress={handleSendText}>
-                  <Send color={Colors.cyan} size={20} />
+                <TouchableOpacity
+                  style={[styles.sendBtn, { backgroundColor: editingMsgId ? 'rgba(255,209,102,0.15)' : Colors.cyanDim, borderColor: editingMsgId ? Colors.gold : Colors.glassBorderBright }]}
+                  onPress={handleSendText}
+                >
+                  {editingMsgId
+                    ? <Check color={Colors.gold} size={20} strokeWidth={2.5} />
+                    : <Send color={Colors.cyan} size={20} />
+                  }
                 </TouchableOpacity>
-              ) : (
+              ) : !editingMsgId ? (
                 <TouchableOpacity style={styles.sendBtn} onPress={startRecording}>
                   <Mic color={Colors.textMuted} size={20} />
                 </TouchableOpacity>
-              )}
+              ) : null}
             </View>
           )}
         </View>
@@ -557,34 +672,41 @@ const styles = StyleSheet.create({
   messagesList: { padding: 16, gap: 14 },
   msgRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   msgRowMe: { flexDirection: 'row-reverse' },
-  msgAvatar: { width: 30, height: 30, borderRadius: 15, marginBottom: 20 },
+  msgAvatar: { width: 30, height: 30, borderRadius: 15, marginBottom: 22 },
   msgContent: { maxWidth: '78%', gap: 3 },
+
+  // Time + receipt row
   timeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 4 },
+  timeRowMe: { justifyContent: 'flex-end' },
   timeText: { fontSize: 11, color: Colors.textMuted },
 
-  // Read receipts
-  receiptText: { fontSize: 11, color: Colors.textMuted },
-  doubleCheck: { flexDirection: 'row', alignItems: 'center' },
+  // ── Read Receipts ──
+  receiptWrap: { width: 14, height: 14, alignItems: 'center', justifyContent: 'center' },
+  receiptSending: { fontSize: 10, color: Colors.textMuted },
+  receiptDouble: {
+    width: 20, height: 14,
+    position: 'relative',
+  },
+  checkA: { position: 'absolute', left: 0, top: 0 },
+  checkB: { position: 'absolute', left: 6, top: 0 },
 
   // Reply quote in bubble
-  replyQuote: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 6,
-  },
+  replyQuote: { flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 8, overflow: 'hidden', marginBottom: 6 },
   replyAccent: { width: 3, backgroundColor: Colors.cyan },
   replyQuoteContent: { flex: 1, paddingHorizontal: 8, paddingVertical: 5 },
   replyQuoteName: { fontSize: 11, fontWeight: '700', color: Colors.cyan, marginBottom: 2 },
   replyQuoteText: { fontSize: 12, color: Colors.textSecondary },
 
   // Context menu
-  contextOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: 'rgba(0,0,0,0.4)' },
-  contextMenu: { position: 'absolute', top: '40%', backgroundColor: Colors.surface, borderRadius: 14, padding: 8, borderWidth: 1, borderColor: Colors.glassBorder, minWidth: 140 },
+  contextOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: 'rgba(0,0,0,0.5)' },
+  contextMenu: { position: 'absolute', top: '35%', backgroundColor: '#0D1529', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: Colors.glassBorder, minWidth: 160, maxWidth: 220 },
   contextMenuMe: { right: 16 },
-  contextMenuThem: { left: 16 },
-  contextItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 14 },
+  contextMenuThem: { left: 60 },
+  contextPreview: { padding: 12, paddingBottom: 8 },
+  contextPreviewName: { fontSize: 11, fontWeight: '700', color: Colors.cyan, marginBottom: 3 },
+  contextPreviewText: { fontSize: 13, color: Colors.textSecondary, lineHeight: 18 },
+  contextDivider: { height: 1, backgroundColor: Colors.glassBorder, marginHorizontal: 12 },
+  contextItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 16 },
   contextItemText: { fontSize: 14, fontWeight: '600', color: Colors.text },
 
   // Text bubble
@@ -592,22 +714,27 @@ const styles = StyleSheet.create({
   bubbleThem: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, borderBottomLeftRadius: 4 },
   bubbleMe: { backgroundColor: Colors.cyanDim, borderWidth: 1, borderColor: Colors.glassBorderBright, borderBottomRightRadius: 4 },
   bubbleText: { color: Colors.text, fontSize: 15, lineHeight: 22 },
+  editedLabel: { fontSize: 10, color: Colors.textMuted, marginTop: 3, fontStyle: 'italic' },
   translationBox: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, marginLeft: 4 },
   translationText: { fontSize: 12, color: Colors.cyan, fontStyle: 'italic' },
+
+  // Uploading
+  uploadingBubble: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14 },
+  uploadingText: { color: Colors.textSecondary, fontSize: 13 },
 
   // Media bubble
   mediaBubble: { borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: Colors.glassBorder },
   mediaImg: { width: 220, height: 160 },
   mediaCaption: { padding: 10 },
 
-  // Video bubble
+  // Video
   videoWrap: { position: 'relative' },
   videoOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   videoPlayBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)' },
   videoTag: { position: 'absolute', top: 8, left: 8, flexDirection: 'row', gap: 4, alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   videoTagText: { color: Colors.text, fontSize: 11, fontWeight: '600' },
 
-  // Location bubble
+  // Location
   locationBubble: { borderRadius: 16, overflow: 'hidden', width: 230 },
   mapPlaceholder: { height: 130, position: 'relative', alignItems: 'center', justifyContent: 'center' },
   mapGrid: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row', justifyContent: 'space-around' },
@@ -624,7 +751,7 @@ const styles = StyleSheet.create({
   fullImage: { width: '100%', height: '85%' },
   closeModal: { position: 'absolute', top: 52, right: 20, backgroundColor: Colors.surface, borderRadius: 20, padding: 8, borderWidth: 1, borderColor: Colors.glassBorder },
 
-  // Attachment sheet
+  // Attachment
   attachSheet: { marginHorizontal: 12, marginBottom: 8, padding: 16 },
   attachGrid: { flexDirection: 'row', justifyContent: 'space-around' },
   attachItem: { alignItems: 'center', gap: 8 },
@@ -637,7 +764,13 @@ const styles = StyleSheet.create({
   inputBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 10, paddingBottom: 16 },
   attachToggleBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   input: { flex: 1, color: Colors.text, fontSize: 15, minHeight: 44, maxHeight: 120, backgroundColor: Colors.surface, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: Colors.glassBorder, outlineStyle: 'none' } as any,
+  inputEdit: { borderColor: Colors.gold + '60', backgroundColor: 'rgba(255,209,102,0.05)' },
   sendBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+
+  // Edit bar
+  editBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: 'rgba(255,209,102,0.08)', borderBottomWidth: 1, borderBottomColor: Colors.gold + '30' },
+  editBarText: { flex: 1, color: Colors.gold, fontSize: 13, fontWeight: '600' },
+  editCancelBtn: { padding: 4 },
 
   // Recording
   cancelRec: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.dangerDim, borderWidth: 1, borderColor: Colors.danger + '55', alignItems: 'center', justifyContent: 'center' },

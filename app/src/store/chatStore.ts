@@ -53,6 +53,8 @@ export interface UIChatMessage {
   time: string;
   readStatus?: ReadStatus;
   replyTo?: ReplyPreview;
+  isEdited?: boolean;
+  isUploading?: boolean;
 }
 
 interface ChatState {
@@ -68,6 +70,9 @@ interface ChatState {
   updateFriendOnlineStatus: (friendId: string, isOnline: boolean) => void;
   setTyping: (friendId: string, isTyping: boolean) => void;
   markMessagesRead: (friendId: string) => void;
+  deleteMessage: (friendId: string, msgId: string) => Promise<void>;
+  editMessage: (friendId: string, msgId: string, newText: string) => Promise<void>;
+  updateMessageUrl: (friendId: string, msgId: string, mediaUrl: string) => void;
   initSignalR: (myUserId: string) => Promise<void>;
 }
 
@@ -196,6 +201,50 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
     // Tell server
     chatSignalR.markRead(friendId).catch(() => {});
+  },
+
+  deleteMessage: async (friendId: string, msgId: string) => {
+    // Optimistically remove from UI
+    set((state) => ({
+      chatMessages: {
+        ...state.chatMessages,
+        [friendId]: (state.chatMessages[friendId] || []).filter(m => m.id !== msgId)
+      }
+    }));
+    try {
+      await axiosClient.delete(`/conversations/${friendId}/messages/${msgId}`);
+    } catch (e) {
+      console.error('deleteMessage failed', e);
+      // Could restore message here if needed
+    }
+  },
+
+  editMessage: async (friendId: string, msgId: string, newText: string) => {
+    // Optimistically update in UI
+    set((state) => ({
+      chatMessages: {
+        ...state.chatMessages,
+        [friendId]: (state.chatMessages[friendId] || []).map(m =>
+          m.id === msgId ? { ...m, text: newText, isEdited: true } : m
+        )
+      }
+    }));
+    try {
+      await axiosClient.put(`/conversations/${friendId}/messages/${msgId}`, { content: newText });
+    } catch (e) {
+      console.error('editMessage failed', e);
+    }
+  },
+
+  updateMessageUrl: (friendId: string, msgId: string, mediaUrl: string) => {
+    set((state) => ({
+      chatMessages: {
+        ...state.chatMessages,
+        [friendId]: (state.chatMessages[friendId] || []).map(m =>
+          m.id === msgId ? { ...m, mediaUrl, readStatus: 'sending' as ReadStatus } : m
+        )
+      }
+    }));
   },
 
   initSignalR: async (myUserId: string) => {
