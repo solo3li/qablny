@@ -97,8 +97,8 @@ public class MatchService(
             return;
         }
 
-        var userAId = Guid.Parse(a!);
-        var userBId = Guid.Parse(b!);
+        var userAId = Guid.Parse(a.ToString());
+        var userBId = Guid.Parse(b.ToString());
 
         // Check they're not blocked
         using var scope = scopeFactory.CreateScope();

@@ -34,7 +34,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(u => u.Interests)
              .HasConversion(
                  v  => JsonSerializer.Serialize(v, jsonOpts),
-                 v  => JsonSerializer.Deserialize<List<string>>(v, jsonOpts) ?? []);
+                 v  => JsonSerializer.Deserialize<List<string>>(v, jsonOpts) ?? new List<string>());
         });
 
         // Friendship
@@ -90,7 +90,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(v => v.Features)
              .HasConversion(
                  v  => JsonSerializer.Serialize(v, jsonOpts),
-                 v  => JsonSerializer.Deserialize<List<string>>(v, jsonOpts) ?? []);
+                 v  => JsonSerializer.Deserialize<List<string>>(v, jsonOpts) ?? new List<string>());
         });
 
         // VipSubscription
