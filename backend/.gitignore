@@ -1,0 +1,7 @@
+# .gitignore for backend
+obj/
+bin/
+.env
+*.user
+.vs/
+appsettings.Local.json
