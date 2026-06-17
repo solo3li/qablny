@@ -111,7 +111,7 @@ public class FriendsController(FriendService friends) : BaseController
 
 // ─── Messages ─────────────────────────────────────────────────────────────────
 [Route("api/conversations"), Authorize]
-public class MessagesController(MessageService messages, MinioStorageService minio) : BaseController
+public class MessagesController(MessageService messages, MinioStorageService minio, Microsoft.AspNetCore.SignalR.IHubContext<Qablny.Hubs.ChatHub> chatHub) : BaseController
 {
     [HttpGet]
     public async Task<List<ConversationDto>> GetConversations() =>
@@ -122,8 +122,12 @@ public class MessagesController(MessageService messages, MinioStorageService min
         await messages.GetMessagesAsync(UserId, friendId, page, pageSize);
 
     [HttpPost("{friendId:guid}/messages")]
-    public async Task<MessageDto> SendMessage(Guid friendId, SendMessageRequest req) =>
-        await messages.SendAsync(UserId, friendId, req);
+    public async Task<MessageDto> SendMessage(Guid friendId, SendMessageRequest req)
+    {
+        var msg = await messages.SendAsync(UserId, friendId, req);
+        await chatHub.Clients.User(friendId.ToString()).SendAsync("ReceiveMessage", msg);
+        return msg;
+    }
 
     [HttpPut("{friendId:guid}/read")]
     public async Task<IActionResult> MarkRead(Guid friendId)

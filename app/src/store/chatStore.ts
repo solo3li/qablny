@@ -81,10 +81,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
   fetchFriends: async () => {
     set({ isLoadingFriends: true });
     try {
-      const res = await axiosClient.get('/friends');
-      set({ friends: res.data, isLoadingFriends: false });
+      const res = await axiosClient.get('/conversations');
+      const mapped = res.data.map((c: any) => ({
+        id: c.friend.id,
+        name: c.friend.name,
+        profileImageUrl: c.friend.profileImageUrl,
+        lastMessage: c.lastMessage?.content || c.lastMessage?.translation || 'رسالة',
+        lastSeen: c.friend.lastSeen,
+        isOnline: c.friend.isOnline,
+        unread: c.unreadCount
+      }));
+      set({ friends: mapped, isLoadingFriends: false });
     } catch (e) {
-      console.error('Failed to fetch friends', e);
+      console.error('Failed to fetch conversations', e);
       set({ isLoadingFriends: false });
     }
   },
@@ -146,6 +155,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const friendId = msg.senderId;
         const uiMsg = mapBackendToUI(msg, myUserId);
         const msgs = state.chatMessages[friendId] || [];
+        
+        const friendExists = state.friends.some(f => f.id === friendId);
+        if (!friendExists) {
+          // If message is from a new person, reload conversations to get their name and picture
+          setTimeout(() => get().fetchFriends(), 100);
+          return {
+            chatMessages: { ...state.chatMessages, [friendId]: [...msgs, uiMsg] }
+          };
+        }
+
         return {
           chatMessages: { ...state.chatMessages, [friendId]: [...msgs, uiMsg] },
           friends: state.friends.map(f => f.id === friendId ? { ...f, lastMessage: uiMsg.text || 'رسالة', unread: (f.unread||0) + 1 } : f)
