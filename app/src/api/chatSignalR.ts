@@ -101,6 +101,22 @@ class ChatSignalRService {
       this.connection = null;
     }
   }
+
+  // Debounced typing - call this whenever user types
+  private typingDebounceTimers: Record<string, any> = {};
+  public notifyTyping(friendId: string) {
+    // Send startTyping immediately on first call
+    if (!this.typingDebounceTimers[friendId]) {
+      this.startTyping(friendId).catch(() => {});
+    }
+    // Clear existing debounce timer
+    clearTimeout(this.typingDebounceTimers[friendId]);
+    // After 2 seconds of no typing, send stopTyping
+    this.typingDebounceTimers[friendId] = setTimeout(() => {
+      this.stopTyping(friendId).catch(() => {});
+      delete this.typingDebounceTimers[friendId];
+    }, 2000);
+  }
 }
 
 export const chatSignalR = new ChatSignalRService();

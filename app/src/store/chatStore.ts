@@ -23,10 +23,22 @@ export interface BackendChatMessage {
   senderId: string;
   isRead: boolean;
   createdAt: string;
+  replyToId?: string;
+}
+
+// Reply preview embedded in message
+export interface ReplyPreview {
+  id: string;
+  text?: string;
+  type: string;
+  isMe: boolean;
+  senderName: string;
 }
 
 // UI format
 export type MessageType = 'text' | 'voice' | 'image' | 'video' | 'location';
+export type ReadStatus = 'sending' | 'sent' | 'delivered' | 'read';
+
 export interface UIChatMessage {
   id: string;
   type: MessageType;
@@ -39,18 +51,23 @@ export interface UIChatMessage {
   locationLng?: number;
   isMe: boolean;
   time: string;
+  readStatus?: ReadStatus;
+  replyTo?: ReplyPreview;
 }
 
 interface ChatState {
   friends: Friend[];
   chatMessages: Record<string, UIChatMessage[]>;
   isLoadingFriends: boolean;
+  typingUsers: Record<string, boolean>; // friendId -> is typing
   
   fetchFriends: () => Promise<void>;
   fetchMessages: (friendId: string, myUserId: string) => Promise<void>;
   sendMessage: (friendId: string, msg: UIChatMessage) => Promise<void>;
   addIncomingMessage: (msg: BackendChatMessage, myUserId: string) => void;
   updateFriendOnlineStatus: (friendId: string, isOnline: boolean) => void;
+  setTyping: (friendId: string, isTyping: boolean) => void;
+  markMessagesRead: (friendId: string) => void;
   initSignalR: (myUserId: string) => Promise<void>;
 }
 
@@ -61,7 +78,6 @@ const mapBackendToUI = (msg: BackendChatMessage, myUserId: string): UIChatMessag
   if (msg.type === 1) type = 'image';
   if (msg.type === 2) type = 'voice';
   if (msg.type === 3) type = 'video';
-  // Note: we can parse content if it's JSON for location, but for now we map basic
   
   return {
     id: msg.id,
@@ -70,7 +86,8 @@ const mapBackendToUI = (msg: BackendChatMessage, myUserId: string): UIChatMessag
     translation: msg.translation,
     mediaUrl: msg.mediaUrl,
     isMe,
-    time
+    time,
+    readStatus: msg.isRead ? 'read' : isMe ? 'delivered' : undefined,
   };
 };
 
@@ -78,6 +95,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   friends: [],
   chatMessages: {},
   isLoadingFriends: false,
+  typingUsers: {},
 
   fetchFriends: async () => {
     set({ isLoadingFriends: true });
@@ -115,10 +133,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendMessage: async (friendId: string, msg: UIChatMessage) => {
-    // Add optimistically
+    // Add optimistically with 'sending' status
+    const msgWithStatus: UIChatMessage = { ...msg, readStatus: 'sending' };
     set((state) => {
       const msgs = state.chatMessages[friendId] || [];
-      return { chatMessages: { ...state.chatMessages, [friendId]: [...msgs, msg] } };
+      return { chatMessages: { ...state.chatMessages, [friendId]: [...msgs, msgWithStatus] } };
     });
     try {
       let typeInt = 0;
@@ -127,25 +146,56 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (msg.type === 'video') typeInt = 3;
       
       const content = msg.text || (msg.type === 'location' ? msg.locationName : 'Media');
-      await axiosClient.post(`/conversations/${friendId}/messages`, { type: typeInt, content, mediaUrl: msg.mediaUrl });
-      
-      // We rely on SignalR 'MessageSent' for confirmation or just leave it optimistic.
+      await axiosClient.post(`/conversations/${friendId}/messages`, {
+        type: typeInt,
+        content,
+        mediaUrl: msg.mediaUrl,
+        replyToId: msg.replyTo?.id,
+      });
+
+      // Update status to 'sent'
+      set((state) => ({
+        chatMessages: {
+          ...state.chatMessages,
+          [friendId]: (state.chatMessages[friendId] || []).map(m =>
+            m.id === msg.id ? { ...m, readStatus: 'sent' as ReadStatus } : m
+          )
+        }
+      }));
     } catch (e) {
       console.error('Failed to send message', e);
     }
   },
 
   addIncomingMessage: (msg: BackendChatMessage, myUserId: string) => {
-    set((state) => {
-      const isMe = msg.senderId === myUserId;
-      return state;
-    });
+    // This is handled inside initSignalR's setOnReceiveMessage
   },
 
   updateFriendOnlineStatus: (friendId: string, isOnline: boolean) => {
     set((state) => ({
       friends: state.friends.map(f => f.id === friendId ? { ...f, isOnline } : f)
     }));
+  },
+
+  setTyping: (friendId: string, isTyping: boolean) => {
+    set((state) => ({
+      typingUsers: { ...state.typingUsers, [friendId]: isTyping }
+    }));
+  },
+
+  markMessagesRead: (friendId: string) => {
+    // Mark all messages from that friend as read in UI
+    set((state) => ({
+      chatMessages: {
+        ...state.chatMessages,
+        [friendId]: (state.chatMessages[friendId] || []).map(m =>
+          !m.isMe ? { ...m, readStatus: 'read' as ReadStatus } : m
+        )
+      },
+      friends: state.friends.map(f => f.id === friendId ? { ...f, unread: 0 } : f)
+    }));
+    // Tell server
+    chatSignalR.markRead(friendId).catch(() => {});
   },
 
   initSignalR: async (myUserId: string) => {
@@ -159,7 +209,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         
         const friendExists = state.friends.some(f => f.id === friendId);
         if (!friendExists) {
-          // If message is from a new person, reload conversations to get their name and picture
           setTimeout(() => get().fetchFriends(), 100);
           return {
             chatMessages: { ...state.chatMessages, [friendId]: [...msgs, uiMsg] }
@@ -168,13 +217,42 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         return {
           chatMessages: { ...state.chatMessages, [friendId]: [...msgs, uiMsg] },
-          friends: state.friends.map(f => f.id === friendId ? { ...f, lastMessage: uiMsg.text || 'رسالة', unread: (f.unread||0) + 1 } : f)
+          friends: state.friends.map(f => f.id === friendId
+            ? { ...f, lastMessage: uiMsg.text || 'رسالة', unread: (f.unread || 0) + 1 }
+            : f
+          )
         };
       });
     });
 
     chatSignalR.setOnMessageSent((msg: BackendChatMessage) => {
-      // Note: backend 'MessageSent' currently returns the message sent, we might ignore to avoid dupes since we added optimistically
+      // Update optimistic message to 'delivered'
+      set((state) => {
+        const friendId = msg.senderId === myUserId ? '' : msg.senderId;
+        // Find the conversation - it's our own message, update last pending 'sent' to 'delivered'
+        const allConvs = { ...state.chatMessages };
+        for (const fid of Object.keys(allConvs)) {
+          allConvs[fid] = allConvs[fid].map(m =>
+            m.readStatus === 'sent' ? { ...m, readStatus: 'delivered' as ReadStatus } : m
+          );
+        }
+        return { chatMessages: allConvs };
+      });
+    });
+
+    chatSignalR.setOnTypingStarted((userId: string) => get().setTyping(userId, true));
+    chatSignalR.setOnTypingStopped((userId: string) => get().setTyping(userId, false));
+
+    chatSignalR.setOnMessagesRead((userId: string) => {
+      // Our messages to that user have been read
+      set((state) => ({
+        chatMessages: {
+          ...state.chatMessages,
+          [userId]: (state.chatMessages[userId] || []).map(m =>
+            m.isMe ? { ...m, readStatus: 'read' as ReadStatus } : m
+          )
+        }
+      }));
     });
 
     chatSignalR.setOnUserOnline((userId: string) => get().updateFriendOnlineStatus(userId, true));
@@ -182,7 +260,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Call Events Setup
     chatSignalR.setOnIncomingCall((payload) => {
-      // payload: { callerId, roomName, callType }
       useCallStore.getState().setIncomingCall({
         callerId: payload.callerId,
         roomName: payload.roomName,
@@ -191,7 +268,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
 
     chatSignalR.setOnCallAccepted((payload) => {
-      // payload: { friendId, roomName }
       const state = useCallStore.getState();
       if (state.activeCall && state.activeCall.friendId === payload.friendId) {
         state.setActiveCall({ ...state.activeCall, roomName: payload.roomName });
@@ -199,12 +275,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     });
 
-    chatSignalR.setOnCallDeclined((friendId) => {
-      useCallStore.getState().handleCallDeclined();
-    });
-
-    chatSignalR.setOnCallEnded((friendId) => {
-      useCallStore.getState().handleCallDeclined(); // Same effect, ends the call
-    });
+    chatSignalR.setOnCallDeclined(() => useCallStore.getState().handleCallDeclined());
+    chatSignalR.setOnCallEnded(() => useCallStore.getState().handleCallDeclined());
   }
 }));

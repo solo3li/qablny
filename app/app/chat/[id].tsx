@@ -1,24 +1,76 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, Image, FlatList, TextInput,
-  TouchableOpacity, KeyboardAvoidingView, Platform, Modal, ScrollView, Animated,
+  TouchableOpacity, KeyboardAvoidingView, Platform, Modal,
+  Animated, Pressable,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '../../src/store/authStore';
-import { useChatStore, UIChatMessage as ChatMessage } from '../../src/store/chatStore';
+import { useChatStore, UIChatMessage as ChatMessage, ReadStatus } from '../../src/store/chatStore';
 import { useCallStore } from '../../src/store/callStore';
+import { WaveformPlayer } from '../../components/WaveformPlayer';
+import { TypingIndicator } from '../../components/TypingIndicator';
+import { ReplyBar, ReplyData } from '../../components/ReplyBar';
+import { chatSignalR } from '../../src/api/chatSignalR';
 import {
   Send, Languages, ChevronLeft, Phone, Video,
-  Mic, Image as ImageIcon, Film, MapPin, X, Play, Pause,
-  Plus
+  Mic, Image as ImageIcon, Film, MapPin, X, Play,
+  Plus, Check, CornerUpLeft
 } from 'lucide-react-native';
 import { uploadMedia } from '../../src/api/axiosClient';
 import { Audio } from 'expo-av';
-import { AudioPlayer } from '../../components/AudioPlayer';
 import * as ImagePicker from 'expo-image-picker';
+
+// ─── Read Receipt Icon ─────────────────────────────────────────────────────────
+
+function ReadReceipt({ status }: { status?: ReadStatus }) {
+  if (!status || status === 'sending') {
+    return <Text style={styles.receiptText}>○</Text>;
+  }
+  if (status === 'sent') {
+    return <Check color={Colors.textMuted} size={12} strokeWidth={2.5} />;
+  }
+  if (status === 'delivered') {
+    // Two overlapping checks
+    return (
+      <View style={styles.doubleCheck}>
+        <Check color={Colors.textMuted} size={12} strokeWidth={2.5} />
+        <Check color={Colors.textMuted} size={12} strokeWidth={2.5} style={{ marginLeft: -6 }} />
+      </View>
+    );
+  }
+  // read
+  return (
+    <View style={styles.doubleCheck}>
+      <Check color={Colors.cyan} size={12} strokeWidth={2.5} />
+      <Check color={Colors.cyan} size={12} strokeWidth={2.5} style={{ marginLeft: -6 }} />
+    </View>
+  );
+}
+
+// ─── Reply Quote Box ───────────────────────────────────────────────────────────
+
+function ReplyQuote({ replyTo }: { replyTo: ChatMessage['replyTo'] }) {
+  if (!replyTo) return null;
+  const preview = replyTo.type === 'text' ? replyTo.text
+    : replyTo.type === 'voice' ? '🎵 رسالة صوتية'
+    : replyTo.type === 'image' ? '📷 صورة'
+    : replyTo.type === 'video' ? '🎬 فيديو'
+    : replyTo.type === 'location' ? '📍 موقع' : 'رسالة';
+
+  return (
+    <View style={styles.replyQuote}>
+      <View style={styles.replyAccent} />
+      <View style={styles.replyQuoteContent}>
+        <Text style={styles.replyQuoteName}>{replyTo.isMe ? 'أنت' : replyTo.senderName}</Text>
+        <Text style={styles.replyQuoteText} numberOfLines={1}>{preview}</Text>
+      </View>
+    </View>
+  );
+}
 
 // ─── Message Bubbles ──────────────────────────────────────────────────────────
 
@@ -26,6 +78,7 @@ function TextBubble({ msg, friend }: { msg: ChatMessage; friend: any }) {
   return (
     <View>
       <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
+        {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
         <Text style={styles.bubbleText}>{msg.text}</Text>
       </View>
       {!msg.isMe && msg.translation && (
@@ -47,8 +100,9 @@ function VoiceBubble({ msg }: { msg: ChatMessage }) {
     );
   }
   return (
-    <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
-      <AudioPlayer uri={msg.mediaUrl} durationSeconds={msg.duration} />
+    <View style={msg.isMe ? styles.bubbleMe : styles.bubbleThem}>
+      {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
+      <WaveformPlayer uri={msg.mediaUrl} durationSeconds={msg.duration} isMe={msg.isMe} />
     </View>
   );
 }
@@ -58,6 +112,7 @@ function ImageBubble({ msg }: { msg: ChatMessage }) {
   return (
     <>
       <TouchableOpacity style={styles.mediaBubble} onPress={() => setExpanded(true)}>
+        {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
         <Image source={{ uri: msg.mediaUrl }} style={styles.mediaImg} resizeMode="cover" />
         {msg.text && (
           <View style={[styles.mediaCaption, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
@@ -80,6 +135,7 @@ function ImageBubble({ msg }: { msg: ChatMessage }) {
 function VideoBubble({ msg }: { msg: ChatMessage }) {
   return (
     <TouchableOpacity style={styles.mediaBubble}>
+      {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
       <View style={styles.videoWrap}>
         <Image source={{ uri: msg.mediaUrl }} style={styles.mediaImg} resizeMode="cover" />
         <View style={styles.videoOverlay}>
@@ -92,11 +148,6 @@ function VideoBubble({ msg }: { msg: ChatMessage }) {
           </View>
         </View>
       </View>
-      {msg.text && (
-        <View style={[msg.isMe ? styles.bubbleMe : styles.bubbleThem, { borderTopLeftRadius: 0, borderTopRightRadius: 0, padding: 10 }]}>
-          <Text style={styles.bubbleText}>{msg.text}</Text>
-        </View>
-      )}
     </TouchableOpacity>
   );
 }
@@ -104,20 +155,15 @@ function VideoBubble({ msg }: { msg: ChatMessage }) {
 function LocationBubble({ msg }: { msg: ChatMessage }) {
   return (
     <TouchableOpacity style={[styles.locationBubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
+      {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
       <View style={styles.mapPlaceholder}>
-        {/* Dummy map grid */}
         <LinearGradient colors={['#0d2137', '#0a1929']} style={StyleSheet.absoluteFillObject} />
         <View style={styles.mapGrid}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <View key={i} style={styles.mapGridLine} />
-          ))}
+          {Array.from({ length: 6 }).map((_, i) => <View key={i} style={styles.mapGridLine} />)}
         </View>
         <View style={styles.mapGridH}>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <View key={i} style={styles.mapGridLineH} />
-          ))}
+          {Array.from({ length: 4 }).map((_, i) => <View key={i} style={styles.mapGridLineH} />)}
         </View>
-        {/* Pin */}
         <View style={styles.mapPin}>
           <MapPin color={Colors.danger} size={28} fill={Colors.danger} />
         </View>
@@ -133,6 +179,27 @@ function LocationBubble({ msg }: { msg: ChatMessage }) {
   );
 }
 
+// ─── Context Menu ─────────────────────────────────────────────────────────────
+
+interface ContextMenuProps {
+  msg: ChatMessage;
+  onReply: () => void;
+  onClose: () => void;
+}
+
+function MessageContextMenu({ msg, onReply, onClose }: ContextMenuProps) {
+  return (
+    <Pressable style={styles.contextOverlay} onPress={onClose}>
+      <View style={[styles.contextMenu, msg.isMe ? styles.contextMenuMe : styles.contextMenuThem]}>
+        <TouchableOpacity style={styles.contextItem} onPress={() => { onReply(); onClose(); }}>
+          <CornerUpLeft color={Colors.cyan} size={16} />
+          <Text style={styles.contextItemText}>رد</Text>
+        </TouchableOpacity>
+      </View>
+    </Pressable>
+  );
+}
+
 // ─── Attachment Menu ──────────────────────────────────────────────────────────
 
 const ATTACH_OPTIONS = [
@@ -142,39 +209,30 @@ const ATTACH_OPTIONS = [
   { id: 'location', icon: <MapPin color={Colors.gold} size={22} />, label: 'موقع', color: Colors.goldDim, border: Colors.gold + '44' },
 ];
 
-// Dummy media URLs for simulated sending
-const dummyImages = [
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
-  'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&q=80',
-  'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400&q=80',
-];
-const dummyVideos = [
-  'https://images.unsplash.com/photo-1682687220067-dced9a881b56?w=400&q=80',
-  'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=400&q=80',
-];
 const dummyLocations = [
   { name: 'برج خليفة، دبي', lat: 25.1972, lng: 55.2744 },
   { name: 'ميدان التحرير، القاهرة', lat: 30.0444, lng: 31.2357 },
   { name: 'الحمراء، غرناطة', lat: 37.1760, lng: -3.5881 },
 ];
 
-// ─── Main Screen ─────────────────────────────────────────────────────────────
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ChatScreen() {
-  const { id, name, image } = useLocalSearchParams<{ id: string, name?: string, image?: string }>();
+  const { id, name, image } = useLocalSearchParams<{ id: string; name?: string; image?: string }>();
   const { user } = useAuthStore();
-  const { friends, chatMessages, sendMessage, fetchMessages } = useChatStore();
-  
-  // If the user isn't in our friends list, we create a temporary object from the passed params
+  const { friends, chatMessages, sendMessage, fetchMessages, typingUsers, markMessagesRead } = useChatStore();
+
   const storeFriend = friends.find(f => f.id === id);
-  const friend = storeFriend || (name ? { id, name, image, isOnline: true, lastSeen: 'الآن' } : null);
+  const friend = storeFriend || (name ? { id, name, profileImageUrl: image, isOnline: true, lastSeen: 'الآن', unread: 0 } : null);
 
   const messages = chatMessages[id ?? ''] ?? [];
+  const isTyping = typingUsers[id ?? ''] ?? false;
 
   React.useEffect(() => {
     if (id && user) {
       fetchMessages(id, user.id);
       useChatStore.getState().initSignalR(user.id);
+      markMessagesRead(id);
     }
   }, [id, user]);
 
@@ -186,27 +244,54 @@ export default function ChatScreen() {
   const [recording, setRecording] = useState(false);
   const [recordingObj, setRecordingObj] = useState<Audio.Recording | null>(null);
   const [recordSecs, setRecordSecs] = useState(0);
+  const [replyTo, setReplyTo] = useState<ReplyData | null>(null);
+  const [contextMsg, setContextMsg] = useState<ChatMessage | null>(null);
   const recordInterval = useRef<any>(null);
   const listRef = useRef<FlatList>(null);
 
   const now = () => {
     const d = new Date();
-    const h = d.getHours(), m = String(d.getMinutes()).padStart(2, '0');
-    return `${h}:${m} ${h < 12 ? 'ص' : 'م'}`;
+    return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
   const uid = () => Math.random().toString(36).slice(2);
 
+  const handleInputChange = (text: string) => {
+    setInput(text);
+    if (id) chatSignalR.notifyTyping(id);
+  };
+
   const handleSendText = () => {
     if (!input.trim() || !id) return;
-    sendMessage(id, { id: uid(), type: 'text', text: input.trim(), isMe: true, time: now() });
+    const msg: ChatMessage = {
+      id: uid(),
+      type: 'text',
+      text: input.trim(),
+      isMe: true,
+      time: now(),
+      replyTo: replyTo
+        ? { id: replyTo.id, text: replyTo.text, type: replyTo.type, isMe: replyTo.isMe, senderName: replyTo.senderName }
+        : undefined,
+    };
+    sendMessage(id, msg);
     setInput('');
+    setReplyTo(null);
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+  };
+
+  const handleReply = (msg: ChatMessage) => {
+    setReplyTo({
+      id: msg.id,
+      text: msg.text,
+      type: msg.type,
+      isMe: msg.isMe,
+      senderName: friend?.name || 'مستخدم',
+    });
+    setContextMsg(null);
   };
 
   const handleAttach = async (type: string) => {
     if (!id) return;
     setShowAttach(false);
-
     try {
       if (type === 'image' || type === 'video') {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -214,19 +299,15 @@ export default function ChatScreen() {
           allowsEditing: true,
           quality: 0.8,
         });
-
-        if (!result.canceled && result.assets && result.assets.length > 0) {
+        if (!result.canceled && result.assets?.length > 0) {
           const asset = result.assets[0];
-          // Upload to backend
           const uploadedUrl = await uploadMedia(asset, type as any);
-          sendMessage(id, { 
-            id: uid(), 
-            type: type as any, 
-            mediaUrl: uploadedUrl, 
-            text: type === 'video' ? 'فيديو 🎬' : '',
-            isMe: true, 
-            time: now() 
+          sendMessage(id, {
+            id: uid(), type: type as any, mediaUrl: uploadedUrl,
+            text: type === 'video' ? 'فيديو 🎬' : '', isMe: true, time: now(),
+            replyTo: replyTo || undefined,
           });
+          setReplyTo(null);
         }
       } else if (type === 'location') {
         const loc = dummyLocations[Math.floor(Math.random() * dummyLocations.length)];
@@ -234,46 +315,28 @@ export default function ChatScreen() {
       }
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (e) {
-      console.error('Error attaching media:', e);
-      alert('حدث خطأ أثناء رفع الملف');
+      console.error('Attach error:', e);
     }
   };
 
   const startRecording = async () => {
     try {
       const perm = await Audio.requestPermissionsAsync();
-      if (perm.status !== 'granted') {
-        alert('عذراً، نحتاج إلى صلاحية الميكروفون لتسجيل الصوت');
-        return;
-      }
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      if (perm.status !== 'granted') { alert('نحتاج إذن الميكروفون'); return; }
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       setRecordingObj(recording);
       setRecording(true);
       setRecordSecs(0);
       recordInterval.current = setInterval(() => setRecordSecs(s => s + 1), 1000);
-    } catch (err) {
-      console.error('Failed to start recording', err);
-      alert('حدث خطأ أثناء تشغيل الميكروفون');
-    }
+    } catch (err) { console.error('Recording error', err); }
   };
 
   const cancelRecording = async () => {
     clearInterval(recordInterval.current);
     setRecording(false);
     setRecordSecs(0);
-    if (recordingObj) {
-      try {
-        await recordingObj.stopAndUnloadAsync();
-        setRecordingObj(null);
-      } catch (e) {}
-    }
+    if (recordingObj) { try { await recordingObj.stopAndUnloadAsync(); } catch (e) {} setRecordingObj(null); }
   };
 
   const stopRecording = async () => {
@@ -282,30 +345,24 @@ export default function ChatScreen() {
     const dur = recordSecs;
     setRecording(false);
     setRecordSecs(0);
-    
     if (recordingObj) {
       try {
         await recordingObj.stopAndUnloadAsync();
         const uri = recordingObj.getURI();
         setRecordingObj(null);
-        
         if (dur > 0 && uri) {
           let assetToUpload: any;
           if (Platform.OS === 'web') {
-            const res = await fetch(uri);
-            const blob = await res.blob();
-            assetToUpload = blob;
+            const res = await fetch(uri); const blob = await res.blob(); assetToUpload = blob;
           } else {
             assetToUpload = { uri, type: 'audio/m4a' };
           }
-          
           const uploadedUrl = await uploadMedia(assetToUpload, 'audio');
-          sendMessage(id, { id: uid(), type: 'voice', mediaUrl: uploadedUrl, duration: dur, isMe: true, time: now() });
+          sendMessage(id, { id: uid(), type: 'voice', mediaUrl: uploadedUrl, duration: dur, isMe: true, time: now(), replyTo: replyTo || undefined });
+          setReplyTo(null);
           setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
         }
-      } catch (err) {
-        console.error('Failed to stop/upload recording', err);
-      }
+      } catch (err) { console.error('Stop recording error', err); }
     }
   };
 
@@ -313,20 +370,39 @@ export default function ChatScreen() {
 
   if (!friend) return null;
 
+  const headerStatus = isTyping
+    ? 'يكتب الآن...'
+    : (storeFriend?.isOnline ?? friend.isOnline)
+      ? '● متصل الآن'
+      : `● ${storeFriend?.lastSeen || friend.lastSeen || 'غير متصل'}`;
+
+  const statusColor = isTyping
+    ? Colors.cyan
+    : (storeFriend?.isOnline ?? friend.isOnline) ? Colors.online : Colors.textMuted;
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <LinearGradient colors={['#040710', '#070B14']} style={StyleSheet.absoluteFillObject} />
+
+      {/* Context Menu Overlay */}
+      {contextMsg && (
+        <MessageContextMenu
+          msg={contextMsg}
+          onReply={() => handleReply(contextMsg)}
+          onClose={() => setContextMsg(null)}
+        />
+      )}
 
       {/* ── Header ─────────────────────────────────── */}
       <GlassCard style={styles.header} borderRadius={0} intensity={40}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft color={Colors.text} size={26} />
         </TouchableOpacity>
-        <Image source={{ uri: friend.image }} style={styles.headerAvatar} />
+        <Image source={{ uri: (storeFriend?.profileImageUrl || friend.profileImageUrl || image) ?? 'https://i.pravatar.cc/150' }} style={styles.headerAvatar} />
         <View style={styles.headerInfo}>
-          <Text style={styles.headerName}>{friend.name}</Text>
-          <Text style={[styles.headerStatus, { color: friend.isOnline ? Colors.online : Colors.textMuted }]}>
-            {friend.isOnline ? '● متصل الآن' : `● ${friend.lastSeen}`}
+          <Text style={styles.headerName}>{storeFriend?.name || friend.name}</Text>
+          <Text style={[styles.headerStatus, { color: statusColor }]}>
+            {headerStatus}
           </Text>
         </View>
         <View style={styles.headerActions}>
@@ -347,7 +423,7 @@ export default function ChatScreen() {
         </Text>
       </TouchableOpacity>
 
-      {/* ── Messages list ──────────────────────────── */}
+      {/* ── Messages List ───────────────────────────── */}
       <FlatList
         ref={listRef}
         data={messages}
@@ -355,22 +431,37 @@ export default function ChatScreen() {
         contentContainerStyle={styles.messagesList}
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
         renderItem={({ item: msg }) => (
-          <View style={[styles.msgRow, msg.isMe && styles.msgRowMe]}>
-            {!msg.isMe && <Image source={{ uri: friend.image }} style={styles.msgAvatar} />}
-
-            <View style={styles.msgContent}>
-              {msg.type === 'text' && <TextBubble msg={msg} friend={friend} />}
-              {msg.type === 'voice' && <VoiceBubble msg={msg} />}
-              {msg.type === 'image' && <ImageBubble msg={msg} />}
-              {msg.type === 'video' && <VideoBubble msg={msg} />}
-              {msg.type === 'location' && <LocationBubble msg={msg} />}
-              <Text style={[styles.timeText, msg.isMe && { textAlign: 'right' }]}>{msg.time}</Text>
+          <Pressable
+            onLongPress={() => setContextMsg(msg)}
+            delayLongPress={350}
+          >
+            <View style={[styles.msgRow, msg.isMe && styles.msgRowMe]}>
+              {!msg.isMe && (
+                <Image
+                  source={{ uri: (storeFriend?.profileImageUrl || image) ?? 'https://i.pravatar.cc/150' }}
+                  style={styles.msgAvatar}
+                />
+              )}
+              <View style={styles.msgContent}>
+                {msg.type === 'text' && <TextBubble msg={msg} friend={friend} />}
+                {msg.type === 'voice' && <VoiceBubble msg={msg} />}
+                {msg.type === 'image' && <ImageBubble msg={msg} />}
+                {msg.type === 'video' && <VideoBubble msg={msg} />}
+                {msg.type === 'location' && <LocationBubble msg={msg} />}
+                <View style={[styles.timeRow, msg.isMe && { flexDirection: 'row-reverse' }]}>
+                  <Text style={styles.timeText}>{msg.time}</Text>
+                  {msg.isMe && <ReadReceipt status={msg.readStatus} />}
+                </View>
+              </View>
             </View>
-          </View>
+          </Pressable>
         )}
+        ListFooterComponent={() =>
+          isTyping ? <TypingIndicator name={storeFriend?.name || friend.name} /> : null
+        }
       />
 
-      {/* ── Attachment Options Sheet ──────────────── */}
+      {/* ── Attachment Sheet ──────────────────────── */}
       {showAttach && (
         <GlassCard style={styles.attachSheet} borderRadius={20} intensity={60}>
           <View style={styles.attachGrid}>
@@ -386,58 +477,64 @@ export default function ChatScreen() {
         </GlassCard>
       )}
 
-      {/* ── Input Bar ─────────────────────────────── */}
-      <View style={styles.inputBarOuter}>
-        {recording ? (
-          <View style={styles.inputBar}>
-            <TouchableOpacity onPress={cancelRecording} style={styles.cancelRec}>
-              <X color={Colors.danger} size={20} />
-            </TouchableOpacity>
-            <View style={styles.recordingInfo}>
-              <View style={styles.recDot} />
-              <Text style={styles.recTime}>{formatRec(recordSecs)}</Text>
-              <Text style={styles.recLabel}>جاري التسجيل...</Text>
-            </View>
-            <TouchableOpacity style={[styles.sendBtn, { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]} onPress={stopRecording}>
-              <Send color={Colors.cyan} size={20} />
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.inputBar}>
-            <TouchableOpacity
-              style={[styles.attachToggleBtn, showAttach && { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]}
-              onPress={() => setShowAttach(!showAttach)}
-            >
-              <Plus color={showAttach ? Colors.cyan : Colors.textMuted} size={22} />
-            </TouchableOpacity>
+      {/* ── Input Area ────────────────────────────── */}
+      <View style={styles.inputAreaOuter}>
+        {/* Reply Bar */}
+        {replyTo && <ReplyBar reply={replyTo} onCancel={() => setReplyTo(null)} />}
 
-            <TextInput
-              style={styles.input}
-              placeholder="اكتب رسالة..."
-              placeholderTextColor={Colors.textMuted}
-              value={input}
-              onChangeText={setInput}
-              onSubmitEditing={handleSendText}
-              onFocus={() => setShowAttach(false)}
-            />
-
-            {input.trim() ? (
-              <TouchableOpacity style={[styles.sendBtn, { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]} onPress={handleSendText}>
+        <View style={styles.inputBarOuter}>
+          {recording ? (
+            <View style={styles.inputBar}>
+              <TouchableOpacity onPress={cancelRecording} style={styles.cancelRec}>
+                <X color={Colors.danger} size={20} />
+              </TouchableOpacity>
+              <View style={styles.recordingInfo}>
+                <View style={styles.recDot} />
+                <Text style={styles.recTime}>{formatRec(recordSecs)}</Text>
+                <Text style={styles.recLabel}>جاري التسجيل...</Text>
+              </View>
+              <TouchableOpacity style={[styles.sendBtn, { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]} onPress={stopRecording}>
                 <Send color={Colors.cyan} size={20} />
               </TouchableOpacity>
-            ) : (
-              <TouchableOpacity style={styles.sendBtn} onPress={startRecording}>
-                <Mic color={Colors.textMuted} size={20} />
+            </View>
+          ) : (
+            <View style={styles.inputBar}>
+              <TouchableOpacity
+                style={[styles.attachToggleBtn, showAttach && { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]}
+                onPress={() => setShowAttach(!showAttach)}
+              >
+                <Plus color={showAttach ? Colors.cyan : Colors.textMuted} size={22} />
               </TouchableOpacity>
-            )}
-          </View>
-        )}
+
+              <TextInput
+                style={styles.input}
+                placeholder="اكتب رسالة..."
+                placeholderTextColor={Colors.textMuted}
+                value={input}
+                onChangeText={handleInputChange}
+                onSubmitEditing={handleSendText}
+                onFocus={() => setShowAttach(false)}
+                multiline
+              />
+
+              {input.trim() ? (
+                <TouchableOpacity style={[styles.sendBtn, { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]} onPress={handleSendText}>
+                  <Send color={Colors.cyan} size={20} />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity style={styles.sendBtn} onPress={startRecording}>
+                  <Mic color={Colors.textMuted} size={20} />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -460,9 +557,35 @@ const styles = StyleSheet.create({
   messagesList: { padding: 16, gap: 14 },
   msgRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   msgRowMe: { flexDirection: 'row-reverse' },
-  msgAvatar: { width: 30, height: 30, borderRadius: 15, marginBottom: 18 },
+  msgAvatar: { width: 30, height: 30, borderRadius: 15, marginBottom: 20 },
   msgContent: { maxWidth: '78%', gap: 3 },
-  timeText: { fontSize: 11, color: Colors.textMuted, paddingHorizontal: 4 },
+  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 4 },
+  timeText: { fontSize: 11, color: Colors.textMuted },
+
+  // Read receipts
+  receiptText: { fontSize: 11, color: Colors.textMuted },
+  doubleCheck: { flexDirection: 'row', alignItems: 'center' },
+
+  // Reply quote in bubble
+  replyQuote: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 6,
+  },
+  replyAccent: { width: 3, backgroundColor: Colors.cyan },
+  replyQuoteContent: { flex: 1, paddingHorizontal: 8, paddingVertical: 5 },
+  replyQuoteName: { fontSize: 11, fontWeight: '700', color: Colors.cyan, marginBottom: 2 },
+  replyQuoteText: { fontSize: 12, color: Colors.textSecondary },
+
+  // Context menu
+  contextOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: 'rgba(0,0,0,0.4)' },
+  contextMenu: { position: 'absolute', top: '40%', backgroundColor: Colors.surface, borderRadius: 14, padding: 8, borderWidth: 1, borderColor: Colors.glassBorder, minWidth: 140 },
+  contextMenuMe: { right: 16 },
+  contextMenuThem: { left: 16 },
+  contextItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 14 },
+  contextItemText: { fontSize: 14, fontWeight: '600', color: Colors.text },
 
   // Text bubble
   bubble: { borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
@@ -471,15 +594,6 @@ const styles = StyleSheet.create({
   bubbleText: { color: Colors.text, fontSize: 15, lineHeight: 22 },
   translationBox: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, marginLeft: 4 },
   translationText: { fontSize: 12, color: Colors.cyan, fontStyle: 'italic' },
-
-  // Voice bubble
-  voiceBubble: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, minWidth: 200 },
-  playBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.glassBorder },
-  voiceBarWrap: { flex: 1, gap: 4 },
-  voiceTrack: { height: 24, flexDirection: 'row', alignItems: 'center', gap: 2, overflow: 'hidden', position: 'relative' },
-  voiceFill: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 4, opacity: 0.3 },
-  waveBar: { width: 3, borderRadius: 2, backgroundColor: Colors.textSecondary },
-  voiceDur: { fontSize: 11, color: Colors.textMuted },
 
   // Media bubble
   mediaBubble: { borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: Colors.glassBorder },
@@ -517,15 +631,15 @@ const styles = StyleSheet.create({
   attachIcon: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   attachLabel: { color: Colors.textSecondary, fontSize: 12, fontWeight: '600' },
 
-  // Input bar
-  inputBarOuter: { borderTopWidth: 1, borderTopColor: Colors.glassBorder, backgroundColor: Colors.glassBg },
+  // Input area
+  inputAreaOuter: { borderTopWidth: 1, borderTopColor: Colors.glassBorder, backgroundColor: Colors.glassBg },
+  inputBarOuter: {},
   inputBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 10, paddingBottom: 16 },
   attachToggleBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  input: { flex: 1, color: Colors.text, fontSize: 15, height: 46, backgroundColor: Colors.surface, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: Colors.glassBorder, outlineStyle: 'none' } as any,
+  input: { flex: 1, color: Colors.text, fontSize: 15, minHeight: 44, maxHeight: 120, backgroundColor: Colors.surface, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: Colors.glassBorder, outlineStyle: 'none' } as any,
   sendBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
 
   // Recording
-  recordingBar: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   cancelRec: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.dangerDim, borderWidth: 1, borderColor: Colors.danger + '55', alignItems: 'center', justifyContent: 'center' },
   recordingInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   recDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.danger },
