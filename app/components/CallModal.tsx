@@ -25,7 +25,7 @@ interface CallModalProps {
 }
 
 export function CallModal({ visible, onClose, friend, callType }: CallModalProps) {
-  const { callStatus, activeCall } = useCallStore();
+  const { callStatus, activeCall, incomingGift } = useCallStore();
   const [seconds, setSeconds] = useState(0);
   const [muted, setMuted] = useState(false);
   const [speaker, setSpeaker] = useState(true);
@@ -39,8 +39,21 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
   const pulse2 = useRef(new Animated.Value(1)).current;
   const pulse3 = useRef(new Animated.Value(1)).current;
 
+  // Gift animation
+  const giftScale = useRef(new Animated.Value(0)).current;
+
   // Timer ref
   const timerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (incomingGift) {
+      Animated.sequence([
+        Animated.spring(giftScale, { toValue: 1.5, friction: 3, useNativeDriver: true }),
+        Animated.delay(1500),
+        Animated.timing(giftScale, { toValue: 0, duration: 500, useNativeDriver: true })
+      ]).start();
+    }
+  }, [incomingGift]);
 
   useEffect(() => {
     if (!visible) {
@@ -122,7 +135,7 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
 
         {/* LiveKit Handler */}
         {callStatus === 'connected' && activeCall?.roomName && (
-          <LiveKitHandler roomName={activeCall.roomName} callType={callType} muted={muted} cameraOn={cameraOn} />
+          <LiveKitHandler roomName={activeCall.roomName} callType={callType} muted={muted} cameraOn={cameraOn} speaker={speaker} />
         )}
 
         {/* Video call blurred background overlay (only if no actual video feed yet, or just to darken) */}
@@ -250,9 +263,18 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
         </View>
 
         {sentGift && (
-          <View style={styles.giftFloat}>
+          <View style={[styles.giftFloat, { top: '30%' }]}>
             <Text style={styles.giftFloatEmoji}>{sentGift}</Text>
           </View>
+        )}
+
+        {/* Incoming Gift Animation */}
+        {incomingGift && (
+          <Animated.View style={[styles.giftFloat, { transform: [{ scale: giftScale }] }]}>
+            <Text style={[styles.giftFloatEmoji, { fontSize: 120, textShadowColor: 'rgba(255,215,0,0.8)', textShadowRadius: 20 }]}>
+              {incomingGift}
+            </Text>
+          </Animated.View>
         )}
 
         <GiftModal

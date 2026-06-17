@@ -15,6 +15,7 @@ class ChatSignalRService {
   private onUserOfflineCallback: ((userId: string) => void) | null = null;
   private onRecordingStartedCallback: ((userId: string) => void) | null = null;
   private onRecordingStoppedCallback: ((userId: string) => void) | null = null;
+  private onReceiveGiftCallback: ((payload: any) => void) | null = null;
   
   // Call Callbacks
   private onIncomingCallCallback: ((payload: any) => void) | null = null;
@@ -51,6 +52,7 @@ class ChatSignalRService {
     this.connection.on("UserOffline", (userId: string) => this.onUserOfflineCallback?.(userId));
     this.connection.on("RecordingStarted", (userId: string) => this.onRecordingStartedCallback?.(userId));
     this.connection.on("RecordingStopped", (userId: string) => this.onRecordingStoppedCallback?.(userId));
+    this.connection.on("ReceiveGift", (payload: any) => this.onReceiveGiftCallback?.(payload));
 
     // Call Events
     this.connection.on("IncomingCall", (payload: any) => this.onIncomingCallCallback?.(payload));
@@ -72,6 +74,7 @@ class ChatSignalRService {
   public setOnUserOffline(cb: (userId: string) => void) { this.onUserOfflineCallback = cb; }
   public setOnRecordingStarted(cb: (userId: string) => void) { this.onRecordingStartedCallback = cb; }
   public setOnRecordingStopped(cb: (userId: string) => void) { this.onRecordingStoppedCallback = cb; }
+  public setOnReceiveGift(cb: (payload: any) => void) { this.onReceiveGiftCallback = cb; }
 
   // Call Callbacks Setters
   public setOnIncomingCall(cb: (payload: any) => void) { this.onIncomingCallCallback = cb; }

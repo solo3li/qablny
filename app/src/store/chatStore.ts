@@ -358,6 +358,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     chatSignalR.setOnRecordingStarted((userId: string) => get().setVoiceRecording(userId, true));
     chatSignalR.setOnRecordingStopped((userId: string) => get().setVoiceRecording(userId, false));
 
+    chatSignalR.setOnReceiveGift((payload: any) => {
+      // Forward the gift emoji to callStore to show animation during a call
+      if (payload.gift && payload.gift.emoji) {
+        useCallStore.getState().setIncomingGift(payload.gift.emoji);
+      }
+    });
+
     chatSignalR.setOnMessagesRead((userId: string) => {
       // Our messages to that user have been read
       set((state) => ({

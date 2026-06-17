@@ -174,14 +174,23 @@ public class MatchController(LiveKitService liveKit) : BaseController
 
 // ─── Gifts ────────────────────────────────────────────────────────────────────
 [Route("api/gifts"), Authorize]
-public class GiftsController(GiftService gifts) : BaseController
+public class GiftsController(GiftService gifts, IHubContext<Qablny.Hubs.ChatHub> chatHub) : BaseController
 {
     [HttpGet, AllowAnonymous]
     public async Task<List<GiftDto>> GetGifts() => await gifts.GetGiftsAsync();
 
     [HttpPost("send")]
-    public async Task<GiftDto> SendGift(SendGiftRequest req) =>
-        await gifts.SendGiftAsync(UserId, req);
+    public async Task<GiftDto> SendGift(SendGiftRequest req)
+    {
+        var gift = await gifts.SendGiftAsync(UserId, req);
+        var senderName = User.FindFirstValue("name") ?? "مستخدم";
+        await chatHub.Clients.User(req.ReceiverId.ToString()).SendAsync("ReceiveGift", new { 
+            senderId = UserId, 
+            senderName,
+            gift 
+        });
+        return gift;
+    }
 }
 
 // ─── Coins ────────────────────────────────────────────────────────────────────

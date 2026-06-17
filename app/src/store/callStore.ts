@@ -17,10 +17,12 @@ interface CallState {
   incomingCall: IncomingCallPayload | null;
   activeCall: ActiveCallPayload | null;
   callStatus: 'idle' | 'ringing' | 'connected';
+  incomingGift: string | null;
   
   setIncomingCall: (payload: IncomingCallPayload | null) => void;
   setActiveCall: (payload: ActiveCallPayload | null) => void;
   setCallStatus: (status: 'idle' | 'ringing' | 'connected') => void;
+  setIncomingGift: (emoji: string | null) => void;
 
   initiateCall: (friendId: string, callType: 'voice' | 'video') => void;
   acceptCall: () => void;
@@ -33,10 +35,17 @@ export const useCallStore = create<CallState>((set, get) => ({
   incomingCall: null,
   activeCall: null,
   callStatus: 'idle',
+  incomingGift: null,
 
   setIncomingCall: (payload) => set({ incomingCall: payload }),
   setActiveCall: (payload) => set({ activeCall: payload }),
   setCallStatus: (status) => set({ callStatus: status }),
+  setIncomingGift: (emoji) => {
+    set({ incomingGift: emoji });
+    if (emoji) {
+      setTimeout(() => set({ incomingGift: null }), 3000);
+    }
+  },
 
   initiateCall: (friendId, callType) => {
     // Optimistically set active call but ringing

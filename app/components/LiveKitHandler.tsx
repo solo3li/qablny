@@ -44,9 +44,10 @@ function LocalVideo() {
 }
 
 // Wrapper to manage camera and mic state
-function RoomControls({ muted, cameraOn }: { muted: boolean, cameraOn: boolean }) {
+function RoomControls({ muted, cameraOn, speaker }: { muted: boolean, cameraOn: boolean, speaker: boolean }) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
+  const audioTracks = useTracks([Track.Source.Microphone]);
 
   useEffect(() => {
     if (localParticipant) {
@@ -55,10 +56,25 @@ function RoomControls({ muted, cameraOn }: { muted: boolean, cameraOn: boolean }
     }
   }, [muted, cameraOn, localParticipant]);
 
+  // Mute incoming audio if speaker is false (صامت)
+  useEffect(() => {
+    audioTracks.forEach(trackRef => {
+      if (!trackRef.participant.isLocal && trackRef.publication?.track) {
+        try {
+          // On Web, track is an HTMLAudioElement wrapper
+          const t = trackRef.publication.track as any;
+          if (t.mediaStreamTrack) {
+            t.mediaStreamTrack.enabled = speaker;
+          }
+        } catch (e) { console.error('Failed to mute track', e); }
+      }
+    });
+  }, [speaker, audioTracks]);
+
   return null;
 }
 
-export function LiveKitHandler({ roomName, callType, muted, cameraOn }: { roomName: string, callType: 'voice' | 'video', muted: boolean, cameraOn: boolean }) {
+export function LiveKitHandler({ roomName, callType, muted, cameraOn, speaker }: { roomName: string, callType: 'voice' | 'video', muted: boolean, cameraOn: boolean, speaker: boolean }) {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,7 +94,7 @@ export function LiveKitHandler({ roomName, callType, muted, cameraOn }: { roomNa
       video={callType === 'video'} // Start with video if video call
       style={{ width: '100%', height: '100%', position: 'absolute' }}
     >
-      <RoomControls muted={muted} cameraOn={cameraOn && callType === 'video'} />
+      <RoomControls muted={muted} cameraOn={cameraOn && callType === 'video'} speaker={speaker} />
       {callType === 'video' && <RemoteVideo />}
       {callType === 'video' && (
         <View style={styles.selfVideoWrap}>
