@@ -12,14 +12,6 @@ using Microsoft.AspNetCore.SignalR;
 using Serilog;
 using StackExchange.Redis;
 
-public class CustomUserIdProvider : IUserIdProvider
-{
-    public string? GetUserId(HubConnectionContext connection)
-    {
-        return connection.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
-            ?? connection.User?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
-    }
-}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -161,3 +153,12 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", time = DateTime
 
 Log.Information("Qablny API starting on .NET 10 🚀");
 app.Run();
+
+public class CustomUserIdProvider : IUserIdProvider
+{
+    public string? GetUserId(HubConnectionContext connection)
+    {
+        return connection.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+            ?? connection.User?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+    }
+}
