@@ -6,6 +6,7 @@ interface FriendStoreState {
   requests: FriendRequest[];
   friends: any[];
   isLoading: boolean;
+  error: string | null;
   fetchRequests: () => Promise<void>;
   acceptRequest: (id: string) => Promise<void>;
   rejectRequest: (id: string) => Promise<void>;
@@ -16,11 +17,12 @@ export const useFriendStore = create<FriendStoreState>((set, get) => ({
   requests: [],
   friends: [],
   isLoading: false,
+  error: null,
 
   fetchRequests: async () => {
     set({ isLoading: true });
     try {
-      const res = await axiosClient.get('/users/friends/requests');
+      const res = await axiosClient.get('/friends/requests');
       // Backend returns list of pending requests with sender info
       const mapped: FriendRequest[] = res.data.map((r: any) => ({
         id: r.id,
@@ -39,7 +41,7 @@ export const useFriendStore = create<FriendStoreState>((set, get) => ({
 
   acceptRequest: async (id: string) => {
     try {
-      await axiosClient.put(`/users/friends/requests/${id}/accept`);
+      await axiosClient.put(`/friends/accept/${id}`);
       set(state => ({
         requests: state.requests.filter(r => r.id !== id),
       }));
@@ -50,7 +52,7 @@ export const useFriendStore = create<FriendStoreState>((set, get) => ({
 
   rejectRequest: async (id: string) => {
     try {
-      await axiosClient.put(`/users/friends/requests/${id}/reject`);
+      await axiosClient.put(`/friends/decline/${id}`);
       set(state => ({
         requests: state.requests.filter(r => r.id !== id),
       }));
@@ -61,7 +63,7 @@ export const useFriendStore = create<FriendStoreState>((set, get) => ({
 
   fetchAllFriends: async () => {
     try {
-      const res = await axiosClient.get('/users/friends');
+      const res = await axiosClient.get('/friends');
       set({ friends: res.data });
     } catch (e) {
       console.error('friendStore: fetchAllFriends failed', e);
