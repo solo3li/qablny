@@ -1,14 +1,32 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { Colors } from '../constants/Colors';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { useAppStore, initDummyAuth } from '../store/useAppStore';
+import { useAuthStore } from '../src/store/authStore';
 
 export default function RootLayout() {
-  // Auto-init dummy auth so app always has a user for testing
+  const { checkAuth, token, isLoading } = useAuthStore();
+  const segments = useSegments();
+  const router = useRouter();
+
   useEffect(() => {
-    initDummyAuth();
+    checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inProtectedGroup = segments[0] === '(tabs)' || segments[0] === 'chat';
+    const inAuthGroup = segments[0] === 'auth';
+
+    if (!token && inProtectedGroup) {
+      // Redirect to login if user is not authenticated but tries to access protected routes
+      router.replace('/auth/login');
+    } else if (token && inAuthGroup) {
+      // Redirect to home if user is authenticated but tries to access login screen
+      router.replace('/(tabs)');
+    }
+  }, [token, isLoading, segments]);
 
   return (
     <>

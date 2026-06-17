@@ -2,11 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { router } from 'expo-router';
 import { Colors } from '../constants/Colors';
-import { useAppStore } from '../store/useAppStore';
+import { useAuthStore } from '../src/store/authStore';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SplashScreen() {
-  const isLoggedIn = useAppStore(state => state.isLoggedIn);
+  const { token, isLoading } = useAuthStore();
   const scale = useRef(new Animated.Value(0.7)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const glowOpacity = useRef(new Animated.Value(0)).current;
@@ -20,12 +20,38 @@ export default function SplashScreen() {
       Animated.timing(glowOpacity, { toValue: 1, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
     ]).start();
 
+    // Minimum splash duration of 2.5s for branding, plus wait for auth to finish loading
     const timer = setTimeout(() => {
-      if (isLoggedIn) router.replace('/(tabs)');
-      else router.replace('/onboarding');
+      if (!isLoading) {
+        if (token) router.replace('/(tabs)');
+        else router.replace('/auth/login');
+      }
     }, 2600);
+    
+    // If auth finishes loading AFTER the 2.6s timer, redirect immediately
+    if (!isLoading && opacity._value === 1) {
+       // This handles the case where checkAuth takes longer than 2.6s
+       // but we don't want to overcomplicate the animation logic.
+       // Actually a robust way is a combined effect.
+    }
+    
     return () => clearTimeout(timer);
-  }, [isLoggedIn]);
+  }, []);
+
+  // Use a second effect to handle the redirect safely when both conditions are met
+  const [animationDone, setAnimationDone] = React.useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimationDone(true), 2600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (animationDone && !isLoading) {
+      if (token) router.replace('/(tabs)');
+      else router.replace('/auth/login');
+    }
+  }, [animationDone, isLoading, token]);
 
   return (
     <LinearGradient colors={['#040710', '#070B14', '#0A1020']} style={styles.container}>
