@@ -12,7 +12,8 @@ import { useChatStore, UIChatMessage as ChatMessage } from '../../src/store/chat
 import {
   Send, Languages, ChevronLeft, Phone, Video,
   Mic, Image as ImageIcon, Film, MapPin, X, Play, Pause,
-import { Plus } from 'lucide-react-native';
+  Plus
+} from 'lucide-react-native';
 import { CallModal } from '../../components/CallModal';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadMedia } from '../../src/api/axiosClient';

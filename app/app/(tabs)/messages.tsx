@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import { MessageCircle, Search } from 'lucide-react-native';
 import { TextInput } from 'react-native';
 
+export default function MessagesScreen() {
   const { friends, fetchFriends, initSignalR } = useChatStore();
   const { user } = useAuthStore();
   const totalUnread = friends?.reduce((acc, f) => acc + (f.unread || 0), 0) || 0;
