@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { useAuthStore } from '../../src/store/authStore';
-import { useAppStore } from '../../store/useAppStore';
+import { axiosClient } from '../../src/api/axiosClient';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,9 +10,25 @@ import { router } from 'expo-router';
 import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle } from 'lucide-react-native';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuthStore();
-  const { vipPlans } = useAppStore();
+  const { user, logout, checkAuth } = useAuthStore();
   const [showVip, setShowVip] = useState(false);
+  const [vipPlans, setVipPlans] = useState<any[]>([]);
+
+  useEffect(() => {
+    axiosClient.get('/vip/plans').then(res => setVipPlans(res.data)).catch(console.error);
+  }, []);
+
+  const handleSubscribe = async (planId: string) => {
+    try {
+      await axiosClient.post(`/vip/subscribe/${planId}`);
+      await checkAuth(); // Refresh user data to get VIP status
+      setShowVip(false);
+      alert('تم الاشتراك بنجاح!');
+    } catch (e) {
+      console.error(e);
+      alert('حدث خطأ أثناء الاشتراك');
+    }
+  };
 
   if (!user) return (
     <View style={{ flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' }}>
@@ -111,7 +127,7 @@ export default function ProfileScreen() {
                 <View style={styles.planFeatures}>
                   {plan.features.map(f => <Text key={f} style={styles.planFeature}>✓ {f}</Text>)}
                 </View>
-                <GlassButton title="اشترك" variant={plan.isBest ? 'gold' : 'ghost'} size="sm" style={{ marginTop: 12 }} />
+                <GlassButton title="اشترك" variant={plan.isBest ? 'gold' : 'ghost'} size="sm" style={{ marginTop: 12 }} onPress={() => handleSubscribe(plan.id)} />
               </GlassCard>
             ))}
           </View>

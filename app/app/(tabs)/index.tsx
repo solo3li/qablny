@@ -48,13 +48,11 @@ export default function MatchScreen() {
   const [sentGift, setSentGift] = useState<string | null>(null);
   const [liked, setLiked] = useState(false);
 
-  // Fallback dummy gifts since we didn't fetch them yet
-  const dummyGifts = [
-    { id: '1', name: 'وردة', emoji: '🌹', cost: 10 },
-    { id: '2', name: 'قلب', emoji: '❤️', cost: 20 },
-  ];
+  const [gifts, setGifts] = useState<any[]>([]);
 
   useEffect(() => {
+    // Fetch gifts
+    axiosClient.get('/gifts').then(res => setGifts(res.data)).catch(console.error);
     matchSignalR.setOnMatchFound(async (room, peer) => {
       setRoomName(room);
       setRemotePeer(peer);
@@ -231,12 +229,12 @@ export default function MatchScreen() {
               </TouchableOpacity>
             </View>
             <View style={styles.giftsGrid}>
-              {dummyGifts.map(g => (
+              {gifts.map(g => (
                 <TouchableOpacity key={g.id} style={styles.giftItem} onPress={() => handleSendGift(g)}>
-                  <Text style={styles.giftEmoji}>{g.emoji}</Text>
+                  <Text style={styles.giftEmoji}>{g.emoji || '🎁'}</Text>
                   <Text style={styles.giftName}>{g.name}</Text>
                   <View style={styles.giftCost}>
-                    <Text style={styles.giftCostText}>🪙 {g.cost}</Text>
+                    <Text style={styles.giftCostText}>🪙 {g.coinCost}</Text>
                   </View>
                 </TouchableOpacity>
               ))}
