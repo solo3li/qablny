@@ -205,6 +205,7 @@ export default function ChatScreen() {
   React.useEffect(() => {
     if (id && user) {
       fetchMessages(id, user.id);
+      useChatStore.getState().initSignalR(user.id);
     }
   }, [id, user]);
 
