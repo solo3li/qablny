@@ -39,7 +39,7 @@ class MatchSignalRService {
   public async enterQueue(filters: { filterGender?: number; filterRegion?: string } = {}) {
     if (!this.connection) await this.connect();
     console.log("Entering queue with filters:", filters);
-    await this.connection?.invoke("EnterQueue", filters);
+    await this.connection?.invoke("JoinQueue", filters);
   }
 
   public async leaveQueue() {

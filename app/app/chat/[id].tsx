@@ -7,7 +7,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAppStore, ChatMessage } from '../../store/useAppStore';
+import { useAuthStore } from '../../src/store/authStore';
+import { useChatStore, UIChatMessage as ChatMessage } from '../../src/store/chatStore';
 import {
   Send, Languages, ChevronLeft, Phone, Video,
   Mic, Image as ImageIcon, Film, MapPin, X, Play, Pause,
@@ -190,9 +191,16 @@ const dummyLocations = [
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { friends, chatMessages, sendMessage } = useAppStore();
+  const { user } = useAuthStore();
+  const { friends, chatMessages, sendMessage, fetchMessages } = useChatStore();
   const friend = friends.find(f => f.id === id);
   const messages = chatMessages[id ?? ''] ?? [];
+
+  React.useEffect(() => {
+    if (id && user) {
+      fetchMessages(id, user.id);
+    }
+  }, [id, user]);
 
   const [input, setInput] = useState('');
   const [showTranslation, setShowTranslation] = useState(true);

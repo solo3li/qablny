@@ -1,16 +1,24 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { useAppStore } from '../../store/useAppStore';
+import { useChatStore } from '../../src/store/chatStore';
+import { useAuthStore } from '../../src/store/authStore';
 import { GlassCard } from '../../components/GlassCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { MessageCircle, Search } from 'lucide-react-native';
 import { TextInput } from 'react-native';
 
-export default function MessagesScreen() {
-  const friends = useAppStore(state => state.friends);
-  const totalUnread = friends.reduce((acc, f) => acc + f.unread, 0);
+  const { friends, fetchFriends, initSignalR } = useChatStore();
+  const { user } = useAuthStore();
+  const totalUnread = friends?.reduce((acc, f) => acc + (f.unread || 0), 0) || 0;
+
+  React.useEffect(() => {
+    if (user) {
+      fetchFriends();
+      initSignalR(user.id);
+    }
+  }, [user]);
 
   return (
     <LinearGradient colors={['#040710', '#070B14']} style={styles.container}>
@@ -41,13 +49,13 @@ export default function MessagesScreen() {
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
-          data={friends.filter(f => f.isOnline)}
+          data={friends?.filter(f => f.isOnline) || []}
           keyExtractor={f => 'online-' + f.id}
           contentContainerStyle={{ gap: 16, paddingHorizontal: 4 }}
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.onlineItem} onPress={() => router.push(`/chat/${item.id}` as any)}>
               <View style={styles.onlineAvatarWrap}>
-                <Image source={{ uri: item.image }} style={styles.onlineAvatar} />
+                <Image source={{ uri: item.profileImageUrl || 'https://i.pravatar.cc/150' }} style={styles.onlineAvatar} />
                 <View style={styles.onlineDot} />
               </View>
               <Text style={styles.onlineName}>{item.name.split(' ')[0]}</Text>
@@ -59,14 +67,14 @@ export default function MessagesScreen() {
       {/* All conversations */}
       <Text style={styles.sectionLabel}>كل المحادثات</Text>
       <FlatList
-        data={friends}
+        data={friends || []}
         keyExtractor={f => f.id}
         contentContainerStyle={{ gap: 10, paddingBottom: 100 }}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => router.push(`/chat/${item.id}` as any)}>
             <GlassCard style={styles.chatRow} glowColor={item.unread > 0 ? Colors.cyan : undefined}>
               <View style={styles.avatarWrap}>
-                <Image source={{ uri: item.image }} style={styles.avatar} />
+                <Image source={{ uri: item.profileImageUrl || 'https://i.pravatar.cc/150' }} style={styles.avatar} />
                 {item.isOnline && <View style={styles.chatOnlineDot} />}
               </View>
               <View style={styles.chatInfo}>
@@ -75,7 +83,7 @@ export default function MessagesScreen() {
                   <Text style={styles.chatTime}>{item.lastSeen}</Text>
                 </View>
                 <View style={styles.chatBottom}>
-                  <Text style={styles.chatLast} numberOfLines={1}>{item.lastMessage}</Text>
+                  <Text style={styles.chatLast} numberOfLines={1}>{item.lastMessage || 'بدأت المحادثة'}</Text>
                   {item.unread > 0 && (
                     <View style={styles.unreadBadge}>
                       <Text style={styles.unreadNum}>{item.unread}</Text>
