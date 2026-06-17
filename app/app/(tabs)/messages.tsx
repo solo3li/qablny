@@ -15,7 +15,7 @@ import { MessageCircle, Search, Users, Bell } from 'lucide-react-native';
 type Tab = 'chats' | 'friends' | 'requests';
 
 export default function MessagesScreen() {
-  const { friends, fetchFriends, initSignalR } = useChatStore();
+  const { friends, fetchFriends, initSignalR, onlineUsers, typingUsers, voiceUsers } = useChatStore();
   const { user } = useAuthStore();
   const { requests, fetchRequests, acceptRequest, rejectRequest, fetchAllFriends, friends: allFriends } = useFriendStore();
 
@@ -54,7 +54,25 @@ export default function MessagesScreen() {
     setActionLoading(null);
   };
 
-  const filteredFriends = (friends || []).filter(f =>
+  const filteredFriends = (friends || []).map(f => {
+    const realTime = onlineUsers[f.id];
+    return {
+      ...f,
+      isOnline: realTime ? realTime.isOnline : f.isOnline,
+      lastSeen: realTime ? realTime.lastSeen : f.lastSeen
+    };
+  }).filter(f =>
+    f.name?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const mappedAllFriends = (allFriends || []).map((f: any) => {
+    const realTime = onlineUsers[f.id];
+    return {
+      ...f,
+      isOnline: realTime ? realTime.isOnline : f.isOnline,
+      lastSeen: realTime ? realTime.lastSeen : f.lastSeen
+    };
+  }).filter((f: any) =>
     f.name?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -163,10 +181,19 @@ export default function MessagesScreen() {
                     <Text style={styles.chatTime}>{item.lastSeen}</Text>
                   </View>
                   <View style={styles.chatBottom}>
-                    <Text style={[styles.chatLast, item.unread > 0 && { color: Colors.text }]} numberOfLines={1}>
-                      {item.lastMessage || 'بدأت المحادثة'}
+                    <Text style={[
+                      styles.chatLast, 
+                      item.unread > 0 && { color: Colors.text },
+                      voiceUsers[item.id] && { color: Colors.pink, fontWeight: '700' },
+                      typingUsers[item.id] && !voiceUsers[item.id] && { color: Colors.cyan, fontWeight: '700' }
+                    ]} numberOfLines={1}>
+                      {voiceUsers[item.id] 
+                        ? '🎙 يسجل مقطع صوتي...' 
+                        : typingUsers[item.id] 
+                          ? '✍️ يكتب الآن...' 
+                          : (item.lastMessage || 'بدأت المحادثة')}
                     </Text>
-                    {item.unread > 0 && (
+                    {item.unread > 0 && !typingUsers[item.id] && !voiceUsers[item.id] && (
                       <View style={styles.unreadBadge}>
                         <Text style={styles.unreadNum}>{item.unread}</Text>
                       </View>
@@ -189,9 +216,7 @@ export default function MessagesScreen() {
       {/* ── TAB: Friends ──────────────────────────────── */}
       {activeTab === 'friends' && (
         <FlatList
-          data={(allFriends || []).filter((f: any) =>
-            f.name?.toLowerCase().includes(search.toLowerCase())
-          )}
+          data={mappedAllFriends}
           keyExtractor={(f: any) => f.id}
           contentContainerStyle={{ gap: 8, paddingBottom: 100 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.cyan} />}

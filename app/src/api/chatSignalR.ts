@@ -13,6 +13,8 @@ class ChatSignalRService {
   private onMessagesReadCallback: ((userId: string) => void) | null = null;
   private onUserOnlineCallback: ((userId: string) => void) | null = null;
   private onUserOfflineCallback: ((userId: string) => void) | null = null;
+  private onRecordingStartedCallback: ((userId: string) => void) | null = null;
+  private onRecordingStoppedCallback: ((userId: string) => void) | null = null;
   
   // Call Callbacks
   private onIncomingCallCallback: ((payload: any) => void) | null = null;
@@ -47,6 +49,8 @@ class ChatSignalRService {
     this.connection.on("MessagesRead", (userId: string) => this.onMessagesReadCallback?.(userId));
     this.connection.on("UserOnline", (userId: string) => this.onUserOnlineCallback?.(userId));
     this.connection.on("UserOffline", (userId: string) => this.onUserOfflineCallback?.(userId));
+    this.connection.on("RecordingStarted", (userId: string) => this.onRecordingStartedCallback?.(userId));
+    this.connection.on("RecordingStopped", (userId: string) => this.onRecordingStoppedCallback?.(userId));
 
     // Call Events
     this.connection.on("IncomingCall", (payload: any) => this.onIncomingCallCallback?.(payload));
@@ -66,6 +70,8 @@ class ChatSignalRService {
   public setOnMessagesRead(cb: (userId: string) => void) { this.onMessagesReadCallback = cb; }
   public setOnUserOnline(cb: (userId: string) => void) { this.onUserOnlineCallback = cb; }
   public setOnUserOffline(cb: (userId: string) => void) { this.onUserOfflineCallback = cb; }
+  public setOnRecordingStarted(cb: (userId: string) => void) { this.onRecordingStartedCallback = cb; }
+  public setOnRecordingStopped(cb: (userId: string) => void) { this.onRecordingStoppedCallback = cb; }
 
   // Call Callbacks Setters
   public setOnIncomingCall(cb: (payload: any) => void) { this.onIncomingCallCallback = cb; }
@@ -88,6 +94,16 @@ class ChatSignalRService {
   public async stopTyping(friendId: string) {
     if (!this.connection) return;
     await this.connection.invoke("StopTyping", friendId);
+  }
+
+  public async startRecording(friendId: string) {
+    if (!this.connection) return;
+    try { await this.connection.invoke("StartRecording", friendId); } catch(e) {}
+  }
+
+  public async stopRecording(friendId: string) {
+    if (!this.connection) return;
+    try { await this.connection.invoke("StopRecording", friendId); } catch(e) {}
   }
 
   public async markRead(friendId: string) {

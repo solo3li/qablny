@@ -407,12 +407,14 @@ export default function ChatScreen() {
       setRecording(true);
       setRecordSecs(0);
       recordInterval.current = setInterval(() => setRecordSecs(s => s + 1), 1000);
+      if (id) chatSignalR.startRecording(id);
     } catch (err) { console.error('Recording error', err); }
   };
 
   const cancelRecording = async () => {
     clearInterval(recordInterval.current);
     setRecording(false); setRecordSecs(0);
+    if (id) chatSignalR.stopRecording(id);
     if (recordingObj) { try { await recordingObj.stopAndUnloadAsync(); } catch (e) {} setRecordingObj(null); }
   };
 
@@ -421,6 +423,7 @@ export default function ChatScreen() {
     clearInterval(recordInterval.current);
     const dur = recordSecs;
     setRecording(false); setRecordSecs(0);
+    chatSignalR.stopRecording(id);
 
     if (recordingObj) {
       try {
@@ -475,8 +478,11 @@ export default function ChatScreen() {
   // ── Telegram-style dynamic status ──
   let headerStatus = '';
   let statusColor = Colors.textMuted;
-  if (isTyping) {
-    headerStatus = 'يكتب...';
+  if (isRecordingVoice) {
+    headerStatus = 'يسجل مقطع صوتي...';
+    statusColor = Colors.pink;
+  } else if (isTyping) {
+    headerStatus = 'يكتب الآن...';
     statusColor = Colors.cyan;
   } else if (isOnline) {
     headerStatus = '● متصل الآن';

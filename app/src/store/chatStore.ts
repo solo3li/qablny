@@ -355,6 +355,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     chatSignalR.setOnTypingStarted((userId: string) => get().setTyping(userId, true));
     chatSignalR.setOnTypingStopped((userId: string) => get().setTyping(userId, false));
 
+    chatSignalR.setOnRecordingStarted((userId: string) => get().setVoiceRecording(userId, true));
+    chatSignalR.setOnRecordingStopped((userId: string) => get().setVoiceRecording(userId, false));
+
     chatSignalR.setOnMessagesRead((userId: string) => {
       // Our messages to that user have been read
       set((state) => ({
