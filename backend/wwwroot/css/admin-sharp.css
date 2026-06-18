@@ -42,3 +42,16 @@ body {
     opacity: 0.5;
     transition: opacity 200ms ease-in;
 }
+
+/* Sidebar on the Right */
+.bx--side-nav {
+    left: auto !important;
+    right: 0 !important;
+    border-right: none !important;
+    border-left: 1px solid #e0e0e0;
+}
+
+.bx--content {
+    margin-left: 0 !important;
+    margin-right: 16rem !important;
+}

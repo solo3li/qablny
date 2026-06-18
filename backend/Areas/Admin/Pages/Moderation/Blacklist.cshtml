@@ -13,7 +13,7 @@
 
 <div class="bx--row">
     <div class="bx--col-md-6">
-        <form hx-post="/Admin/Moderation/Blacklist?handler=Add" hx-target="#main-content" hx-swap="outerHTML" style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+        <form hx-post="/Admin/Moderation/Blacklist?handler=Add" hx-target="#main-content" hx-swap="innerHTML" style="display: flex; gap: 1rem; margin-bottom: 2rem;">
             <div class="bx--form-item" style="flex: 1;">
                 <input type="text" class="bx--text-input" name="NewWord" placeholder="أدخل كلمة جديدة للحظر..." required>
             </div>

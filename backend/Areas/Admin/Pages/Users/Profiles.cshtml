@@ -9,7 +9,7 @@
         <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">التحكم بالملف الشخصي</h1>
         <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">تعديل بيانات المستخدم، إخفاء الصور المخالفة، أو حذف الحساب.</p>
         
-        <form hx-get="/Admin/Users/Profiles" hx-target="#main-content" hx-swap="outerHTML" style="margin-bottom: 2rem; max-width: 400px; display: flex; gap: 1rem;">
+        <form hx-get="/Admin/Users/Profiles" hx-target="#main-content" hx-swap="innerHTML" style="margin-bottom: 2rem; max-width: 400px; display: flex; gap: 1rem;">
             <div class="bx--form-item" style="flex: 1;">
                 <input type="text" class="bx--text-input" name="Id" value="@Model.Id" placeholder="أدخل معرف المستخدم (ID)...">
             </div>

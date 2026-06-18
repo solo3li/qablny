@@ -24,7 +24,7 @@
                 }
             </p>
 
-            <form hx-post="/Admin/System/Maintenance?handler=Toggle" hx-target="#main-content" hx-swap="outerHTML">
+            <form hx-post="/Admin/System/Maintenance?handler=Toggle" hx-target="#main-content" hx-swap="innerHTML">
                 @if(Model.IsMaintenanceMode) {
                     <button class="bx--btn bx--btn--primary" type="submit">تعطيل وضع الصيانة</button>
                 } else {

@@ -9,7 +9,7 @@
         <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">قاعدة بيانات المستخدمين</h1>
         <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">عرض قائمة بكل المستخدمين مع إمكانية البحث المتقدم (بالاسم، البريد الإلكتروني).</p>
         
-        <form hx-get="/Admin/Users/Database" hx-target="#main-content" hx-swap="outerHTML" style="margin-bottom: 2rem; max-width: 400px; display: flex; gap: 1rem;">
+        <form hx-get="/Admin/Users/Database" hx-target="#main-content" hx-swap="innerHTML" style="margin-bottom: 2rem; max-width: 400px; display: flex; gap: 1rem;">
             <div class="bx--form-item" style="flex: 1;">
                 <input type="text" class="bx--text-input" name="SearchTerm" value="@Model.SearchTerm" placeholder="ابحث بالاسم أو البريد...">
             </div>
@@ -46,7 +46,7 @@
                         <td>@(user.IsVip ? "⭐ نعم" : "لا")</td>
                         <td>@user.JoinedAt.ToString("yyyy-MM-dd")</td>
                         <td>
-                            <a href="/Admin/Users/Profiles?id=@user.Id" class="bx--btn bx--btn--sm bx--btn--ghost" hx-boost="true" hx-target="#main-content" hx-swap="outerHTML">الملف</a>
+                            <a href="/Admin/Users/Profiles?id=@user.Id" class="bx--btn bx--btn--sm bx--btn--ghost" hx-boost="true" hx-target="#main-content" hx-swap="innerHTML">الملف</a>
                         </td>
                     </tr>
                 }

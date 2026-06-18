@@ -11,6 +11,7 @@ using Qablny.Services;
 using Microsoft.AspNetCore.SignalR;
 using Serilog;
 using StackExchange.Redis;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,8 +24,12 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // ── PostgreSQL + EF Core ──────────────────────────────────────────────────────
-builder.Services.AddDbContext<AppDbContext>(opts =>
-    opts.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+});
 
 // ── Redis ─────────────────────────────────────────────────────────────────────
 var redisConn = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";

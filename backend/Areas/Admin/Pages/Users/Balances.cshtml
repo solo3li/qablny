@@ -13,7 +13,7 @@
 
 <div class="bx--row">
     <div class="bx--col-md-6">
-        <form hx-post="/Admin/Users/Balances?handler=Update" hx-target="#main-content" hx-swap="outerHTML">
+        <form hx-post="/Admin/Users/Balances?handler=Update" hx-target="#main-content" hx-swap="innerHTML">
             <div class="bx--form-item" style="margin-bottom: 1rem;">
                 <label for="userId" class="bx--label">معرف المستخدم (User ID)</label>
                 <input id="userId" type="text" class="bx--text-input" name="UserId" required>
