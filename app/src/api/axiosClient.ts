@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 // Replace with your local machine's IP address if testing on a physical device
 // For Android emulator: 10.0.2.2
 // For Web: localhost
-export const API_BASE_URL = Platform.OS === 'web' ? 'http://localhost:5000/api' : 'http://10.0.2.2:5000/api'; 
+export const API_BASE_URL = 'https://api.178.62.192.74.nip.io/api';
 
 export const axiosClient = axios.create({
   baseURL: API_BASE_URL,
