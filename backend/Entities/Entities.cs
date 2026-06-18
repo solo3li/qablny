@@ -203,3 +203,68 @@ public class RefreshToken
 
     public User User { get; set; } = default!;
 }
+
+// ─── Admin & Staff ────────────────────────────────────────────────────────────
+public class AdminUser
+{
+    public Guid       Id           { get; set; } = Guid.NewGuid();
+    public string     Username     { get; set; } = default!;
+    public string     PasswordHash { get; set; } = default!;
+    public string     FullName     { get; set; } = default!;
+    public AdminRole  Role         { get; set; } = AdminRole.Support;
+    public bool       IsActive     { get; set; } = true;
+    public DateTime   CreatedAt    { get; set; } = DateTime.UtcNow;
+
+    public ICollection<StaffShift> Shifts    { get; set; } = [];
+    public ICollection<AuditLog>   AuditLogs { get; set; } = [];
+}
+
+public class StaffShift
+{
+    public Guid       Id           { get; set; } = Guid.NewGuid();
+    public Guid       AdminUserId  { get; set; }
+    public DateTime   StartTime    { get; set; }
+    public DateTime?  EndTime      { get; set; }
+    public string     Status       { get; set; } = "Active"; // Active, Completed, Missed
+    
+    public AdminUser  AdminUser    { get; set; } = default!;
+}
+
+public class AuditLog
+{
+    public Guid       Id           { get; set; } = Guid.NewGuid();
+    public Guid       AdminUserId  { get; set; }
+    public string     Action       { get; set; } = default!;
+    public string?    Details      { get; set; }
+    public DateTime   CreatedAt    { get; set; } = DateTime.UtcNow;
+
+    public AdminUser  AdminUser    { get; set; } = default!;
+}
+
+// ─── System & Communications ──────────────────────────────────────────────────
+public class SystemSetting
+{
+    public string     Key          { get; set; } = default!;
+    public string     Value        { get; set; } = default!;
+    public string?    Description  { get; set; }
+}
+
+public class Banner
+{
+    public Guid       Id           { get; set; } = Guid.NewGuid();
+    public string     ImageUrl     { get; set; } = default!;
+    public string?    LinkUrl      { get; set; }
+    public int        Order        { get; set; }
+    public bool       IsActive     { get; set; } = true;
+    public DateTime   CreatedAt    { get; set; } = DateTime.UtcNow;
+}
+
+public class PushNotificationLog
+{
+    public Guid       Id             { get; set; } = Guid.NewGuid();
+    public string     Title          { get; set; } = default!;
+    public string     Body           { get; set; } = default!;
+    public string     TargetAudience { get; set; } = "All"; 
+    public int        SentCount      { get; set; }
+    public DateTime   SentAt         { get; set; } = DateTime.UtcNow;
+}

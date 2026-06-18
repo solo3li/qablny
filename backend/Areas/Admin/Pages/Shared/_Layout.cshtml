@@ -26,19 +26,105 @@
         </a>
     </header>
 
-    <aside class="bx--side-nav bx--side-nav--expanded" aria-label="Side navigation" style="top: 3rem;">
+    <aside class="bx--side-nav bx--side-nav--expanded" aria-label="Side navigation" style="top: 3rem; overflow-y: auto; padding-bottom: 5rem;">
         <nav class="bx--side-nav__navigation" aria-label="Side navigation">
             <ul class="bx--side-nav__items">
+                
+                <!-- 1. Dashboard -->
                 <li class="bx--side-nav__item">
                     <a class="bx--side-nav__link" href="/Admin" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML">
-                        <span class="bx--side-nav__link-text">الرئيسية (Dashboard)</span>
+                        <span class="bx--side-nav__link-text" style="font-weight: bold; color: #0f62fe;">1. لوحة القيادة والإحصائيات</span>
                     </a>
                 </li>
+
+                <li class="bx--side-nav__divider"></li>
+
+                <!-- 2. Finance -->
                 <li class="bx--side-nav__item">
-                    <a class="bx--side-nav__link" href="/Admin/Staff/Shifts" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML">
-                        <span class="bx--side-nav__link-text">إدارة الموظفين والورديات</span>
-                    </a>
+                    <div class="bx--side-nav__link" style="cursor: default; pointer-events: none;">
+                        <span class="bx--side-nav__link-text" style="font-weight: bold; color: #525252;">2. الإدارة المالية والتحويلات</span>
+                    </div>
                 </li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Finance/Coins" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- باقات العملات</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Finance/VIP" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- اشتراكات הـ VIP</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Finance/Store" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- متجر الهدايا</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Finance/Coupons" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- كوبونات الخصم</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Finance/Transactions" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- سجل المعاملات</span></a></li>
+
+                <li class="bx--side-nav__divider"></li>
+
+                <!-- 3. Users -->
+                <li class="bx--side-nav__item">
+                    <div class="bx--side-nav__link" style="cursor: default; pointer-events: none;">
+                        <span class="bx--side-nav__link-text" style="font-weight: bold; color: #525252;">3. إدارة المستخدمين</span>
+                    </div>
+                </li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Users/Database" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- قاعدة بيانات المستخدمين</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Users/Profiles" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- التحكم بالملف الشخصي</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Users/Balances" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- التحكم بالأرصدة</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Users/Activity" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- سجل النشاط</span></a></li>
+
+                <li class="bx--side-nav__divider"></li>
+
+                <!-- 4. Moderation & Safety -->
+                <li class="bx--side-nav__item">
+                    <div class="bx--side-nav__link" style="cursor: default; pointer-events: none;">
+                        <span class="bx--side-nav__link-text" style="font-weight: bold; color: #525252;">4. نظام الرقابة والأمان</span>
+                    </div>
+                </li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Moderation/Reports" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- مركز البلاغات</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Moderation/Penalties" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- لوحة العقوبات</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Moderation/Blacklist" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- الكلمات المحظورة</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Moderation/Review" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- مراجعة المحتوى</span></a></li>
+
+                <li class="bx--side-nav__divider"></li>
+
+                <!-- 5. Staff -->
+                <li class="bx--side-nav__item">
+                    <div class="bx--side-nav__link" style="cursor: default; pointer-events: none;">
+                        <span class="bx--side-nav__link-text" style="font-weight: bold; color: #525252;">5. إدارة الموظفين والورديات</span>
+                    </div>
+                </li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Staff/Roles" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- الصلاحيات</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Staff/Shifts" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- إدارة الورديات</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Staff/Performance" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- تقييم الأداء</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Staff/AuditLogs" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- سجل التدقيق (Audit)</span></a></li>
+
+                <li class="bx--side-nav__divider"></li>
+
+                <!-- 6. Matchmaking -->
+                <li class="bx--side-nav__item">
+                    <div class="bx--side-nav__link" style="cursor: default; pointer-events: none;">
+                        <span class="bx--side-nav__link-text" style="font-weight: bold; color: #525252;">6. إعدادات المطابقة</span>
+                    </div>
+                </li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Matchmaking/Limits" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- قيود المكالمات</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Matchmaking/FilterPricing" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- تسعير الفلاتر</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Matchmaking/Algorithm" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- إعدادات الخوارزمية</span></a></li>
+
+                <li class="bx--side-nav__divider"></li>
+
+                <!-- 7. Communications -->
+                <li class="bx--side-nav__item">
+                    <div class="bx--side-nav__link" style="cursor: default; pointer-events: none;">
+                        <span class="bx--side-nav__link-text" style="font-weight: bold; color: #525252;">7. التواصل والإشعارات</span>
+                    </div>
+                </li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Communications/Global" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- إشعارات للجميع</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Communications/Targeted" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- إشعارات مستهدفة</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/Communications/Banners" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- البنرات الداخلية</span></a></li>
+
+                <li class="bx--side-nav__divider"></li>
+
+                <!-- 8. System Settings -->
+                <li class="bx--side-nav__item">
+                    <div class="bx--side-nav__link" style="cursor: default; pointer-events: none;">
+                        <span class="bx--side-nav__link-text" style="font-weight: bold; color: #525252;">8. الإعدادات التقنية</span>
+                    </div>
+                </li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/System/ApiKeys" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- مفاتيح الـ APIs</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/System/Updates" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- إجبار التحديث</span></a></li>
+                <li class="bx--side-nav__item"><a class="bx--side-nav__link" href="/Admin/System/Maintenance" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML"><span class="bx--side-nav__link-text" style="padding-right: 1rem;">- وضع الصيانة</span></a></li>
             </ul>
         </nav>
     </aside>

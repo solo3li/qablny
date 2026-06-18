@@ -1,0 +1,48 @@
+@page
+@model Qablny.Areas.Admin.Pages.Finance.TransactionsModel
+@{
+    ViewData["Title"] = "سجل المعاملات";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">سجل المعاملات المالية (Transactions)</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">مراقبة كل عملية دفع تمت داخل التطبيق، سواء اشتراكات VIP أو شراء عملات.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">رقم العملية (ID)</span></th>
+                    <th><span class="bx--table-header-label">المستخدم</span></th>
+                    <th><span class="bx--table-header-label">الباقة المشترك بها</span></th>
+                    <th><span class="bx--table-header-label">المبلغ المدفوع</span></th>
+                    <th><span class="bx--table-header-label">تاريخ العملية</span></th>
+                    <th><span class="bx--table-header-label">تاريخ الانتهاء</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var sale in Model.VipSales)
+                {
+                    <tr>
+                        <td style="font-size: 0.8rem; color: #525252;">@sale.Id.ToString()[..8]...</td>
+                        <td>
+                            @if(sale.User != null) {
+                                <a href="/Admin/Users/Profiles?id=@sale.User.Id">@sale.User.Name</a>
+                            } else {
+                                <span>غير معروف</span>
+                            }
+                        </td>
+                        <td>@(sale.Plan?.Name ?? "باقة محذوفة")</td>
+                        <td style="font-weight:bold; color:#24a148;">$@sale.PricePaid</td>
+                        <td>@sale.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@sale.ExpiresAt.ToString("yyyy-MM-dd")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

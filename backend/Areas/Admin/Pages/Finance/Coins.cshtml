@@ -1,0 +1,43 @@
+@page
+@model Qablny.Areas.Admin.Pages.Finance.CoinsModel
+@{
+    ViewData["Title"] = "باقات العملات";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">إدارة باقات العملات</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إنشاء باقات شحن الرصيد، تعديل أسعارها، وإضافة عروض أو بونص عليها.</p>
+        <button class="bx--btn bx--btn--primary" style="margin-bottom: 1rem;">إنشاء باقة جديدة +</button>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">اسم الباقة</span></th>
+                    <th><span class="bx--table-header-label">عدد العملات</span></th>
+                    <th><span class="bx--table-header-label">بونص مجاني</span></th>
+                    <th><span class="bx--table-header-label">السعر (USD)</span></th>
+                    <th><span class="bx--table-header-label">إجراءات</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var pkg in Model.Packages)
+                {
+                    <tr>
+                        <td>@pkg.Name</td>
+                        <td style="font-weight:bold; color:#f1c21b;">@pkg.Coins <span style="font-size:0.8rem;">🪙</span></td>
+                        <td>@pkg.Bonus</td>
+                        <td>$@pkg.Price</td>
+                        <td>
+                            <button class="bx--btn bx--btn--sm bx--btn--ghost">تعديل</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

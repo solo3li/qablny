@@ -6,3 +6,4 @@ public enum MessageType           { Text, Voice, Image, Video, Location, VoiceCa
 public enum CoinTransactionType   { Purchase, GiftSent, GiftReceived, VipReward, Deduction }
 public enum ReportStatus          { Pending, Reviewed, ActionTaken, Dismissed }
 public enum VipPeriod             { Weekly, Monthly, Yearly }
+public enum AdminRole             { SuperAdmin, Moderator, Support }

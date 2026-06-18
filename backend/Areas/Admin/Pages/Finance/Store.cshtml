@@ -1,0 +1,49 @@
+@page
+@model Qablny.Areas.Admin.Pages.Finance.StoreModel
+@{
+    ViewData["Title"] = "متجر الهدايا";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">إدارة الهدايا (Gift Store)</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">رفع الهدايا، تسعيرها، وإدارتها.</p>
+        <button class="bx--btn bx--btn--primary" style="margin-bottom: 1rem;">إضافة هدية جديدة +</button>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">الهدية</span></th>
+                    <th><span class="bx--table-header-label">الاسم</span></th>
+                    <th><span class="bx--table-header-label">التكلفة (عملات)</span></th>
+                    <th><span class="bx--table-header-label">الحالة</span></th>
+                    <th><span class="bx--table-header-label">إجراءات</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var gift in Model.Gifts)
+                {
+                    <tr>
+                        <td style="font-size: 1.5rem;">@gift.Emoji</td>
+                        <td>@gift.Name</td>
+                        <td>@gift.CoinCost</td>
+                        <td>
+                            @if(gift.IsActive) {
+                                <span style="color: #24a148; font-weight:bold;">نشط</span>
+                            } else {
+                                <span style="color: #da1e28;">متوقف</span>
+                            }
+                        </td>
+                        <td>
+                            <button class="bx--btn bx--btn--sm bx--btn--ghost">تعديل</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

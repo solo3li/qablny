@@ -1,0 +1,50 @@
+@page
+@model Qablny.Areas.Admin.Pages.Finance.VIPModel
+@{
+    ViewData["Title"] = "اشتراكات الـ VIP";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">إدارة اشتراكات الـ VIP</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إدارة الباقات، تعديل الأسعار، ومتابعة الاشتراكات النشطة.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">اسم الباقة</span></th>
+                    <th><span class="bx--table-header-label">المدة</span></th>
+                    <th><span class="bx--table-header-label">السعر</span></th>
+                    <th><span class="bx--table-header-label">بونص عملات</span></th>
+                    <th><span class="bx--table-header-label">الحالة</span></th>
+                    <th><span class="bx--table-header-label">إجراءات</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var plan in Model.Plans)
+                {
+                    <tr>
+                        <td>@plan.Name @(plan.IsBest ? "⭐" : "")</td>
+                        <td>@plan.Period</td>
+                        <td>$@plan.Price</td>
+                        <td>@plan.BonusCoins</td>
+                        <td>
+                            @if(plan.IsActive) {
+                                <span style="color: #24a148; font-weight:bold;">نشط</span>
+                            } else {
+                                <span style="color: #da1e28;">متوقف</span>
+                            }
+                        </td>
+                        <td>
+                            <button class="bx--btn bx--btn--sm bx--btn--ghost">تعديل</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

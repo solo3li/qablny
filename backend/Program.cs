@@ -127,7 +127,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync(); // creates schema + seed data
+    await db.Database.MigrateAsync(); // applies migrations + seed data
     Log.Information("Database ready ✓");
 }
 

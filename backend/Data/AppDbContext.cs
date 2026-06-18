@@ -20,6 +20,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Report>          Reports          => Set<Report>();
     public DbSet<UserBlock>       UserBlocks       => Set<UserBlock>();
     public DbSet<RefreshToken>    RefreshTokens    => Set<RefreshToken>();
+    
+    // Admin & System
+    public DbSet<AdminUser>       AdminUsers       => Set<AdminUser>();
+    public DbSet<StaffShift>      StaffShifts      => Set<StaffShift>();
+    public DbSet<AuditLog>        AuditLogs        => Set<AuditLog>();
+    public DbSet<SystemSetting>   SystemSettings   => Set<SystemSetting>();
+    public DbSet<Banner>          Banners          => Set<Banner>();
+    public DbSet<PushNotificationLog> PushNotificationLogs => Set<PushNotificationLog>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -133,9 +141,32 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(rt => rt.User).WithMany(u => u.RefreshTokens)
              .HasForeignKey(rt => rt.UserId));
 
+        // AdminUser
+        b.Entity<AdminUser>(e =>
+        {
+            e.HasIndex(au => au.Username).IsUnique();
+        });
+
+        // StaffShift
+        b.Entity<StaffShift>(e =>
+            e.HasOne(ss => ss.AdminUser).WithMany(au => au.Shifts)
+             .HasForeignKey(ss => ss.AdminUserId));
+
+        // AuditLog
+        b.Entity<AuditLog>(e =>
+            e.HasOne(al => al.AdminUser).WithMany(au => au.AuditLogs)
+             .HasForeignKey(al => al.AdminUserId));
+
+        // SystemSetting
+        b.Entity<SystemSetting>(e =>
+        {
+            e.HasKey(s => s.Key);
+        });
+
         // ── Seed Data ──────────────────────────────────────────────────────
         SeedGifts(b);
         SeedVipPlans(b);
+        SeedAdminAndSettings(b);
     }
 
     private static void SeedGifts(ModelBuilder b) => b.Entity<Gift>().HasData(
@@ -172,4 +203,29 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             Features = ["كل الميزات", "5000 عملة مجاناً", "دعم أولوية 24/7", "بث مباشر"]
         }
     );
+
+    private static void SeedAdminAndSettings(ModelBuilder b)
+    {
+        b.Entity<AdminUser>().HasData(
+            new AdminUser
+            {
+                Id = Guid.Parse("33333333-0000-0000-0000-000000000001"),
+                Username = "admin",
+                // Hash for password "admin" using BCrypt (cost 11) - just for seeding
+                PasswordHash = "$2a$11$9/0g/H4eEOf2h7W/P1lM/OWGvG6H/5f4wE8E9E3L3V7Z6u7V/u1L2", 
+                FullName = "مدير النظام",
+                Role = AdminRole.SuperAdmin,
+                IsActive = true
+            }
+        );
+
+        b.Entity<SystemSetting>().HasData(
+            new SystemSetting { Key = "Matchmaking:FreeCallMinutes", Value = "3", Description = "مدة المكالمة العشوائية المجانية للمستخدمين العاديين" },
+            new SystemSetting { Key = "Matchmaking:GenderFilterCost", Value = "5", Description = "تكلفة اختيار الجنس في الفلتر" },
+            new SystemSetting { Key = "Matchmaking:RegionFilterCost", Value = "10", Description = "تكلفة اختيار المنطقة في الفلتر" },
+            new SystemSetting { Key = "App:MaintenanceMode", Value = "false", Description = "تفعيل وضع الصيانة (يمنع دخول المستخدمين)" },
+            new SystemSetting { Key = "App:MinVersionIOS", Value = "1.0.0", Description = "الحد الأدنى المقبول لإصدار الآيفون" },
+            new SystemSetting { Key = "App:MinVersionAndroid", Value = "1.0.0", Description = "الحد الأدنى المقبول لإصدار الأندرويد" }
+        );
+    }
 }
