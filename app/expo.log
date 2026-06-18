@@ -1,0 +1,33 @@
+nohup: ignoring input
+[90mStarting project at /root/qablny/qablny/app[39m
+[2mStarting Metro Bundler[22m
+[33mwarning[39m: Bundler cache is empty, rebuilding [2m(this may take a minute)[22m
+Tunnel connected.
+Tunnel ready.
+[33mThe following packages should be updated for best compatibility with the installed [1mexpo[22m version:[39m
+[33m  [1m@react-native-async-storage/async-storage[22m[36m@[39m[33m[31m3.1.1[39m[33m - expected version: [32m2.2.0[39m[33m[39m
+[33m  [1m@types/react[22m[36m@[39m[33m[31m18.2.79[39m[33m - expected version: [32m~19.1.10[39m[33m[39m
+[33mYour project may not work correctly until you install the expected versions of the packages.[39m
+Waiting on [4mhttp://localhost:8081[24m
+Logs for your project will appear below.
+/root/qablny/qablny/app/node_modules/@expo/cli/build/src/utils/errors.js:130
+    throw error;
+    ^
+
+Error: ENOENT: no such file or directory, watch '/root/qablny/qablny/app/node_modules/.react-native-webrtc-NvBFrK8E/android/src/main'
+[90m    at FSWatcher.<computed> (node:internal/fs/watchers:254:19)[39m
+[90m    at Object.watch (node:fs:2554:36)[39m
+    at FallbackWatcher._watchdir [90m(/root/qablny/qablny/app/[39mnode_modules/[4mmetro-file-map[24m/src/watchers/FallbackWatcher.js:119:33[90m)[39m
+    at [90m/root/qablny/qablny/app/[39mnode_modules/[4mmetro-file-map[24m/src/watchers/FallbackWatcher.js:219:22
+    at Walker.<anonymous> [90m(/root/qablny/qablny/app/[39mnode_modules/[4mmetro-file-map[24m/src/watchers/FallbackWatcher.js:358:5[90m)[39m
+[90m    at Walker.emit (node:events:519:28)[39m
+    at [90m/root/qablny/qablny/app/[39mnode_modules/[4mwalker[24m/lib/walker.js:69:16
+[90m    at FSReqCallback.oncomplete (node:fs:186:23)[39m {
+  errno: [33m-2[39m,
+  syscall: [32m'watch'[39m,
+  code: [32m'ENOENT'[39m,
+  path: [32m'/root/qablny/qablny/app/node_modules/.react-native-webrtc-NvBFrK8E/android/src/main'[39m,
+  filename: [32m'/root/qablny/qablny/app/node_modules/.react-native-webrtc-NvBFrK8E/android/src/main'[39m
+}
+
+Node.js v22.22.3

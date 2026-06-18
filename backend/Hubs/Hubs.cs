@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using Qablny.DTOs;
 using Qablny.Services;
 using System.Security.Claims;
+using Qablny.Enums;
 
 using Qablny.Data;
 using System.Collections.Concurrent;
@@ -138,12 +139,11 @@ public class ChatHub(MessageService messages, PresenceService presence, AppDbCon
         }
 
         // Save Call Log Message
-        var msg = await messages.SendAsync(callerId, friendId, new SendMessageRequest 
-        {
-            Type = msgType,
-            Content = callType == "video" ? "مكالمة فيديو" : "مكالمة صوتية",
-            DurationSeconds = durationSeconds
-        });
+        var msg = await messages.SendAsync(callerId, friendId, new SendMessageRequest(
+            msgType,
+            Content: callType == "video" ? "مكالمة فيديو" : "مكالمة صوتية",
+            DurationSeconds: durationSeconds
+        ));
 
         // Broadcast Call Log to both users so it appears in Chat instantly
         await Clients.User(friendId.ToString()).SendAsync("ReceiveMessage", msg);

@@ -1,0 +1,25 @@
+domain: 178.62.192.74.nip.io
+
+secrets:
+  postgresPassword: "supersecurepassword"
+  jwtSecret: "supersecretjwtkeythatislongenoughforhmac"
+  livekitApiKey: "devkey"
+  livekitApiSecret: "secret"
+  minioAccessKey: "admin"
+  minioSecretKey: "admin123"
+
+images:
+  frontend: qablny-frontend:latest
+  backend: qablny-backend:latest
+  postgres: postgres:16-alpine
+  redis: redis:7-alpine
+  livekit: livekit/livekit-server:latest
+  minio: minio/minio:latest
+  libretranslate: libretranslate/libretranslate:latest
+
+ingress:
+  className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
