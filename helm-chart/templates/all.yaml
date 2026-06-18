@@ -1,0 +1,425 @@
+{{- $fullName := "qablny" -}}
+---
+# Postgres
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.images.postgres }}
+          env:
+            - name: POSTGRES_DB
+              value: qablny
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: qablny-secrets
+                  key: postgresPassword
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: postgres
+---
+# Redis
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  serviceName: redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: {{ .Values.images.redis }}
+          command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  ports:
+    - port: 6379
+  selector:
+    app: redis
+---
+# MinIO
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  labels:
+    app: minio
+spec:
+  serviceName: minio
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: {{ .Values.images.minio }}
+          command: ["server", "/data", "--console-address", ":9001"]
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: qablny-secrets
+                  key: minioAccessKey
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: qablny-secrets
+                  key: minioSecretKey
+          ports:
+            - containerPort: 9000
+            - containerPort: 9001
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+spec:
+  ports:
+    - name: api
+      port: 9000
+    - name: console
+      port: 9001
+  selector:
+    app: minio
+---
+# LiveKit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit
+  labels:
+    app: livekit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: livekit
+  template:
+    metadata:
+      labels:
+        app: livekit
+    spec:
+      hostNetwork: true
+      containers:
+        - name: livekit
+          image: {{ .Values.images.livekit }}
+          command: ["livekit-server", "--bind", "0.0.0.0", "--port", "7880"]
+          env:
+            - name: LIVEKIT_KEYS
+              value: "{{ .Values.secrets.livekitApiKey }}: {{ .Values.secrets.livekitApiSecret }}"
+          ports:
+            - containerPort: 7880
+            - containerPort: 7881
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit
+spec:
+  ports:
+    - name: http
+      port: 7880
+    - name: turn
+      port: 7881
+  selector:
+    app: livekit
+---
+# LibreTranslate
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: libretranslate
+  labels:
+    app: libretranslate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: libretranslate
+  template:
+    metadata:
+      labels:
+        app: libretranslate
+    spec:
+      containers:
+        - name: libretranslate
+          image: {{ .Values.images.libretranslate }}
+          env:
+            - name: LT_LOAD_ONLY
+              value: "ar,en,fr,tr"
+            - name: LT_UPDATE_MODELS
+              value: "false"
+          ports:
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: libretranslate
+spec:
+  ports:
+    - port: 5000
+  selector:
+    app: libretranslate
+---
+# Backend API
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: {{ .Values.images.backend }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: qablny-secrets
+                  key: dbConnectionString
+            - name: ConnectionStrings__Redis
+              value: "redis:6379"
+            - name: Jwt__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: qablny-secrets
+                  key: jwtSecret
+            - name: Jwt__Issuer
+              value: qablny-api
+            - name: Jwt__Audience
+              value: qablny-app
+            - name: Jwt__ExpiryMinutes
+              value: "60"
+            - name: LiveKit__ApiKey
+              valueFrom:
+                secretKeyRef:
+                  name: qablny-secrets
+                  key: livekitApiKey
+            - name: LiveKit__ApiSecret
+              valueFrom:
+                secretKeyRef:
+                  name: qablny-secrets
+                  key: livekitApiSecret
+            - name: LiveKit__ServerUrl
+              value: "http://livekit:7880"
+            - name: LiveKit__PublicUrl
+              value: "wss://livekit.{{ .Values.domain }}"
+            - name: MinIO__Endpoint
+              value: "minio:9000"
+            - name: MinIO__AccessKey
+              valueFrom:
+                secretKeyRef:
+                  name: qablny-secrets
+                  key: minioAccessKey
+            - name: MinIO__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: qablny-secrets
+                  key: minioSecretKey
+            - name: MinIO__PublicUrl
+              value: "https://minio.{{ .Values.domain }}"
+            - name: LibreTranslate__BaseUrl
+              value: "http://libretranslate:5000"
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  ports:
+    - port: 8080
+  selector:
+    app: backend
+---
+# Frontend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: {{ .Values.images.frontend }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: frontend
+---
+# Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: qablny-secrets
+type: Opaque
+stringData:
+  postgresPassword: {{ .Values.secrets.postgresPassword }}
+  dbConnectionString: "Host=postgres;Database=qablny;Username=postgres;Password={{ .Values.secrets.postgresPassword }}"
+  jwtSecret: {{ .Values.secrets.jwtSecret }}
+  livekitApiKey: {{ .Values.secrets.livekitApiKey }}
+  livekitApiSecret: {{ .Values.secrets.livekitApiSecret }}
+  minioAccessKey: {{ .Values.secrets.minioAccessKey }}
+  minioSecretKey: {{ .Values.secrets.minioSecretKey }}
+---
+# Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qablny-ingress
+  annotations:
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    - hosts:
+        - {{ .Values.domain }}
+        - api.{{ .Values.domain }}
+        - minio.{{ .Values.domain }}
+        - livekit.{{ .Values.domain }}
+      secretName: qablny-tls
+  rules:
+    - host: {{ .Values.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+    - host: api.{{ .Values.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+    - host: minio.{{ .Values.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9001
