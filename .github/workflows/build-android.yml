@@ -1,0 +1,58 @@
+name: Build Android Local (EAS)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: 🏗 Setup Java (Required for Android Build)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: 🏗 Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        working-directory: ./app
+        run: npm install --legacy-peer-deps
+
+      - name: 📝 Auto-increment version
+        working-directory: ./app
+        run: |
+          jq ".expo.version = \"1.0.${{ github.run_number }}\" | .expo.android.versionCode = ${{ github.run_number }}" app.json > app_tmp.json && mv app_tmp.json app.json
+          echo "App version set to 1.0.${{ github.run_number }}"
+
+      - name: 🚀 Build Android locally inside GitHub Action
+        working-directory: ./app
+        run: eas build --platform android --profile preview --local --non-interactive
+
+      - name: 📦 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Release v1.0.${{ github.run_number }}
+          files: ./app/build/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
