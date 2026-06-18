@@ -9,6 +9,7 @@ namespace Qablny.Controllers;
 
 // ─── Base ─────────────────────────────────────────────────────────────────────
 [ApiController]
+[Area("api")]
 public abstract class BaseController : ControllerBase
 {
     protected Guid UserId =>

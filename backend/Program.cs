@@ -107,8 +107,9 @@ builder.Services.AddHttpClient<PushNotificationService>();
 // Background matching service
 builder.Services.AddHostedService<MatchingBackgroundService>();
 
-// ── Controllers & OpenAPI ─────────────────────────────────────────────────────
-builder.Services.AddControllers();
+// ── Controllers, Razor Pages & OpenAPI ────────────────────────────────────────
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
@@ -139,10 +140,12 @@ app.MapScalarApiReference(opts =>
     opts.WithTitle("Qablny API");
 });
 
+app.UseStaticFiles();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapRazorPages();
 
 // ── SignalR Hubs ──────────────────────────────────────────────────────────────
 app.MapHub<ChatHub>("/hubs/chat");

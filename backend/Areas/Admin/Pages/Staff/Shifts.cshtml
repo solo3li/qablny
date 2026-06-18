@@ -1,0 +1,61 @@
+@page
+@model Qablny.Areas.Admin.Pages.Staff.ShiftsModel
+@{
+    ViewData["Title"] = "إدارة الورديات";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">إدارة الموظفين والورديات</h1>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-16">
+        <div class="bx--data-table-container">
+            <div class="bx--data-table-header">
+                <h4 class="bx--data-table-header__title">الورديات الحالية</h4>
+                <p class="bx--data-table-header__description">مراقبة الموظفين المتصلين وإدارة مهامهم.</p>
+            </div>
+            <table class="bx--data-table bx--data-table--sort">
+                <thead>
+                    <tr>
+                        <th><span class="bx--table-header-label">اسم الموظف</span></th>
+                        <th><span class="bx--table-header-label">الدور (Role)</span></th>
+                        <th><span class="bx--table-header-label">وقت الوردية</span></th>
+                        <th><span class="bx--table-header-label">الحالة</span></th>
+                        <th><span class="bx--table-header-label">الإجراءات</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var shift in Model.Shifts)
+                    {
+                        <tr>
+                            <td>@shift.EmployeeName</td>
+                            <td>@shift.Role</td>
+                            <td>@shift.ShiftTime</td>
+                            <td>
+                                @if(shift.Status == "نشط") {
+                                    <span style="color: #24a148; font-weight: bold;">@shift.Status</span>
+                                } else {
+                                    <span style="color: #da1e28;">@shift.Status</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="bx--btn bx--btn--sm bx--btn--ghost">سجل النشاط</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="bx--row" style="margin-top: 2rem;">
+    <div class="bx--col-lg-16">
+        <button class="bx--btn bx--btn--primary" hx-get="/Admin/Staff/Shifts" hx-swap="outerHTML" hx-target="#main-content">
+            تحديث القائمة (HTMX)
+        </button>
+    </div>
+</div>

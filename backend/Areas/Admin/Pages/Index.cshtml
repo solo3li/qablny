@@ -1,0 +1,46 @@
+@page
+@model Qablny.Areas.Admin.Pages.IndexModel
+@{
+    ViewData["Title"] = "الرئيسية";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">لوحة القيادة (Dashboard)</h1>
+    </div>
+</div>
+
+<div class="bx--row" style="margin-bottom: 2rem;">
+    <div class="bx--col-md-3">
+        <div class="bx--tile">
+            <h4 class="bx--type-productive-heading-02">المستخدمين</h4>
+            <p class="bx--type-fluid-heading-04">@Model.TotalUsers</p>
+        </div>
+    </div>
+    <div class="bx--col-md-3">
+        <div class="bx--tile">
+            <h4 class="bx--type-productive-heading-02">المطابقات النشطة</h4>
+            <p class="bx--type-fluid-heading-04">@Model.ActiveMatches</p>
+        </div>
+    </div>
+    <div class="bx--col-md-3">
+        <div class="bx--tile">
+            <h4 class="bx--type-productive-heading-02">الأرباح اليومية</h4>
+            <p class="bx--type-fluid-heading-04">$@Model.DailyRevenue</p>
+        </div>
+    </div>
+    <div class="bx--col-md-3">
+        <div class="bx--tile">
+            <h4 class="bx--type-productive-heading-02">البلاغات المفتوحة</h4>
+            <p class="bx--type-fluid-heading-04" style="color: #da1e28;">@Model.OpenReports</p>
+        </div>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-16">
+        <button class="bx--btn bx--btn--primary" hx-get="/Admin?handler=Refresh" hx-swap="outerHTML" hx-target="#main-content">
+            تحديث البيانات (HTMX)
+        </button>
+    </div>
+</div>

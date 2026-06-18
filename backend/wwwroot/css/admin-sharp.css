@@ -1,0 +1,44 @@
+/* Custom Sharp UI for Admin Panel */
+body {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    background-color: #f4f4f4;
+}
+
+/* Force sharp borders everywhere */
+* {
+    border-radius: 0 !important;
+}
+
+/* Customize Data Table to look sharper */
+.bx--data-table-container {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
+}
+
+.bx--data-table th, .bx--data-table td {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Sharp Tiles */
+.bx--tile {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s ease-in-out;
+}
+
+.bx--tile:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+/* Header */
+.bx--header {
+    background-color: #161616;
+    border-bottom: 1px solid #393939;
+}
+
+/* HTMX Indicator (optional styling for loading states) */
+.htmx-request {
+    opacity: 0.5;
+    transition: opacity 200ms ease-in;
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Qablny Admin</title>
+    
+    <!-- IBM Plex Sans Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Carbon Components CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/carbon-components/css/carbon-components.min.css" />
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Custom Sharp UI CSS -->
+    <link rel="stylesheet" href="~/css/admin-sharp.css" asp-append-version="true" />
+</head>
+<body class="bx--body htmx-added">
+    
+    <header class="bx--header" role="banner" aria-label="Qablny Admin">
+        <a class="bx--header__name" href="/Admin" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML">
+            <span class="bx--header__name--prefix">Qablny</span>
+            &nbsp;Admin Panel
+        </a>
+    </header>
+
+    <aside class="bx--side-nav bx--side-nav--expanded" aria-label="Side navigation" style="top: 3rem;">
+        <nav class="bx--side-nav__navigation" aria-label="Side navigation">
+            <ul class="bx--side-nav__items">
+                <li class="bx--side-nav__item">
+                    <a class="bx--side-nav__link" href="/Admin" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML">
+                        <span class="bx--side-nav__link-text">الرئيسية (Dashboard)</span>
+                    </a>
+                </li>
+                <li class="bx--side-nav__item">
+                    <a class="bx--side-nav__link" href="/Admin/Staff/Shifts" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML">
+                        <span class="bx--side-nav__link-text">إدارة الموظفين والورديات</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="bx--content" id="main-content" style="padding-top: 5rem; padding-right: 16rem; padding-left: 2rem;">
+        <div class="bx--grid">
+            @RenderBody()
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/carbon-components/scripts/carbon-components.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
