@@ -1,0 +1,12 @@
+nohup: ignoring input
+[90mStarting project at /root/qablny/qablny/app[39m
+[2mStarting Metro Bundler[22m
+[33mwarning[39m: Bundler cache is empty, rebuilding [2m(this may take a minute)[22m
+Tunnel connected.
+Tunnel ready.
+[33mThe following packages should be updated for best compatibility with the installed [1mexpo[22m version:[39m
+[33m  [1m@react-native-async-storage/async-storage[22m[36m@[39m[33m[31m3.1.1[39m[33m - expected version: [32m2.2.0[39m[33m[39m
+[33m  [1m@types/react[22m[36m@[39m[33m[31m18.2.79[39m[33m - expected version: [32m~19.1.10[39m[33m[39m
+[33mYour project may not work correctly until you install the expected versions of the packages.[39m
+Waiting on [4mhttp://localhost:8081[24m
+Logs for your project will appear below.
