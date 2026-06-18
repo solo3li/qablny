@@ -423,7 +423,7 @@ spec:
               service:
                 name: minio
                 port:
-                  number: 9001
+                  number: 9000
     - host: livekit.{{ .Values.domain }}
       http:
         paths:
