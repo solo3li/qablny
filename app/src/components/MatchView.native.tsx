@@ -13,7 +13,7 @@ import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks, TrackReference }
 import { Track } from 'livekit-client';
 
 // The URL for the LiveKit Server (must match backend)
-const LIVEKIT_URL = 'ws://10.0.2.2:7880';
+const LIVEKIT_URL = 'wss://livekit.178.62.192.74.nip.io';
 
 // A sub-component to render the remote video track
 function RemoteVideo() {
