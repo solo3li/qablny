@@ -1,0 +1,31 @@
+@page
+@model Qablny.Areas.Admin.Pages.System.UpdatesModel
+@{
+    ViewData["Title"] = "إجبار التحديث";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">إجبار التحديث (Force Update)</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إجبار المستخدمين على تحديث التطبيق من خلال وضع رقم الإصدار الأدنى المقبول في اللوحة.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-md-6">
+        <form hx-post="/Admin/System/Updates?handler=Save" hx-target="#main-content" hx-swap="outerHTML">
+            
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label class="bx--label">الحد الأدنى لإصدار iOS</label>
+                <input type="text" class="bx--text-input" name="MinVersionIOS" value="@Model.MinVersionIOS" placeholder="مثال: 1.0.5">
+            </div>
+
+            <div class="bx--form-item" style="margin-bottom: 2rem;">
+                <label class="bx--label">الحد الأدنى لإصدار Android</label>
+                <input type="text" class="bx--text-input" name="MinVersionAndroid" value="@Model.MinVersionAndroid" placeholder="مثال: 1.0.5">
+            </div>
+
+            <button class="bx--btn bx--btn--primary" type="submit">حفظ التغييرات وإجبار التحديث للمخالفين</button>
+        </form>
+    </div>
+</div>

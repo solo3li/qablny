@@ -1,0 +1,44 @@
+@page
+@model Qablny.Areas.Admin.Pages.Users.ActivityModel
+@{
+    ViewData["Title"] = "سجل النشاط العام";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">سجل النشاط العام للمستخدمين</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">تتبع أحدث المطابقات العشوائية والأنشطة.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">تاريخ الجلسة</span></th>
+                    <th><span class="bx--table-header-label">الطرف الأول</span></th>
+                    <th><span class="bx--table-header-label">الطرف الثاني</span></th>
+                    <th><span class="bx--table-header-label">الحالة</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var session in Model.RecentMatches)
+                {
+                    <tr>
+                        <td>@session.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@(session.User1?.Name ?? "مجهول")</td>
+                        <td>@(session.User2?.Name ?? "مجهول")</td>
+                        <td>
+                            @if(session.EndedAt.HasValue) {
+                                <span style="color: #525252;">انتهت</span>
+                            } else {
+                                <span style="color: #24a148; font-weight:bold;">جارية الآن</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

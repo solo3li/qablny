@@ -1,0 +1,31 @@
+@page
+@model Qablny.Areas.Admin.Pages.Communications.GlobalModel
+@{
+    ViewData["Title"] = "إشعارات عامة";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">إرسال إشعارات للجميع (Global Push)</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إرسال إشعار (Push Notification) لجميع المستخدمين المسجلين في التطبيق عبر Firebase.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-md-6">
+        <form hx-post="/Admin/Communications/Global?handler=Send" hx-target="#main-content" hx-swap="outerHTML">
+            
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label class="bx--label">عنوان الإشعار (Title)</label>
+                <input type="text" class="bx--text-input" name="Title" placeholder="مثال: تحديث جديد متوفر!" required>
+            </div>
+
+            <div class="bx--form-item" style="margin-bottom: 2rem;">
+                <label class="bx--label">نص الإشعار (Body)</label>
+                <textarea class="bx--text-area" name="Body" rows="4" placeholder="اكتب تفاصيل الإشعار هنا..." required></textarea>
+            </div>
+
+            <button class="bx--btn bx--btn--primary" type="submit">إرسال الإشعار الآن</button>
+        </form>
+    </div>
+</div>

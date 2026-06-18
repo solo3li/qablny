@@ -1,0 +1,41 @@
+@page
+@model Qablny.Areas.Admin.Pages.Staff.AuditLogsModel
+@{
+    ViewData["Title"] = "سجلات المراقبة";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">سجلات المراقبة (Audit Logs)</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">تتبع أفعال كل موظف في اللوحة، ماذا حذف؟ وماذا عدّل؟ متى؟ (تفيد في كشف التلاعب).</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">التاريخ والوقت</span></th>
+                    <th><span class="bx--table-header-label">الموظف</span></th>
+                    <th><span class="bx--table-header-label">الإجراء (Action)</span></th>
+                    <th><span class="bx--table-header-label">التفاصيل</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(!Model.Logs.Any()) {
+                    <tr><td colspan="5" style="text-align: center;">لا يوجد سجلات حالياً.</td></tr>
+                }
+                @foreach(var log in Model.Logs)
+                {
+                    <tr>
+                        <td>@log.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td style="font-weight:bold;">@(log.AdminUser?.Username ?? "النظام")</td>
+                        <td>@log.Action</td>
+                        <td style="font-size: 0.8rem;">@log.Details</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

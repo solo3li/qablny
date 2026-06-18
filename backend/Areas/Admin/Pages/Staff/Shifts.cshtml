@@ -28,17 +28,20 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @if(!Model.Shifts.Any()) {
+                        <tr><td colspan="5" style="text-align: center;">لا يوجد ورديات مسجلة.</td></tr>
+                    }
                     @foreach (var shift in Model.Shifts)
                     {
                         <tr>
-                            <td>@shift.EmployeeName</td>
-                            <td>@shift.Role</td>
-                            <td>@shift.ShiftTime</td>
+                            <td>@(shift.AdminUser?.Username ?? "محذوف")</td>
+                            <td>@(shift.AdminUser?.Role.ToString() ?? "N/A")</td>
+                            <td>@shift.StartTime.ToString("HH:mm") - @(shift.EndTime?.ToString("HH:mm") ?? "مستمر")</td>
                             <td>
-                                @if(shift.Status == "نشط") {
-                                    <span style="color: #24a148; font-weight: bold;">@shift.Status</span>
+                                @if(shift.EndTime == null) {
+                                    <span style="color: #24a148; font-weight: bold;">نشط الآن</span>
                                 } else {
-                                    <span style="color: #da1e28;">@shift.Status</span>
+                                    <span style="color: #525252;">منتهي</span>
                                 }
                             </td>
                             <td>

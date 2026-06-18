@@ -215,7 +215,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 PasswordHash = "$2a$11$9/0g/H4eEOf2h7W/P1lM/OWGvG6H/5f4wE8E9E3L3V7Z6u7V/u1L2", 
                 FullName = "مدير النظام",
                 Role = AdminRole.SuperAdmin,
-                IsActive = true
+                IsActive = true,
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         );
 

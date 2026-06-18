@@ -1,0 +1,32 @@
+@page
+@model Qablny.Areas.Admin.Pages.Matchmaking.FilterPricingModel
+@{
+    ViewData["Title"] = "تسعير الفلاتر";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">تسعير الفلاتر (Filter Pricing)</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">تحديد تكلفة استخدام الفلاتر (مثل اختيار الجنس أو الدولة) بالعملات للمستخدمين العاديين.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-md-6">
+        <form hx-post="/Admin/Matchmaking/FilterPricing?handler=Save" hx-target="#main-content" hx-swap="outerHTML">
+            
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label class="bx--label">تكلفة فلتر الجنس (عملات)</label>
+                <input type="number" class="bx--text-input" name="GenderFilterCost" value="@Model.GenderFilterCost" min="0">
+            </div>
+
+            <div class="bx--form-item" style="margin-bottom: 2rem;">
+                <label class="bx--label">تكلفة فلتر الدولة/المنطقة (عملات)</label>
+                <input type="number" class="bx--text-input" name="LocationFilterCost" value="@Model.LocationFilterCost" min="0">
+            </div>
+
+            <button class="bx--btn bx--btn--primary" type="submit">تحديث الأسعار</button>
+            <p style="margin-top: 1rem; color: #525252; font-size: 0.8rem;">ملاحظة: مشتركي الـ VIP يمكنهم استخدام هذه الفلاتر مجاناً.</p>
+        </form>
+    </div>
+</div>

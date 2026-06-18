@@ -1,0 +1,36 @@
+@page
+@model Qablny.Areas.Admin.Pages.Moderation.BlacklistModel
+@{
+    ViewData["Title"] = "الكلمات المحظورة";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">الكلمات المحظورة (Blacklist)</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إضافة كلمات مسيئة ليقوم النظام بحجبها تلقائياً من الدردشة النصية.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-md-6">
+        <form hx-post="/Admin/Moderation/Blacklist?handler=Add" hx-target="#main-content" hx-swap="outerHTML" style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+            <div class="bx--form-item" style="flex: 1;">
+                <input type="text" class="bx--text-input" name="NewWord" placeholder="أدخل كلمة جديدة للحظر..." required>
+            </div>
+            <button class="bx--btn bx--btn--primary" type="submit">إضافة</button>
+        </form>
+
+        <ul class="bx--list--unordered">
+            @if(!Model.Words.Any()) {
+                <li class="bx--list__item" style="color: #525252;">لا توجد كلمات محظورة حالياً.</li>
+            }
+            @foreach(var word in Model.Words)
+            {
+                <li class="bx--list__item" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: #f4f4f4;">
+                    <span style="font-weight: bold;">@word</span>
+                    <button class="bx--btn bx--btn--sm bx--btn--danger--ghost" style="padding: 0 0.5rem;">حذف</button>
+                </li>
+            }
+        </ul>
+    </div>
+</div>

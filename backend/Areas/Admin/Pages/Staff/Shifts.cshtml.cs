@@ -1,27 +1,20 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using Qablny.Data;
+using Qablny.Entities;
 
 namespace Qablny.Areas.Admin.Pages.Staff;
 
-public class ShiftDto
+public class ShiftsModel(AppDbContext db) : PageModel
 {
-    public string EmployeeName { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
-    public string ShiftTime { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-}
+    public List<StaffShift> Shifts { get; set; } = [];
 
-public class ShiftsModel : PageModel
-{
-    public List<ShiftDto> Shifts { get; set; } = new();
-
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        Shifts = new List<ShiftDto>
-        {
-            new ShiftDto { EmployeeName = "أحمد خالد", Role = "مشرف وردية", ShiftTime = "08:00 AM - 04:00 PM", Status = "نشط" },
-            new ShiftDto { EmployeeName = "سارة محمد", Role = "مراقب محتوى", ShiftTime = "08:00 AM - 04:00 PM", Status = "نشط" },
-            new ShiftDto { EmployeeName = "خالد حسن", Role = "دعم فني", ShiftTime = "04:00 PM - 12:00 AM", Status = "غير متصل" }
-        };
+        Shifts = await db.StaffShifts
+            .Include(s => s.AdminUser)
+            .OrderByDescending(s => s.StartTime)
+            .Take(50)
+            .ToListAsync();
     }
 }

@@ -1,0 +1,56 @@
+@page
+@model Qablny.Areas.Admin.Pages.Users.DatabaseModel
+@{
+    ViewData["Title"] = "قاعدة بيانات المستخدمين";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">قاعدة بيانات المستخدمين</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">عرض قائمة بكل المستخدمين مع إمكانية البحث المتقدم (بالاسم، البريد الإلكتروني).</p>
+        
+        <form hx-get="/Admin/Users/Database" hx-target="#main-content" hx-swap="outerHTML" style="margin-bottom: 2rem; max-width: 400px; display: flex; gap: 1rem;">
+            <div class="bx--form-item" style="flex: 1;">
+                <input type="text" class="bx--text-input" name="SearchTerm" value="@Model.SearchTerm" placeholder="ابحث بالاسم أو البريد...">
+            </div>
+            <button class="bx--btn bx--btn--primary" type="submit">بحث</button>
+        </form>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">المعرف</span></th>
+                    <th><span class="bx--table-header-label">الاسم</span></th>
+                    <th><span class="bx--table-header-label">البريد الإلكتروني</span></th>
+                    <th><span class="bx--table-header-label">الجنس</span></th>
+                    <th><span class="bx--table-header-label">VIP</span></th>
+                    <th><span class="bx--table-header-label">تاريخ التسجيل</span></th>
+                    <th><span class="bx--table-header-label">إجراءات</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(!Model.AppUsers.Any()) {
+                    <tr><td colspan="7" style="text-align: center;">لا يوجد مستخدمين.</td></tr>
+                }
+                @foreach(var user in Model.AppUsers)
+                {
+                    <tr>
+                        <td style="font-size: 0.8rem; color: #525252;">@user.Id.ToString()[..8]</td>
+                        <td style="font-weight:bold;">@user.Name</td>
+                        <td>@user.Email</td>
+                        <td>@user.Gender</td>
+                        <td>@(user.IsVip ? "⭐ نعم" : "لا")</td>
+                        <td>@user.JoinedAt.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <a href="/Admin/Users/Profiles?id=@user.Id" class="bx--btn bx--btn--sm bx--btn--ghost" hx-boost="true" hx-target="#main-content" hx-swap="outerHTML">الملف</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,45 @@
+@page
+@model Qablny.Areas.Admin.Pages.Moderation.PenaltiesModel
+@{
+    ViewData["Title"] = "لوحة العقوبات";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">لوحة العقوبات والحظر</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">قائمة بالمستخدمين الذين تم حظرهم من التطبيق بسبب مخالفة الشروط.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">المعرف</span></th>
+                    <th><span class="bx--table-header-label">الاسم</span></th>
+                    <th><span class="bx--table-header-label">البريد الإلكتروني</span></th>
+                    <th><span class="bx--table-header-label">الحالة</span></th>
+                    <th><span class="bx--table-header-label">إجراءات</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(!Model.BlockedUsers.Any()) {
+                    <tr><td colspan="5" style="text-align: center;">لا يوجد مستخدمين محظورين.</td></tr>
+                }
+                @foreach(var user in Model.BlockedUsers)
+                {
+                    <tr>
+                        <td style="font-size: 0.8rem; color: #525252;">@user.Id.ToString()[..8]</td>
+                        <td style="font-weight:bold;">@user.Name</td>
+                        <td>@user.Email</td>
+                        <td><span style="color: #da1e28; font-weight:bold;">محظور نهائياً</span></td>
+                        <td>
+                            <button class="bx--btn bx--btn--sm bx--btn--primary">إلغاء الحظر (Unban)</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

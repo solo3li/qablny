@@ -1,0 +1,41 @@
+@page
+@model Qablny.Areas.Admin.Pages.System.ApiKeysModel
+@{
+    ViewData["Title"] = "مفاتيح الـ APIs";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">مفاتيح وبروتوكولات الربط (API Keys)</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">مكان آمن لتغيير مفاتيح (LiveKit, MinIO, Firebase) دون الحاجة لإعادة كتابة الأكواد المرجعية.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-md-6">
+        <form hx-post="/Admin/System/ApiKeys?handler=Save" hx-target="#main-content" hx-swap="outerHTML">
+            
+            <h4 class="bx--type-productive-heading-02" style="margin-bottom: 1rem;">خوادم LiveKit (WebRTC)</h4>
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label class="bx--label">LiveKit URL</label>
+                <input type="text" class="bx--text-input" value="ws://178.62.192.74:7880">
+            </div>
+            <div class="bx--form-item" style="margin-bottom: 2rem;">
+                <label class="bx--label">API Key / Secret</label>
+                <input type="password" class="bx--text-input" value="******************">
+            </div>
+
+            <h4 class="bx--type-productive-heading-02" style="margin-bottom: 1rem;">خوادم MinIO (التخزين)</h4>
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label class="bx--label">MinIO Endpoint</label>
+                <input type="text" class="bx--text-input" value="http://minio:9000">
+            </div>
+            <div class="bx--form-item" style="margin-bottom: 2rem;">
+                <label class="bx--label">Access Key / Secret</label>
+                <input type="password" class="bx--text-input" value="******************">
+            </div>
+
+            <button class="bx--btn bx--btn--primary" type="submit">حفظ التغييرات</button>
+        </form>
+    </div>
+</div>

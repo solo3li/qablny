@@ -1,0 +1,46 @@
+@page
+@model Qablny.Areas.Admin.Pages.Users.ProfilesModel
+@{
+    ViewData["Title"] = "الملف الشخصي";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">التحكم بالملف الشخصي</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">تعديل بيانات المستخدم، إخفاء الصور المخالفة، أو حذف الحساب.</p>
+        
+        <form hx-get="/Admin/Users/Profiles" hx-target="#main-content" hx-swap="outerHTML" style="margin-bottom: 2rem; max-width: 400px; display: flex; gap: 1rem;">
+            <div class="bx--form-item" style="flex: 1;">
+                <input type="text" class="bx--text-input" name="Id" value="@Model.Id" placeholder="أدخل معرف المستخدم (ID)...">
+            </div>
+            <button class="bx--btn bx--btn--primary" type="submit">بحث</button>
+        </form>
+    </div>
+</div>
+
+@if(Model.AppUser != null)
+{
+    <div class="bx--row">
+        <div class="bx--col-md-4">
+            <div class="bx--tile">
+                <h3 class="bx--type-productive-heading-03">بيانات المستخدم</h3>
+                <br />
+                <p><strong>الاسم:</strong> @Model.AppUser.Name</p>
+                <p><strong>البريد:</strong> @Model.AppUser.Email</p>
+                <p><strong>الجنس:</strong> @Model.AppUser.Gender</p>
+                <p><strong>الرصيد:</strong> @Model.AppUser.Coins عملة</p>
+                <p><strong>حالة VIP:</strong> @(Model.AppUser.IsVip ? "نشط" : "لا")</p>
+                <br />
+                <button class="bx--btn bx--btn--danger">حظر المستخدم</button>
+            </div>
+        </div>
+    </div>
+}
+else if (Model.Id.HasValue)
+{
+    <div class="bx--row">
+        <div class="bx--col-lg-12">
+            <p style="color: #da1e28;">لم يتم العثور على مستخدم بهذا المعرف.</p>
+        </div>
+    </div>
+}

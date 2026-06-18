@@ -1,0 +1,46 @@
+@page
+@model Qablny.Areas.Admin.Pages.Moderation.ReportsModel
+@{
+    ViewData["Title"] = "مركز البلاغات";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">مركز البلاغات (Report Center)</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">شاشة تستقبل بلاغات المستخدمين ضد بعضهم لاتخاذ الإجراء المناسب.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">تاريخ البلاغ</span></th>
+                    <th><span class="bx--table-header-label">المُبَلِّغ (الضحية)</span></th>
+                    <th><span class="bx--table-header-label">المُبَلَّغ عنه (المخالف)</span></th>
+                    <th><span class="bx--table-header-label">السبب</span></th>
+                    <th><span class="bx--table-header-label">إجراءات</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(!Model.ActiveReports.Any()) {
+                    <tr><td colspan="5" style="text-align: center;">لا يوجد بلاغات معلقة.</td></tr>
+                }
+                @foreach(var report in Model.ActiveReports)
+                {
+                    <tr>
+                        <td>@report.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td><a href="/Admin/Users/Profiles?id=@report.ReporterId">@report.Reporter?.Name</a></td>
+                        <td><a href="/Admin/Users/Profiles?id=@report.ReportedUserId" style="color: #da1e28;">@report.ReportedUser?.Name</a></td>
+                        <td style="font-weight:bold;">@report.Reason</td>
+                        <td>
+                            <button class="bx--btn bx--btn--sm bx--btn--danger">حظر المخالف</button>
+                            <button class="bx--btn bx--btn--sm bx--btn--ghost">تجاهل البلاغ</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

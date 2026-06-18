@@ -1,0 +1,46 @@
+@page
+@model Qablny.Areas.Admin.Pages.Users.BalancesModel
+@{
+    ViewData["Title"] = "التحكم بالأرصدة";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">التحكم بأرصدة المستخدمين</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">شحن رصيد مستخدم مجاناً كتعويض، أو خصم عملات في حالات الاحتيال.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-md-6">
+        <form hx-post="/Admin/Users/Balances?handler=Update" hx-target="#main-content" hx-swap="outerHTML">
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label for="userId" class="bx--label">معرف المستخدم (User ID)</label>
+                <input id="userId" type="text" class="bx--text-input" name="UserId" required>
+            </div>
+            
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label for="action" class="bx--label">نوع العملية</label>
+                <div class="bx--select">
+                    <select id="action" class="bx--select-input" name="ActionType">
+                        <option class="bx--select-option" value="add">إضافة رصيد (+)</option>
+                        <option class="bx--select-option" value="deduct">خصم رصيد (-)</option>
+                    </select>
+                    <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" class="bx--select__arrow"><path d="M8 11L3 6 3.7 5.3 8 9.6 12.3 5.3 13 6z"></path></svg>
+                </div>
+            </div>
+
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label for="amount" class="bx--label">المبلغ (عملات)</label>
+                <input id="amount" type="number" class="bx--text-input" name="Amount" min="1" required>
+            </div>
+
+            <div class="bx--form-item" style="margin-bottom: 2rem;">
+                <label for="reason" class="bx--label">السبب (للتدقيق)</label>
+                <input id="reason" type="text" class="bx--text-input" name="Reason" placeholder="مثال: تعويض عن انقطاع مكالمة..." required>
+            </div>
+
+            <button class="bx--btn bx--btn--primary" type="submit">تطبيق العملية</button>
+        </form>
+    </div>
+</div>

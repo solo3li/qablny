@@ -1,0 +1,36 @@
+@page
+@model Qablny.Areas.Admin.Pages.System.MaintenanceModel
+@{
+    ViewData["Title"] = "وضع الصيانة";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">وضع الصيانة (Maintenance Mode)</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إغلاق التطبيق وإظهار رسالة "جاري إجراء صيانة" للمستخدمين، مفيد جداً أثناء تحديث السيرفرات.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-md-6">
+        <div class="bx--tile">
+            <h4 class="bx--type-productive-heading-02" style="margin-bottom: 1rem;">حالة النظام الحالية</h4>
+            
+            <p style="font-size: 1.2rem; font-weight: bold; margin-bottom: 2rem;">
+                @if(Model.IsMaintenanceMode) {
+                    <span style="color: #da1e28;">متوقف للصيانة 🛑</span>
+                } else {
+                    <span style="color: #24a148;">متاح للجميع ✅</span>
+                }
+            </p>
+
+            <form hx-post="/Admin/System/Maintenance?handler=Toggle" hx-target="#main-content" hx-swap="outerHTML">
+                @if(Model.IsMaintenanceMode) {
+                    <button class="bx--btn bx--btn--primary" type="submit">تعطيل وضع الصيانة</button>
+                } else {
+                    <button class="bx--btn bx--btn--danger" type="submit">تفعيل وضع الصيانة</button>
+                }
+            </form>
+        </div>
+    </div>
+</div>

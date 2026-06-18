@@ -1,0 +1,52 @@
+@page
+@model Qablny.Areas.Admin.Pages.Communications.BannersModel
+@{
+    ViewData["Title"] = "البنرات الإعلانية";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">إدارة البنرات الإعلانية</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إضافة وإدارة البنرات التي تظهر في الواجهة الرئيسية للمستخدمين.</p>
+        <button class="bx--btn bx--btn--primary" style="margin-bottom: 1rem;">إضافة بنر جديد +</button>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">الصورة</span></th>
+                    <th><span class="bx--table-header-label">الرابط المرفق (Link)</span></th>
+                    <th><span class="bx--table-header-label">الحالة</span></th>
+                    <th><span class="bx--table-header-label">تاريخ الإنشاء</span></th>
+                    <th><span class="bx--table-header-label">إجراءات</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(!Model.Banners.Any()) {
+                    <tr><td colspan="5" style="text-align: center;">لا يوجد بنرات حالياً.</td></tr>
+                }
+                @foreach(var banner in Model.Banners)
+                {
+                    <tr>
+                        <td><img src="@banner.ImageUrl" alt="Banner" style="height: 40px; border-radius: 4px;" /></td>
+                        <td>@(string.IsNullOrEmpty(banner.LinkUrl) ? "لا يوجد" : banner.LinkUrl)</td>
+                        <td>
+                            @if(banner.IsActive) {
+                                <span style="color: #24a148; font-weight:bold;">نشط</span>
+                            } else {
+                                <span style="color: #da1e28;">متوقف</span>
+                            }
+                        </td>
+                        <td>@banner.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <button class="bx--btn bx--btn--sm bx--btn--ghost">تعديل</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
