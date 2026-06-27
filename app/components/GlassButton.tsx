@@ -1,82 +1,95 @@
 import React from 'react';
-import { Text, StyleSheet, TouchableOpacity, TouchableOpacityProps, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps, ActivityIndicator, Platform, View } from 'react-native';
 import { Colors } from '../constants/Colors';
 
-interface GlassButtonProps extends TouchableOpacityProps {
+interface Props extends TouchableOpacityProps {
   title?: string;
+  loading?: boolean;
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
   icon?: React.ReactNode;
-  variant?: 'primary' | 'danger' | 'ghost' | 'gold' | 'secondary';
-  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
 }
 
-export const GlassButton: React.FC<GlassButtonProps> = ({
-  title, icon, variant = 'primary', size = 'md', style, ...props
-}) => {
-  const isPrimary = variant === 'primary' || variant === 'gold';
-  const isDanger = variant === 'danger';
-  const isGhost = variant === 'ghost';
-  const isSecondary = variant === 'secondary';
+export function GlassButton({ title, loading, variant = 'primary', icon, style, disabled, ...props }: Props) {
   
-  const bgColor = isPrimary ? Colors.primary : 
-                   isDanger ? Colors.danger : 
-                   isSecondary ? Colors.secondary :
-                   Colors.surface;
-                   
-  const textColor = isGhost ? Colors.text : 
-                    isPrimary || isSecondary || isDanger ? '#FFFFFF' : Colors.text;
+  const getBgColor = () => {
+    if (disabled) return Colors.glassBorder;
+    switch (variant) {
+      case 'primary': return Colors.primary;
+      case 'secondary': return Colors.secondary;
+      case 'danger': return Colors.danger;
+      case 'outline': return Colors.bgDeep;
+      default: return Colors.primary;
+    }
+  };
 
-  const pad = { sm: { v: 10, h: 16 }, md: { v: 14, h: 24 }, lg: { v: 18, h: 32 } }[size];
-  const fontSize = { sm: 14, md: 16, lg: 18 }[size];
+  const getTextColor = () => {
+    if (disabled) return Colors.textMuted;
+    if (variant === 'outline') return Colors.text;
+    return '#FFFFFF';
+  };
 
-  if (isGhost) {
-    return (
-      <TouchableOpacity activeOpacity={0.6} style={[styles.ghostBtn, { paddingVertical: pad.v, paddingHorizontal: pad.h }, style]} {...props}>
-        <View style={styles.inner}>
-          {icon && <View style={title ? styles.iconWithText : null}>{icon}</View>}
-          {title && <Text style={[styles.text, { color: textColor, fontSize }]}>{title}</Text>}
-        </View>
-      </TouchableOpacity>
-    );
-  }
+  const shadowColor = disabled ? 'transparent' : getBgColor();
 
   return (
     <TouchableOpacity 
-      activeOpacity={0.8} 
+      activeOpacity={0.7} 
       style={[
-        styles.wrapper, 
-        { backgroundColor: bgColor, paddingVertical: pad.v, paddingHorizontal: pad.h }, 
+        styles.button, 
+        { backgroundColor: getBgColor() },
+        variant === 'outline' && { borderWidth: 2, borderColor: Colors.glassBorder },
+        Platform.OS === 'web' && variant !== 'outline' && !disabled ? { boxShadow: `0px 8px 16px -4px ${shadowColor}80, inset 0px 4px 8px rgba(255,255,255,0.4)` } as any : null,
         style
       ]} 
+      disabled={disabled || loading}
       {...props}
     >
-      <View style={styles.inner}>
-        {icon && <View style={title ? styles.iconWithText : null}>{icon}</View>}
-        {title && <Text style={[styles.text, { color: textColor, fontSize }]}>{title}</Text>}
+      <View style={styles.content}>
+        {loading ? (
+          <ActivityIndicator color={getTextColor()} />
+        ) : (
+          <>
+            {icon && <View style={styles.iconWrap}>{icon}</View>}
+            {title && <Text style={[styles.text, { color: getTextColor() }]}>{title}</Text>}
+          </>
+        )}
       </View>
     </TouchableOpacity>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  wrapper: {
-    borderRadius: 12,
-    alignItems: 'center',
+  button: {
+    height: 56,
+    borderRadius: 100, // Pill shape
+    overflow: 'hidden',
     justifyContent: 'center',
-    // Minimalist: No heavy shadows, flat design
-  },
-  ghostBtn: {
-    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.glassBorderBright,
-    backgroundColor: 'transparent',
+    paddingHorizontal: 24,
+    // Native shadow fallback
+    ...Platform.select({
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 4,
+      }
+    }),
   },
-  inner: {
+  content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
   },
-  iconWithText: { marginRight: 8 },
-  text: { fontWeight: '600', letterSpacing: 0.5 },
+  iconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
 });

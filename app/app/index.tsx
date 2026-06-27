@@ -6,13 +6,15 @@ import { useAuthStore } from '../src/store/authStore';
 
 export default function SplashScreen() {
   const { token, isLoading } = useAuthStore();
-  const scale = useRef(new Animated.Value(0.9)).current;
+  const scale = useRef(new Animated.Value(0.7)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(scale, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 50, friction: 6 }),
+        Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+      ])
     ]).start();
 
     const timer = setTimeout(() => {
@@ -41,17 +43,23 @@ export default function SplashScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: '10%', left: '-20%', backgroundColor: Colors.primaryDim }]} />
+      <View style={[styles.orb, { bottom: '5%', right: '-10%', backgroundColor: Colors.secondaryDim, width: 200, height: 200 }]} />
+
       <Animated.View style={[styles.logoWrap, { transform: [{ scale }], opacity }]}>
         <View style={styles.iconCircle}>
-          <Text style={styles.iconEmoji}>🕊️</Text>
+          <Text style={styles.iconEmoji}>💖</Text>
         </View>
 
         <Text style={styles.appName}>Qablny</Text>
-        <Text style={styles.tagline}>لقاءات مبنية على القيمة والجودة.</Text>
+        <Text style={styles.tagline}>صنع بحب، للقاءات لطيفة.</Text>
       </Animated.View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>الرجاء الانتظار...</Text>
+        <View style={[styles.dot, { backgroundColor: Colors.primary }]} />
+        <View style={[styles.dot, { backgroundColor: Colors.secondary }]} />
+        <View style={[styles.dot, { backgroundColor: Colors.cyan }]} />
       </View>
     </View>
   );
@@ -59,21 +67,25 @@ export default function SplashScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg },
+  orb: { position: 'absolute', width: 300, height: 300, borderRadius: 150 },
   logoWrap: { alignItems: 'center' },
   iconCircle: {
-    width: 90, height: 90, borderRadius: 45,
+    width: 100, height: 100, borderRadius: 50,
     backgroundColor: Colors.bgDeep,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 32,
-    borderWidth: 1, borderColor: Colors.glassBorder,
+    borderWidth: 1, borderColor: '#FFFFFF',
+    ...Platform.select({
+      web: { boxShadow: `0px 12px 24px -8px rgba(210, 195, 180, 0.5)` },
+      default: { shadowColor: '#D0C5B9', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.5, shadowRadius: 16, elevation: 8 }
+    })
   },
-  iconEmoji: { fontSize: 36 },
+  iconEmoji: { fontSize: 44 },
   appName: {
-    fontSize: 40, fontWeight: '300', color: Colors.text,
-    letterSpacing: 8, marginBottom: 16,
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'sans-serif-light',
+    fontSize: 42, fontWeight: '800', color: Colors.primary,
+    letterSpacing: 2, marginBottom: 16,
   },
-  tagline: { fontSize: 14, color: Colors.textSecondary, letterSpacing: 0.5, fontWeight: '400' },
-  footer: { position: 'absolute', bottom: 60, alignItems: 'center' },
-  footerText: { fontSize: 12, color: Colors.textMuted, letterSpacing: 1, textTransform: 'uppercase' },
+  tagline: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600' },
+  footer: { position: 'absolute', bottom: 60, flexDirection: 'row', gap: 10 },
+  dot: { width: 12, height: 12, borderRadius: 6, opacity: 0.8 },
 });

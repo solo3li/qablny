@@ -1,9 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Colors } from '../../constants/Colors';
-import { Video, Search, MessageCircle, User } from 'lucide-react-native';
-import { BlurView } from 'expo-blur';
-import { StyleSheet, View, Text } from 'react-native';
+import { Video, Search, MessageSquare, User } from 'lucide-react-native';
+import { StyleSheet, View, Text, Platform } from 'react-native';
 import { useAppStore } from '../../store/useAppStore';
 
 function TabIcon({ icon, focused }: { icon: React.ReactNode; focused: boolean }) {
@@ -23,13 +22,10 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: Colors.cyan,
+        tabBarActiveTintColor: Colors.secondary,
         tabBarInactiveTintColor: Colors.textMuted,
         tabBarShowLabel: true,
         tabBarLabelStyle: styles.tabLabel,
-        tabBarBackground: () => (
-          <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFillObject} />
-        ),
       }}>
       <Tabs.Screen
         name="index"
@@ -55,7 +51,7 @@ export default function TabLayout() {
           title: 'رسائل',
           tabBarIcon: ({ color, focused }) => (
             <View>
-              <TabIcon focused={focused} icon={<MessageCircle color={color} size={22} />} />
+              <TabIcon focused={focused} icon={<MessageSquare color={color} size={22} />} />
               {totalUnread > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{totalUnread > 9 ? '9+' : totalUnread}</Text>
@@ -81,33 +77,47 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    borderTopWidth: 1,
-    borderTopColor: Colors.glassBorder,
-    elevation: 0,
-    backgroundColor: 'transparent',
+    bottom: 24,
+    marginHorizontal: 24,
     height: 72,
-    paddingBottom: 12,
+    borderRadius: 100,
+    backgroundColor: Colors.bgDeep,
+    borderTopWidth: 0,
+    paddingBottom: 0,
+    // Claymorphism shadow effect
+    ...Platform.select({
+      web: {
+        boxShadow: `0px 12px 24px -8px rgba(210, 195, 180, 0.4)`,
+      },
+      default: {
+        shadowColor: '#D0C5B9',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+        elevation: 8,
+      }
+    }),
   },
   tabLabel: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '800',
+    marginTop: 4,
   },
   tabIcon: {
-    width: 40, height: 36,
+    width: 44, height: 44,
     alignItems: 'center', justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: 22,
+    marginTop: 8,
   },
   tabIconActive: {
-    backgroundColor: Colors.cyanDim,
-    borderWidth: 1,
-    borderColor: Colors.glassBorderBright,
+    backgroundColor: Colors.secondaryDim,
   },
   badge: {
-    position: 'absolute', top: -4, right: -6,
-    backgroundColor: Colors.danger,
-    borderRadius: 8, minWidth: 16, height: 16,
+    position: 'absolute', top: 6, right: -4,
+    backgroundColor: Colors.primary,
+    borderRadius: 10, minWidth: 20, height: 20,
     alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
   },
-  badgeText: { color: Colors.text, fontSize: 9, fontWeight: '800' },
+  badgeText: { color: Colors.bgDeep, fontSize: 10, fontWeight: '800' },
 });
