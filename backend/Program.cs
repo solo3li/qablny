@@ -160,6 +160,11 @@ app.MapHub<NotificationHub>("/hubs/notifications");
 // ── Health check ─────────────────────────────────────────────────────────────
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", time = DateTime.UtcNow }));
 
+app.MapGet("/routes", (IEnumerable<EndpointDataSource> endpointSources) => 
+{
+    return string.Join("\n", endpointSources.SelectMany(es => es.Endpoints).OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>().Select(e => e.RoutePattern.RawText));
+});
+
 Log.Information("Qablny API starting on .NET 10 🚀");
 app.Run();
 

@@ -37,6 +37,21 @@
     </div>
 </div>
 
+<div class="bx--row" style="margin-bottom: 2rem;">
+    <div class="bx--col-md-6">
+        <div class="bx--tile">
+            <h4 class="bx--type-productive-heading-02" style="margin-bottom: 1rem;">نمو المستخدمين</h4>
+            <canvas id="userGrowthChart" height="200"></canvas>
+        </div>
+    </div>
+    <div class="bx--col-md-6">
+        <div class="bx--tile">
+            <h4 class="bx--type-productive-heading-02" style="margin-bottom: 1rem;">الأرباح الشهرية</h4>
+            <canvas id="revenueChart" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
 <div class="bx--row">
     <div class="bx--col-lg-16">
         <button class="bx--btn bx--btn--primary" hx-get="/Admin?handler=Refresh" hx-swap="innerHTML" hx-target="#main-content">
@@ -44,3 +59,5 @@
         </button>
     </div>
 </div>
+
+<script src="~/js/admin-charts.js" asp-append-version="true"></script>
