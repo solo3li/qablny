@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, StyleSheet, TouchableOpacity, TouchableOpacityProps, View } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../constants/Colors';
 
 interface GlassButtonProps extends TouchableOpacityProps {
@@ -13,44 +13,56 @@ interface GlassButtonProps extends TouchableOpacityProps {
 export const GlassButton: React.FC<GlassButtonProps> = ({
   title, icon, variant = 'primary', size = 'md', style, ...props
 }) => {
-  const colors = {
-    primary: { bg: Colors.cyanDim, border: Colors.glassBorderBright, text: Colors.cyan },
-    danger: { bg: Colors.dangerDim, border: Colors.danger + '55', text: Colors.danger },
-    ghost: { bg: Colors.surface, border: Colors.glassBorder, text: Colors.textSecondary },
-    gold: { bg: Colors.goldDim, border: Colors.gold + '55', text: Colors.gold },
-  }[variant];
+  const isPrimary = variant === 'primary';
+  const isDanger = variant === 'danger';
+  const isGhost = variant === 'ghost';
+  
+  const bgColors = isPrimary ? Colors.gradPrimary : 
+                   isDanger ? [Colors.danger, '#C2185B'] : 
+                   variant === 'gold' ? ['#FFD166', '#FF9F1C'] :
+                   [Colors.surface, Colors.surface];
+                   
+  const textColor = isGhost ? Colors.textSecondary : Colors.text;
 
-  const pad = { sm: { v: 8, h: 14 }, md: { v: 14, h: 22 }, lg: { v: 18, h: 28 } }[size];
-  const fontSize = { sm: 13, md: 15, lg: 17 }[size];
+  const pad = { sm: { v: 10, h: 16 }, md: { v: 16, h: 24 }, lg: { v: 20, h: 32 } }[size];
+  const fontSize = { sm: 14, md: 16, lg: 18 }[size];
 
   return (
-    <TouchableOpacity
-      style={[styles.btn, { backgroundColor: colors.bg, borderColor: colors.border, paddingVertical: pad.v, paddingHorizontal: pad.h }, style]}
-      activeOpacity={0.7}
-      {...props}
-    >
-      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFillObject} />
-      <View style={styles.inner}>
-        {icon && <View style={title ? styles.iconWithText : null}>{icon}</View>}
-        {title && <Text style={[styles.text, { color: colors.text, fontSize }]}>{title}</Text>}
-      </View>
+    <TouchableOpacity activeOpacity={0.8} style={[styles.wrapper, style]} {...props}>
+      <LinearGradient
+        colors={bgColors}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={[styles.btn, { paddingVertical: pad.v, paddingHorizontal: pad.h }]}
+      >
+        <View style={styles.inner}>
+          {icon && <View style={title ? styles.iconWithText : null}>{icon}</View>}
+          {title && <Text style={[styles.text, { color: textColor, fontSize }]}>{title}</Text>}
+        </View>
+      </LinearGradient>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    borderRadius: 24,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+  },
   btn: {
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   inner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWithText: { marginRight: 8 },
-  text: { fontWeight: '700', letterSpacing: 0.3 },
+  iconWithText: { marginRight: 10 },
+  text: { fontWeight: '800', letterSpacing: 0.5 },
 });

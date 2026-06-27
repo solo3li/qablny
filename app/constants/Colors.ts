@@ -1,41 +1,36 @@
 export const Colors = {
   // Backgrounds
-  bg: '#070B14',
-  bgDeep: '#040710',
-  surface: 'rgba(255,255,255,0.06)',
-  surfaceHover: 'rgba(255,255,255,0.1)',
+  bg: '#0F0C29', // Deep dark purple
+  bgDeep: '#080514', // Almost black
+  surface: '#1E193B', // Elevated dark
+  surfaceHover: '#2A2450',
 
-  // Glass
-  glassBorder: 'rgba(255,255,255,0.12)',
-  glassBorderBright: 'rgba(0,240,255,0.3)',
-  glassBg: 'rgba(10,20,40,0.6)',
+  // Borders
+  glassBorder: 'rgba(255,255,255,0.08)',
+  glassBorderBright: 'rgba(255,45,120,0.4)',
+  glassBg: 'rgba(15,12,41,0.7)', // Semi-transparent bg
 
-  // Accents
+  // Accents (Neon & Cyberpunk vibe)
+  primary: '#FF2D78', // Neon Pink
+  primaryDim: 'rgba(255,45,120,0.2)',
+  secondary: '#7B2FFF', // Electric Purple
+  secondaryDim: 'rgba(123,47,255,0.2)',
   cyan: '#00F0FF',
-  cyanDim: 'rgba(0,240,255,0.15)',
-  cyanGlow: 'rgba(0,240,255,0.08)',
-  purple: '#7B2FFF',
-  purpleDim: 'rgba(123,47,255,0.2)',
-  pink: '#FF2D78',
-  pinkDim: 'rgba(255,45,120,0.15)',
   gold: '#FFD166',
-  goldDim: 'rgba(255,209,102,0.15)',
 
   // Text
-  text: '#F0F4FF',
-  textSecondary: '#8899BB',
-  textMuted: '#4A5A78',
+  text: '#FFFFFF',
+  textSecondary: '#A5A1C0',
+  textMuted: '#68638A',
 
   // States
-  online: '#00E676',
+  online: '#00E676', // Bright Green
   danger: '#FF3B5C',
-  dangerDim: 'rgba(255,59,92,0.15)',
   success: '#00E676',
 
-  // Gradients (as strings for LinearGradient)
-  gradMain: ['#070B14', '#0D1529'] as string[],
-  gradCard: ['rgba(255,255,255,0.07)', 'rgba(255,255,255,0.03)'] as string[],
-  gradCyan: ['rgba(0,240,255,0.2)', 'rgba(0,240,255,0.05)'] as string[],
-  gradPurple: ['rgba(123,47,255,0.2)', 'rgba(123,47,255,0.05)'] as string[],
-  gradPink: ['rgba(255,45,120,0.2)', 'rgba(255,45,120,0.05)'] as string[],
+  // Gradients for rich aesthetics
+  gradMain: ['#0F0C29', '#302B63', '#24243E'] as string[],
+  gradCard: ['#231D45', '#161230'] as string[],
+  gradPrimary: ['#FF2D78', '#7B2FFF'] as string[], // Pink to Purple
+  gradSecondary: ['#00F0FF', '#7B2FFF'] as string[], // Cyan to Purple
 };

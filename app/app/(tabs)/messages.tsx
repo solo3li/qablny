@@ -83,7 +83,7 @@ export default function MessagesScreen() {
   ];
 
   return (
-    <LinearGradient colors={['#040710', '#070B14']} style={styles.container}>
+    <LinearGradient colors={Colors.gradMain} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View>

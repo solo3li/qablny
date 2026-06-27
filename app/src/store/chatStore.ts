@@ -371,8 +371,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     chatSignalR.setOnReceiveGift((payload: any) => {
       // Forward the gift emoji to callStore to show animation during a call
-      if (payload.gift && payload.gift.emoji) {
-        useCallStore.getState().setIncomingGift(payload.gift.emoji);
+      if (payload.gift && payload.gift.gifUrl) {
+        useCallStore.getState().setIncomingGift(payload.gift.gifUrl);
       }
     });
 

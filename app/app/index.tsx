@@ -54,10 +54,10 @@ export default function SplashScreen() {
   }, [animationDone, isLoading, token]);
 
   return (
-    <LinearGradient colors={['#040710', '#070B14', '#0A1020']} style={styles.container}>
+    <LinearGradient colors={Colors.gradMain} style={styles.container}>
       {/* Glow background orbs */}
-      <View style={[styles.orb, { top: '20%', left: '10%', backgroundColor: Colors.purple, opacity: 0.12 }]} />
-      <View style={[styles.orb, { bottom: '25%', right: '5%', backgroundColor: Colors.cyan, opacity: 0.08 }]} />
+      <View style={[styles.orb, { top: '20%', left: '10%', backgroundColor: Colors.primary, opacity: 0.15 }]} />
+      <View style={[styles.orb, { bottom: '25%', right: '5%', backgroundColor: Colors.secondary, opacity: 0.15 }]} />
 
       <Animated.View style={[styles.logoWrap, { transform: [{ scale }], opacity }]}>
         {/* Glow ring */}

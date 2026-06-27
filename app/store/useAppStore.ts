@@ -64,7 +64,8 @@ export interface RandomMatch {
 export interface Gift {
   id: string;
   name: string;
-  emoji: string;
+  emoji?: string;
+  gifUrl: string;
   cost: number;
 }
 
@@ -135,14 +136,14 @@ const matchQueue: RandomMatch[] = [
 ];
 
 const gifts: Gift[] = [
-  { id: 'g1', name: 'وردة', emoji: '🌹', cost: 10 },
-  { id: 'g2', name: 'قلب', emoji: '❤️', cost: 20 },
-  { id: 'g3', name: 'تاج', emoji: '👑', cost: 50 },
-  { id: 'g4', name: 'الماس', emoji: '💎', cost: 100 },
-  { id: 'g5', name: 'نجمة', emoji: '⭐', cost: 30 },
-  { id: 'g6', name: 'كيك', emoji: '🎂', cost: 25 },
-  { id: 'g7', name: 'هدية', emoji: '🎁', cost: 40 },
-  { id: 'g8', name: 'صاروخ', emoji: '🚀', cost: 150 },
+  { id: 'g1', name: 'وردة', gifUrl: 'https://media.giphy.com/media/3o7TKoWXm3okO1kgHC/giphy.gif', cost: 10 },
+  { id: 'g2', name: 'قلب', gifUrl: 'https://media.giphy.com/media/LpDmM2wSt6Vk5qcCR9/giphy.gif', cost: 20 },
+  { id: 'g3', name: 'تاج', gifUrl: 'https://media.giphy.com/media/TNb3Ihssb6T5FpcdOY/giphy.gif', cost: 50 },
+  { id: 'g4', name: 'الماس', gifUrl: 'https://media.giphy.com/media/xT0BKL21U5nnlW4m6k/giphy.gif', cost: 100 },
+  { id: 'g5', name: 'نجمة', gifUrl: 'https://media.giphy.com/media/l41lW1PIfE5z2Xh0Q/giphy.gif', cost: 30 },
+  { id: 'g6', name: 'كيك', gifUrl: 'https://media.giphy.com/media/3oEhmYV226kE49Tvy8/giphy.gif', cost: 25 },
+  { id: 'g7', name: 'هدية', gifUrl: 'https://media.giphy.com/media/3o7TKKcvd3QfVjM37u/giphy.gif', cost: 40 },
+  { id: 'g8', name: 'صاروخ', gifUrl: 'https://media.giphy.com/media/l0HlSi3AIOM3fAhX2/giphy.gif', cost: 150 },
 ];
 
 const vipPlans: VipPlan[] = [

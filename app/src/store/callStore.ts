@@ -22,7 +22,7 @@ interface CallState {
   setIncomingCall: (payload: IncomingCallPayload | null) => void;
   setActiveCall: (payload: ActiveCallPayload | null) => void;
   setCallStatus: (status: 'idle' | 'ringing' | 'connected') => void;
-  setIncomingGift: (emoji: string | null) => void;
+  setIncomingGift: (gifUrl: string | null) => void;
 
   initiateCall: (friendId: string, callType: 'voice' | 'video') => void;
   acceptCall: () => void;
@@ -40,9 +40,9 @@ export const useCallStore = create<CallState>((set, get) => ({
   setIncomingCall: (payload) => set({ incomingCall: payload }),
   setActiveCall: (payload) => set({ activeCall: payload }),
   setCallStatus: (status) => set({ callStatus: status }),
-  setIncomingGift: (emoji) => {
-    set({ incomingGift: emoji });
-    if (emoji) {
+  setIncomingGift: (gifUrl) => {
+    set({ incomingGift: gifUrl });
+    if (gifUrl) {
       setTimeout(() => set({ incomingGift: null }), 3000);
     }
   },

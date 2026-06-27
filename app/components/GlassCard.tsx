@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet, ViewProps } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Colors } from '../constants/Colors';
 
 interface GlassCardProps extends ViewProps {
@@ -10,28 +9,28 @@ interface GlassCardProps extends ViewProps {
 }
 
 export const GlassCard: React.FC<GlassCardProps> = ({
-  children, style, intensity = 25, borderRadius = 20, glowColor, ...props
+  children, style, intensity = 25, borderRadius = 24, glowColor, ...props
 }) => {
   return (
-    <View style={[styles.container, { borderRadius }, style]} {...props}>
-      <BlurView intensity={intensity} tint="dark" style={StyleSheet.absoluteFillObject} />
-      <View style={[
-        styles.innerBorder,
-        { borderRadius },
-        glowColor ? { borderColor: glowColor } : null
-      ]} />
-      {children}
+    <View style={[styles.wrapper, glowColor ? { shadowColor: glowColor, shadowOpacity: 0.3 } : null, style]} {...props}>
+      <View style={[styles.container, { borderRadius }, glowColor ? { borderColor: glowColor, borderWidth: 1 } : null]}>
+        {children}
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
+  },
   container: {
     overflow: 'hidden',
-    backgroundColor: Colors.glassBg,
-  },
-  innerBorder: {
-    ...StyleSheet.absoluteFillObject,
+    backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.glassBorder,
   },

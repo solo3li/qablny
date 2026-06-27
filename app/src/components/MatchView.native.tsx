@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
@@ -90,9 +91,9 @@ export default function MatchScreen() {
   };
 
   const handleSendGift = async (gift: any) => {
-    setSentGift(gift.emoji);
+    setSentGift(gift.gifUrl || gift.emoji || '🎁');
     setGiftsOpen(false);
-    setTimeout(() => setSentGift(null), 2000);
+    setTimeout(() => setSentGift(null), 3000);
     try {
       await axiosClient.post('/gifts/send', { giftId: gift.id, receiverId: remotePeer.id });
     } catch (e) {
@@ -189,10 +190,14 @@ export default function MatchScreen() {
         <GlassButton variant="danger" size="sm" icon={<Flag color={Colors.danger} size={16} />} title="إبلاغ" />
       </View>
 
-      {/* Gift floating emoji */}
+      {/* Gift floating emoji/GIF */}
       {sentGift && (
         <View style={styles.giftFloat}>
-          <Text style={styles.giftFloatEmoji}>{sentGift}</Text>
+          {sentGift.startsWith('http') ? (
+             <Image source={{ uri: sentGift }} style={styles.giftFloatImage} contentFit="contain" />
+          ) : (
+             <Text style={styles.giftFloatEmoji}>{sentGift}</Text>
+          )}
         </View>
       )}
 
@@ -262,7 +267,11 @@ export default function MatchScreen() {
             <View style={styles.giftsGrid}>
               {gifts.map(g => (
                 <TouchableOpacity key={g.id} style={styles.giftItem} onPress={() => handleSendGift(g)}>
-                  <Text style={styles.giftEmoji}>{g.emoji || '🎁'}</Text>
+                  {g.gifUrl ? (
+                    <Image source={{ uri: g.gifUrl }} style={{ width: 50, height: 50 }} contentFit="contain" />
+                  ) : (
+                    <Text style={styles.giftEmoji}>{g.emoji || '🎁'}</Text>
+                  )}
                   <Text style={styles.giftName}>{g.name}</Text>
                   <View style={styles.giftCost}>
                     <Text style={styles.giftCostText}>🪙 {g.coinCost}</Text>
@@ -288,6 +297,7 @@ const styles = StyleSheet.create({
   locationText: { color: Colors.text, fontSize: 13 },
   giftFloat: { position: 'absolute', top: '40%', alignSelf: 'center', zIndex: 100 },
   giftFloatEmoji: { fontSize: 80 },
+  giftFloatImage: { width: 150, height: 150 },
   bottom: { position: 'absolute', bottom: 80, left: 16, right: 16, gap: 16 },
   userInfo: { gap: 10 },
   userName: { fontSize: 28, fontWeight: '800', color: Colors.text },
