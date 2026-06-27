@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { useAppStore } from '../../store/useAppStore';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Globe, Users, Star } from 'lucide-react-native';
 
 const regions = ['العالم', 'الشرق الأوسط', 'الخليج العربي', 'شمال أفريقيا', 'أوروبا', 'أمريكا الشمالية', 'آسيا'];
@@ -20,7 +19,7 @@ export default function ExploreScreen() {
   ] as const;
 
   return (
-    <LinearGradient colors={['#040710', '#070B14']} style={styles.container}>
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>فلاتر البحث</Text>
@@ -39,6 +38,7 @@ export default function ExploreScreen() {
                 key={opt.key}
                 style={[styles.optionBtn, filterGender === opt.key && styles.optionBtnActive]}
                 onPress={() => setFilterGender(opt.key)}
+                activeOpacity={0.7}
               >
                 <Text style={styles.optionEmoji}>{opt.emoji}</Text>
                 <Text style={[styles.optionLabel, filterGender === opt.key && styles.optionLabelActive]}>
@@ -52,10 +52,10 @@ export default function ExploreScreen() {
         {/* Age Filter */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Star color={Colors.purple} size={18} />
+            <Star color={Colors.primary} size={18} />
             <Text style={styles.sectionTitle}>الفئة العمرية</Text>
           </View>
-          <GlassCard style={styles.ageCard}>
+          <GlassCard style={styles.ageCard} tint="light">
             <View style={styles.ageRow}>
               <Text style={styles.ageLabel}>من</Text>
               <View style={styles.ageValueBox}><Text style={styles.ageValue}>{ageRange[0]}</Text></View>
@@ -69,8 +69,9 @@ export default function ExploreScreen() {
                   key={r.join('-')}
                   style={[styles.agePreset, ageRange[0] === r[0] && ageRange[1] === r[1] && styles.agePresetActive]}
                   onPress={() => setAgeRange(r)}
+                  activeOpacity={0.7}
                 >
-                  <Text style={[styles.agePresetText, ageRange[0] === r[0] && ageRange[1] === r[1] && { color: Colors.cyan }]}>
+                  <Text style={[styles.agePresetText, ageRange[0] === r[0] && ageRange[1] === r[1] && { color: Colors.primary }]}>
                     {r[0]}-{r[1]}
                   </Text>
                 </TouchableOpacity>
@@ -82,12 +83,8 @@ export default function ExploreScreen() {
         {/* Region Filter */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Globe color={Colors.pink} size={18} />
+            <Globe color={Colors.secondary} size={18} />
             <Text style={styles.sectionTitle}>المنطقة الجغرافية</Text>
-            <View style={styles.vipNote}>
-              <Star size={11} color={Colors.gold} fill={Colors.gold} />
-              <Text style={styles.vipNoteText}>VIP</Text>
-            </View>
           </View>
           <View style={styles.regionsGrid}>
             {regions.map(r => (
@@ -95,6 +92,7 @@ export default function ExploreScreen() {
                 key={r}
                 style={[styles.regionBtn, filterRegion === r && styles.regionBtnActive]}
                 onPress={() => setFilterRegion(r)}
+                activeOpacity={0.7}
               >
                 <Text style={[styles.regionText, filterRegion === r && styles.regionTextActive]}>{r}</Text>
               </TouchableOpacity>
@@ -103,41 +101,39 @@ export default function ExploreScreen() {
         </View>
 
         {/* Apply */}
-        <GlassButton title="تطبيق الفلاتر ✓" variant="primary" size="lg" style={styles.applyBtn} />
+        <GlassButton title="تطبيق الفلاتر ✓" variant="primary" style={styles.applyBtn} />
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: Colors.bg },
   header: { paddingTop: 60, paddingHorizontal: 24, marginBottom: 24 },
-  title: { fontSize: 30, fontWeight: '800', color: Colors.text, marginBottom: 4 },
-  subtitle: { fontSize: 14, color: Colors.textSecondary },
-  section: { marginHorizontal: 16, marginBottom: 24 },
+  title: { fontSize: 32, fontWeight: '800', color: Colors.text, marginBottom: 4 },
+  subtitle: { fontSize: 15, color: Colors.textSecondary, fontWeight: '600' },
+  section: { marginHorizontal: 24, marginBottom: 24 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: Colors.text, flex: 1 },
-  vipNote: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: Colors.goldDim, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  vipNoteText: { color: Colors.gold, fontSize: 11, fontWeight: '700' },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, flex: 1 },
   optionsRow: { flexDirection: 'row', gap: 10 },
-  optionBtn: { flex: 1, alignItems: 'center', gap: 8, paddingVertical: 16, borderRadius: 16, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder },
-  optionBtnActive: { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright },
+  optionBtn: { flex: 1, alignItems: 'center', gap: 8, paddingVertical: 16, borderRadius: 24, backgroundColor: Colors.bgDeep, borderWidth: 1, borderColor: '#FFFFFF', ...Platform.select({ web: { boxShadow: `inset 0px 4px 8px rgba(210, 195, 180, 0.2)` } }) },
+  optionBtnActive: { backgroundColor: Colors.cyanDim, borderColor: Colors.cyan },
   optionEmoji: { fontSize: 28 },
-  optionLabel: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
+  optionLabel: { fontSize: 14, fontWeight: '700', color: Colors.textSecondary },
   optionLabelActive: { color: Colors.cyan },
   ageCard: { padding: 20 },
   ageRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
-  ageLabel: { fontSize: 15, color: Colors.textSecondary },
-  ageValueBox: { backgroundColor: Colors.cyanDim, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: Colors.glassBorderBright },
-  ageValue: { fontSize: 18, fontWeight: '800', color: Colors.cyan },
+  ageLabel: { fontSize: 15, color: Colors.textSecondary, fontWeight: '700' },
+  ageValueBox: { backgroundColor: Colors.primaryDim, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 8 },
+  ageValue: { fontSize: 18, fontWeight: '800', color: Colors.primary },
   ageBtns: { flexDirection: 'row', gap: 8 },
-  agePreset: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder },
-  agePresetActive: { borderColor: Colors.glassBorderBright },
-  agePresetText: { fontSize: 13, fontWeight: '600', color: Colors.textMuted },
+  agePreset: { flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 16, backgroundColor: Colors.bgDeep, borderWidth: 1, borderColor: '#FFFFFF' },
+  agePresetActive: { backgroundColor: Colors.primaryDim, borderColor: Colors.primary },
+  agePresetText: { fontSize: 14, fontWeight: '700', color: Colors.textMuted },
   regionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  regionBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder },
-  regionBtnActive: { backgroundColor: Colors.pinkDim, borderColor: Colors.pink + '55' },
-  regionText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '600' },
-  regionTextActive: { color: Colors.pink },
-  applyBtn: { marginHorizontal: 16 },
+  regionBtn: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 100, backgroundColor: Colors.bgDeep, borderWidth: 1, borderColor: '#FFFFFF' },
+  regionBtnActive: { backgroundColor: Colors.secondaryDim, borderColor: Colors.secondary },
+  regionText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '700' },
+  regionTextActive: { color: Colors.secondary },
+  applyBtn: { marginHorizontal: 24 },
 });

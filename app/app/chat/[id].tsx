@@ -7,7 +7,6 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '../../src/store/authStore';
 import { useChatStore, UIChatMessage as ChatMessage, ReadStatus } from '../../src/store/chatStore';
 import { useCallStore } from '../../src/store/callStore';
@@ -164,7 +163,7 @@ function LocationBubble({ msg }: { msg: ChatMessage }) {
     <TouchableOpacity style={[styles.locationBubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
       {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
       <View style={styles.mapPlaceholder}>
-        <LinearGradient colors={['#0d2137', '#0a1929']} style={StyleSheet.absoluteFillObject} />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.bgDeep }]} />
         <View style={styles.mapGrid}>
           {Array.from({ length: 6 }).map((_, i) => <View key={i} style={styles.mapGridLine} />)}
         </View>
@@ -707,9 +706,9 @@ export default function ChatScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: Colors.bg },
 
-  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 52, paddingBottom: 14, paddingHorizontal: 12, gap: 10, borderBottomWidth: 1, borderBottomColor: Colors.glassBorder },
+  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 52, paddingBottom: 14, paddingHorizontal: 12, gap: 10, borderBottomWidth: 2, borderBottomColor: Colors.glassBorder },
   backBtn: { padding: 4 },
   avatarWrapHeader: { position: 'relative' },
   headerAvatar: { width: 42, height: 42, borderRadius: 21 },
@@ -748,7 +747,7 @@ const styles = StyleSheet.create({
 
   // Context menu
   contextOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: 'rgba(0,0,0,0.55)' },
-  contextMenu: { position: 'absolute', top: '35%', backgroundColor: '#0D1529', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: Colors.glassBorder, minWidth: 160, maxWidth: 220 },
+  contextMenu: { position: 'absolute', top: '35%', backgroundColor: Colors.bgDeep, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#FFFFFF', minWidth: 160, maxWidth: 220, ...Platform.select({ web: { boxShadow: `0px 4px 12px rgba(210, 195, 180, 0.3)` } }) },
   contextMenuMe: { right: 16 },
   contextMenuThem: { left: 60 },
   contextPreview: { padding: 12, paddingBottom: 8 },

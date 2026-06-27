@@ -5,7 +5,6 @@ import { useAuthStore } from '../../src/store/authStore';
 import { axiosClient } from '../../src/api/axiosClient';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle } from 'lucide-react-native';
 
@@ -32,7 +31,7 @@ export default function ProfileScreen() {
 
   if (!user) return (
     <View style={{ flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-      <ActivityIndicator color={Colors.cyan} size="large" />
+      <ActivityIndicator color={Colors.primary} size="large" />
     </View>
   );
 
@@ -42,13 +41,13 @@ export default function ProfileScreen() {
   };
 
   const menuItems = [
-    { icon: <Bell color={Colors.cyan} size={20} />, label: 'الإشعارات', sub: 'مفعّلة' },
-    { icon: <Shield color={Colors.purple} size={20} />, label: 'الخصوصية والأمان', sub: 'إعدادات الحماية' },
-    { icon: <HelpCircle color={Colors.textSecondary} size={20} />, label: 'مركز المساعدة', sub: 'أسئلة وإجابات' },
+    { icon: <Bell color={Colors.secondary} size={20} />, label: 'الإشعارات', sub: 'مفعّلة' },
+    { icon: <Shield color={Colors.cyan} size={20} />, label: 'الخصوصية والأمان', sub: 'إعدادات الحماية' },
+    { icon: <HelpCircle color={Colors.textMuted} size={20} />, label: 'مركز المساعدة', sub: 'أسئلة وإجابات' },
   ];
 
   return (
-    <LinearGradient colors={['#040710', '#070B14']} style={styles.container}>
+    <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Profile Header */}
         <View style={styles.header}>
@@ -56,7 +55,7 @@ export default function ProfileScreen() {
             <Image source={{ uri: user.profileImageUrl || 'https://i.pravatar.cc/300' }} style={styles.avatar} />
             {user.isVip && (
               <View style={styles.vipRing}>
-                <Star size={14} color={Colors.gold} fill={Colors.gold} />
+                <Star size={14} color={Colors.primary} fill={Colors.primary} />
               </View>
             )}
           </View>
@@ -81,7 +80,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Stats */}
-        <GlassCard style={styles.statsCard}>
+        <GlassCard style={styles.statsCard} tint="light">
           {[
             { label: 'عملات', value: user.coins?.toLocaleString() || '0', emoji: '🪙' },
           ].map((s, i) => (
@@ -98,7 +97,7 @@ export default function ProfileScreen() {
 
         {/* VIP section */}
         {!user.isVip ? (
-          <GlassCard style={styles.vipBanner} glowColor={Colors.gold} borderRadius={20}>
+          <GlassCard style={styles.vipBanner} tint="primary">
             <View style={styles.vipBannerContent}>
               <Text style={styles.vipBannerEmoji}>👑</Text>
               <View>
@@ -106,11 +105,11 @@ export default function ProfileScreen() {
                 <Text style={styles.vipBannerSub}>احصل على مميزات حصرية</Text>
               </View>
             </View>
-            <GlassButton title="اشترك" variant="gold" size="sm" onPress={() => setShowVip(!showVip)} />
+            <GlassButton title="اشترك" variant="primary" onPress={() => setShowVip(!showVip)} style={{ height: 40, paddingHorizontal: 16 }} />
           </GlassCard>
         ) : (
-          <GlassCard style={styles.vipActiveBanner} glowColor={Colors.gold}>
-            <Star size={18} color={Colors.gold} fill={Colors.gold} />
+          <GlassCard style={styles.vipActiveBanner} tint="primary">
+            <Star size={18} color={Colors.primary} fill={Colors.primary} />
             <Text style={styles.vipActiveText}>أنت مشترك في VIP ✨</Text>
           </GlassCard>
         )}
@@ -119,7 +118,7 @@ export default function ProfileScreen() {
         {showVip && (
           <View style={styles.plansRow}>
             {vipPlans.map(plan => (
-              <GlassCard key={plan.id} style={[styles.planCard, plan.isBest && styles.planBest]} glowColor={plan.isBest ? Colors.gold : undefined} borderRadius={18}>
+              <GlassCard key={plan.id} style={[styles.planCard, plan.isBest && styles.planBest]} tint={plan.isBest ? 'primary' : 'light'}>
                 {plan.isBest && <View style={styles.bestBadge}><Text style={styles.bestText}>الأفضل</Text></View>}
                 <Text style={styles.planName}>{plan.name}</Text>
                 <Text style={styles.planPrice}>{plan.price} ر.س</Text>
@@ -127,14 +126,14 @@ export default function ProfileScreen() {
                 <View style={styles.planFeatures}>
                   {plan.features.map(f => <Text key={f} style={styles.planFeature}>✓ {f}</Text>)}
                 </View>
-                <GlassButton title="اشترك" variant={plan.isBest ? 'gold' : 'ghost'} size="sm" style={{ marginTop: 12 }} onPress={() => handleSubscribe(plan.id)} />
+                <GlassButton title="اشترك" variant={plan.isBest ? 'primary' : 'outline'} style={{ marginTop: 12, height: 40, width: '100%' }} onPress={() => handleSubscribe(plan.id)} />
               </GlassCard>
             ))}
           </View>
         )}
 
         {/* Settings menu */}
-        <GlassCard style={styles.menuCard}>
+        <GlassCard style={styles.menuCard} tint="light">
           {menuItems.map((item, i) => (
             <React.Fragment key={item.label}>
               <TouchableOpacity style={styles.menuItem}>
@@ -156,58 +155,58 @@ export default function ProfileScreen() {
         <GlassButton
           title="تسجيل الخروج"
           variant="danger"
-          icon={<LogOut color={Colors.danger} size={18} />}
+          icon={<LogOut color="#FFF" size={18} />}
           onPress={handleLogout}
           style={styles.logoutBtn}
         />
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: Colors.bg },
   header: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24, paddingBottom: 24 },
   avatarWrap: { position: 'relative', marginBottom: 16 },
-  avatar: { width: 110, height: 110, borderRadius: 55, borderWidth: 3, borderColor: Colors.glassBorderBright },
-  vipRing: { position: 'absolute', bottom: 0, right: 0, backgroundColor: Colors.goldDim, borderRadius: 14, padding: 6, borderWidth: 1, borderColor: Colors.gold + '99' },
-  name: { fontSize: 26, fontWeight: '800', color: Colors.text, marginBottom: 6 },
-  bio: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 10 },
+  avatar: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: '#FFFFFF' },
+  vipRing: { position: 'absolute', bottom: 0, right: 0, backgroundColor: Colors.bgDeep, borderRadius: 100, padding: 8, borderWidth: 1, borderColor: Colors.primary },
+  name: { fontSize: 28, fontWeight: '800', color: Colors.text, marginBottom: 6 },
+  bio: { fontSize: 16, color: Colors.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: 10, fontWeight: '500' },
   locationRow: { flexDirection: 'row', gap: 6, alignItems: 'center', marginBottom: 16 },
-  locationText: { fontSize: 13, color: Colors.textMuted },
+  locationText: { fontSize: 14, color: Colors.textMuted, fontWeight: '700' },
   dot: { color: Colors.textMuted },
   interests: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  interestTag: { backgroundColor: Colors.surface, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: Colors.glassBorder },
-  interestText: { color: Colors.textSecondary, fontSize: 13 },
-  statsCard: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 16, padding: 20 },
+  interestTag: { backgroundColor: Colors.bgDeep, borderRadius: 100, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: '#FFFFFF' },
+  interestText: { color: Colors.textSecondary, fontSize: 14, fontWeight: '700' },
+  statsCard: { flexDirection: 'row', marginHorizontal: 24, marginBottom: 24, padding: 20 },
   stat: { flex: 1, alignItems: 'center', gap: 4 },
-  statEmoji: { fontSize: 22 },
-  statValue: { fontSize: 22, fontWeight: '800', color: Colors.text },
-  statLabel: { fontSize: 12, color: Colors.textMuted },
-  statDiv: { width: 1, backgroundColor: Colors.glassBorder },
-  vipBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginBottom: 16, padding: 16 },
+  statEmoji: { fontSize: 28 },
+  statValue: { fontSize: 24, fontWeight: '800', color: Colors.text },
+  statLabel: { fontSize: 14, color: Colors.textMuted, fontWeight: '700' },
+  statDiv: { width: 2, backgroundColor: Colors.glassBorder, borderRadius: 2 },
+  vipBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 24, marginBottom: 24, padding: 20 },
   vipBannerContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   vipBannerEmoji: { fontSize: 32 },
-  vipBannerTitle: { fontSize: 16, fontWeight: '700', color: Colors.gold },
-  vipBannerSub: { fontSize: 13, color: Colors.textMuted },
-  vipActiveBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginBottom: 16, padding: 16 },
-  vipActiveText: { fontSize: 15, fontWeight: '700', color: Colors.gold },
-  plansRow: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginBottom: 16 },
-  planCard: { flex: 1, padding: 14, alignItems: 'center' },
-  planBest: { borderColor: Colors.gold },
-  bestBadge: { backgroundColor: Colors.goldDim, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
-  bestText: { color: Colors.gold, fontSize: 11, fontWeight: '700' },
-  planName: { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 4 },
-  planPrice: { fontSize: 24, fontWeight: '800', color: Colors.gold },
-  planPeriod: { fontSize: 12, color: Colors.textMuted, marginBottom: 10 },
-  planFeatures: { gap: 4, width: '100%' },
-  planFeature: { fontSize: 11, color: Colors.textSecondary },
-  menuCard: { marginHorizontal: 16, marginBottom: 16, overflow: 'hidden' },
-  menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
-  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  menuIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
-  menuLabel: { fontSize: 15, fontWeight: '600', color: Colors.text },
-  menuSub: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
-  menuDiv: { height: 1, backgroundColor: Colors.glassBorder, marginHorizontal: 16 },
-  logoutBtn: { marginHorizontal: 16 },
+  vipBannerTitle: { fontSize: 18, fontWeight: '800', color: Colors.text },
+  vipBannerSub: { fontSize: 14, color: Colors.textSecondary, fontWeight: '600' },
+  vipActiveBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 24, marginBottom: 24, padding: 20 },
+  vipActiveText: { fontSize: 16, fontWeight: '800', color: Colors.text },
+  plansRow: { flexDirection: 'row', gap: 10, marginHorizontal: 24, marginBottom: 24 },
+  planCard: { flex: 1, padding: 16, alignItems: 'center' },
+  planBest: { borderColor: Colors.primary },
+  bestBadge: { backgroundColor: Colors.bgDeep, borderRadius: 100, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 10 },
+  bestText: { color: Colors.primary, fontSize: 12, fontWeight: '800' },
+  planName: { fontSize: 16, fontWeight: '800', color: Colors.text, marginBottom: 4 },
+  planPrice: { fontSize: 26, fontWeight: '800', color: Colors.primary },
+  planPeriod: { fontSize: 13, color: Colors.textMuted, marginBottom: 12, fontWeight: '600' },
+  planFeatures: { gap: 6, width: '100%', alignItems: 'center' },
+  planFeature: { fontSize: 12, color: Colors.textSecondary, fontWeight: '600' },
+  menuCard: { marginHorizontal: 24, marginBottom: 24, overflow: 'hidden', padding: 0 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20 },
+  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  menuIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+  menuLabel: { fontSize: 16, fontWeight: '800', color: Colors.text },
+  menuSub: { fontSize: 13, color: Colors.textMuted, marginTop: 2, fontWeight: '600' },
+  menuDiv: { height: 2, backgroundColor: Colors.glassBorder, marginHorizontal: 20 },
+  logoutBtn: { marginHorizontal: 24 },
 });
