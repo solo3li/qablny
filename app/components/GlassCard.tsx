@@ -9,10 +9,10 @@ interface GlassCardProps extends ViewProps {
 }
 
 export const GlassCard: React.FC<GlassCardProps> = ({
-  children, style, intensity = 25, borderRadius = 12, glowColor, ...props
+  children, style, intensity = 25, borderRadius = 16, glowColor, ...props
 }) => {
   return (
-    <View style={[styles.wrapper, glowColor ? { borderColor: glowColor, shadowColor: glowColor, shadowOpacity: 0.2 } : null, { borderRadius }, style]} {...props}>
+    <View style={[styles.wrapper, glowColor ? { borderColor: glowColor, borderWidth: 2 } : null, { borderRadius }, style]} {...props}>
       {children}
     </View>
   );
@@ -23,11 +23,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderColor: Colors.glassBorder,
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
     overflow: 'hidden',
+    // Minimalist: No shadows, completely flat with subtle border
   },
 });

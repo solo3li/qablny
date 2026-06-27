@@ -1,36 +1,36 @@
 export const Colors = {
-  // Backgrounds (Midnight Velvet)
-  bg: '#0A0F24', // Deep Navy / Midnight Blue
-  bgDeep: '#050814', // Extreme Dark Navy
-  surface: '#121833', // Slightly lighter Navy for cards
-  surfaceHover: '#1A2242',
+  // Backgrounds (Minimalist Elegance)
+  bg: '#FFFFFF', // Pure White
+  bgDeep: '#F9FAFB', // Very soft grey
+  surface: '#FFFFFF', // Pure White for cards
+  surfaceHover: '#F3F4F6',
 
   // Borders
-  glassBorder: 'rgba(212, 175, 55, 0.15)', // Very faint Gold border
-  glassBorderBright: '#D4AF37', // Solid Gold
-  glassBg: 'rgba(10, 15, 36, 0.85)', // Semi-transparent navy
+  glassBorder: '#E5E7EB', // Crisp thin gray border
+  glassBorderBright: '#D1D5DB', // Slightly darker border
+  glassBg: 'rgba(255, 255, 255, 0.95)', // Semi-transparent white
 
-  // Accents (Elegant & Premium)
-  primary: '#D4AF37', // Soft Gold
-  primaryDim: 'rgba(212, 175, 55, 0.15)',
-  secondary: '#C6878F', // Dusty Rose
-  secondaryDim: 'rgba(198, 135, 143, 0.15)',
-  cyan: '#6B8E23', // Olive/Sage green (replacing cyan for a mature look)
-  gold: '#D4AF37',
+  // Accents (Mature & Refined)
+  primary: '#7A9180', // Muted Sage Green
+  primaryDim: 'rgba(122, 145, 128, 0.1)',
+  secondary: '#C2B8A3', // Warm Beige/Sand
+  secondaryDim: 'rgba(194, 184, 163, 0.1)',
+  cyan: '#64748B', // Slate gray
+  gold: '#7A9180', // mapped to primary for consistency
 
   // Text
-  text: '#F5F5F5', // Off-White
-  textSecondary: '#A0A4B8', // Muted Navy-Gray
-  textMuted: '#646982', // Darker Gray
+  text: '#1F2937', // Deep Charcoal (almost black)
+  textSecondary: '#4B5563', // Medium Gray
+  textMuted: '#9CA3AF', // Light Gray
 
   // States
-  online: '#4CAF50', // Emerald Green
-  danger: '#D32F2F', // Deep Red
-  success: '#4CAF50',
+  online: '#10B981', // Crisp Green
+  danger: '#EF4444', // Red
+  success: '#10B981',
 
-  // Gradients (Premium feel)
-  gradMain: ['#0A0F24', '#050814', '#0A0F24'] as string[],
-  gradCard: ['#121833', '#0A0F24'] as string[],
-  gradPrimary: ['#D4AF37', '#B5952F'] as string[], // Gold gradient
-  gradSecondary: ['#C6878F', '#A36870'] as string[], // Rose gradient
+  // Gradients (Rarely used in minimalist, kept solid)
+  gradMain: ['#FFFFFF', '#FFFFFF', '#FFFFFF'] as string[],
+  gradCard: ['#FFFFFF', '#FFFFFF'] as string[],
+  gradPrimary: ['#7A9180', '#637868'] as string[],
+  gradSecondary: ['#C2B8A3', '#A89E88'] as string[],
 };
