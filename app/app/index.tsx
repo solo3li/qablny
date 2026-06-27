@@ -9,18 +9,15 @@ export default function SplashScreen() {
   const { token, isLoading } = useAuthStore();
   const scale = useRef(new Animated.Value(0.7)).current;
   const opacity = useRef(new Animated.Value(0)).current;
-  const glowOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
       Animated.parallel([
         Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 50, friction: 8 }),
         Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }),
-      ]),
-      Animated.timing(glowOpacity, { toValue: 1, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      ])
     ]).start();
 
-    // Minimum splash duration of 2.5s for branding, plus wait for auth to finish loading
     const timer = setTimeout(() => {
       if (!isLoading) {
         if (token) router.replace('/(tabs)');
@@ -28,17 +25,9 @@ export default function SplashScreen() {
       }
     }, 2600);
     
-    // If auth finishes loading AFTER the 2.6s timer, redirect immediately
-    if (!isLoading && opacity._value === 1) {
-       // This handles the case where checkAuth takes longer than 2.6s
-       // but we don't want to overcomplicate the animation logic.
-       // Actually a robust way is a combined effect.
-    }
-    
     return () => clearTimeout(timer);
   }, []);
 
-  // Use a second effect to handle the redirect safely when both conditions are met
   const [animationDone, setAnimationDone] = React.useState(false);
 
   useEffect(() => {
@@ -55,30 +44,23 @@ export default function SplashScreen() {
 
   return (
     <LinearGradient colors={Colors.gradMain} style={styles.container}>
-      {/* Glow background orbs */}
-      <View style={[styles.orb, { top: '20%', left: '10%', backgroundColor: Colors.primary, opacity: 0.15 }]} />
-      <View style={[styles.orb, { bottom: '25%', right: '5%', backgroundColor: Colors.secondary, opacity: 0.15 }]} />
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: '-10%', left: '-20%', backgroundColor: Colors.primary, opacity: 0.05 }]} />
+      <View style={[styles.orb, { bottom: '-10%', right: '-20%', backgroundColor: Colors.secondary, opacity: 0.03 }]} />
 
       <Animated.View style={[styles.logoWrap, { transform: [{ scale }], opacity }]}>
-        {/* Glow ring */}
-        <Animated.View style={[styles.glowRing, { opacity: glowOpacity }]} />
-
-        {/* Icon circle */}
         <View style={styles.iconCircle}>
-          <View style={styles.iconInner}>
-            <Text style={styles.iconEmoji}>📡</Text>
-          </View>
+          <Text style={styles.iconEmoji}>✨</Text>
         </View>
 
         <Text style={styles.appName}>قابلنى</Text>
-        <Text style={styles.tagline}>تواصل. تعرّف. تميّز.</Text>
+        <Text style={styles.tagline}>نخبة التواصل، وأرقى اللقاءات.</Text>
       </Animated.View>
 
-      {/* Loading dots */}
       <View style={styles.dots}>
-        {[0, 1, 2].map(i => (
-          <View key={i} style={[styles.dot, i === 1 && { backgroundColor: Colors.cyan }]} />
-        ))}
+        <View style={[styles.dot, { backgroundColor: Colors.primary }]} />
+        <View style={[styles.dot, { backgroundColor: Colors.secondary }]} />
+        <View style={[styles.dot, { backgroundColor: Colors.textMuted }]} />
       </View>
     </LinearGradient>
   );
@@ -86,41 +68,28 @@ export default function SplashScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  orb: { position: 'absolute', width: 300, height: 300, borderRadius: 150 },
+  orb: { position: 'absolute', width: 400, height: 400, borderRadius: 200 },
   logoWrap: { alignItems: 'center' },
-  glowRing: {
-    position: 'absolute',
-    width: 160, height: 160,
-    borderRadius: 80,
-    borderWidth: 1,
-    borderColor: Colors.cyan,
-    // Use elevation for Android, shadow for iOS, and boxShadow for Web if needed. 
-    // In React Native Web, boxShadow is preferred to avoid the warning.
-    ...Platform.select({
-      web: { boxShadow: '0px 0px 30px rgba(0, 240, 255, 0.8)' } as any,
-      default: {
-        shadowColor: Colors.cyan,
-        shadowOpacity: 0.8,
-        shadowRadius: 30,
-        shadowOffset: { width: 0, height: 0 },
-        elevation: 10,
-      }
-    }),
-  },
   iconCircle: {
-    width: 120, height: 120, borderRadius: 60,
-    backgroundColor: Colors.cyanDim,
-    borderWidth: 1, borderColor: Colors.glassBorderBright,
+    width: 100, height: 100, borderRadius: 50,
+    backgroundColor: Colors.bgDeep,
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: Colors.primaryDim,
+    shadowColor: Colors.primary,
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
   },
-  iconInner: { alignItems: 'center', justifyContent: 'center' },
-  iconEmoji: { fontSize: 52 },
+  iconEmoji: { fontSize: 42 },
   appName: {
-    fontSize: 42, fontWeight: '800', color: Colors.text,
-    letterSpacing: 2, marginBottom: 8,
+    fontSize: 40, fontWeight: '800', color: Colors.primary,
+    letterSpacing: 3, marginBottom: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
   },
-  tagline: { fontSize: 15, color: Colors.textSecondary, letterSpacing: 1 },
-  dots: { position: 'absolute', bottom: 60, flexDirection: 'row', gap: 8 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder },
+  tagline: { fontSize: 16, color: Colors.secondary, letterSpacing: 1, fontWeight: '500' },
+  dots: { position: 'absolute', bottom: 60, flexDirection: 'row', gap: 12 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
 });

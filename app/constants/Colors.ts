@@ -1,36 +1,36 @@
 export const Colors = {
-  // Backgrounds
-  bg: '#0F0C29', // Deep dark purple
-  bgDeep: '#080514', // Almost black
-  surface: '#1E193B', // Elevated dark
-  surfaceHover: '#2A2450',
+  // Backgrounds (Midnight Velvet)
+  bg: '#0A0F24', // Deep Navy / Midnight Blue
+  bgDeep: '#050814', // Extreme Dark Navy
+  surface: '#121833', // Slightly lighter Navy for cards
+  surfaceHover: '#1A2242',
 
   // Borders
-  glassBorder: 'rgba(255,255,255,0.08)',
-  glassBorderBright: 'rgba(255,45,120,0.4)',
-  glassBg: 'rgba(15,12,41,0.7)', // Semi-transparent bg
+  glassBorder: 'rgba(212, 175, 55, 0.15)', // Very faint Gold border
+  glassBorderBright: '#D4AF37', // Solid Gold
+  glassBg: 'rgba(10, 15, 36, 0.85)', // Semi-transparent navy
 
-  // Accents (Neon & Cyberpunk vibe)
-  primary: '#FF2D78', // Neon Pink
-  primaryDim: 'rgba(255,45,120,0.2)',
-  secondary: '#7B2FFF', // Electric Purple
-  secondaryDim: 'rgba(123,47,255,0.2)',
-  cyan: '#00F0FF',
-  gold: '#FFD166',
+  // Accents (Elegant & Premium)
+  primary: '#D4AF37', // Soft Gold
+  primaryDim: 'rgba(212, 175, 55, 0.15)',
+  secondary: '#C6878F', // Dusty Rose
+  secondaryDim: 'rgba(198, 135, 143, 0.15)',
+  cyan: '#6B8E23', // Olive/Sage green (replacing cyan for a mature look)
+  gold: '#D4AF37',
 
   // Text
-  text: '#FFFFFF',
-  textSecondary: '#A5A1C0',
-  textMuted: '#68638A',
+  text: '#F5F5F5', // Off-White
+  textSecondary: '#A0A4B8', // Muted Navy-Gray
+  textMuted: '#646982', // Darker Gray
 
   // States
-  online: '#00E676', // Bright Green
-  danger: '#FF3B5C',
-  success: '#00E676',
+  online: '#4CAF50', // Emerald Green
+  danger: '#D32F2F', // Deep Red
+  success: '#4CAF50',
 
-  // Gradients for rich aesthetics
-  gradMain: ['#0F0C29', '#302B63', '#24243E'] as string[],
-  gradCard: ['#231D45', '#161230'] as string[],
-  gradPrimary: ['#FF2D78', '#7B2FFF'] as string[], // Pink to Purple
-  gradSecondary: ['#00F0FF', '#7B2FFF'] as string[], // Cyan to Purple
+  // Gradients (Premium feel)
+  gradMain: ['#0A0F24', '#050814', '#0A0F24'] as string[],
+  gradCard: ['#121833', '#0A0F24'] as string[],
+  gradPrimary: ['#D4AF37', '#B5952F'] as string[], // Gold gradient
+  gradSecondary: ['#C6878F', '#A36870'] as string[], // Rose gradient
 };

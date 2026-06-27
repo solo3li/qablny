@@ -6,26 +6,39 @@ import { Colors } from '../constants/Colors';
 interface GlassButtonProps extends TouchableOpacityProps {
   title?: string;
   icon?: React.ReactNode;
-  variant?: 'primary' | 'danger' | 'ghost' | 'gold';
+  variant?: 'primary' | 'danger' | 'ghost' | 'gold' | 'secondary';
   size?: 'sm' | 'md' | 'lg';
 }
 
 export const GlassButton: React.FC<GlassButtonProps> = ({
   title, icon, variant = 'primary', size = 'md', style, ...props
 }) => {
-  const isPrimary = variant === 'primary';
+  const isPrimary = variant === 'primary' || variant === 'gold';
   const isDanger = variant === 'danger';
   const isGhost = variant === 'ghost';
+  const isSecondary = variant === 'secondary';
   
   const bgColors = isPrimary ? Colors.gradPrimary : 
-                   isDanger ? [Colors.danger, '#C2185B'] : 
-                   variant === 'gold' ? ['#FFD166', '#FF9F1C'] :
+                   isDanger ? ['#D32F2F', '#9A0007'] : 
+                   isSecondary ? Colors.gradSecondary :
                    [Colors.surface, Colors.surface];
                    
-  const textColor = isGhost ? Colors.textSecondary : Colors.text;
+  const textColor = isGhost ? Colors.primary : 
+                    isPrimary || isSecondary || isDanger ? '#0A0F24' : Colors.text;
 
   const pad = { sm: { v: 10, h: 16 }, md: { v: 16, h: 24 }, lg: { v: 20, h: 32 } }[size];
-  const fontSize = { sm: 14, md: 16, lg: 18 }[size];
+  const fontSize = { sm: 14, md: 15, lg: 17 }[size];
+
+  if (isGhost) {
+    return (
+      <TouchableOpacity activeOpacity={0.7} style={[styles.ghostBtn, { paddingVertical: pad.v, paddingHorizontal: pad.h }, style]} {...props}>
+        <View style={styles.inner}>
+          {icon && <View style={title ? styles.iconWithText : null}>{icon}</View>}
+          {title && <Text style={[styles.text, { color: textColor, fontSize }]}>{title}</Text>}
+        </View>
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <TouchableOpacity activeOpacity={0.8} style={[styles.wrapper, style]} {...props}>
@@ -45,24 +58,33 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 
 const styles = StyleSheet.create({
   wrapper: {
-    borderRadius: 24,
+    borderRadius: 8,
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   btn: {
-    borderRadius: 24,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  ghostBtn: {
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.glassBorderBright,
+    backgroundColor: 'transparent',
   },
   inner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWithText: { marginRight: 10 },
-  text: { fontWeight: '800', letterSpacing: 0.5 },
+  iconWithText: { marginRight: 8 },
+  text: { fontWeight: '600', letterSpacing: 1 },
 });
