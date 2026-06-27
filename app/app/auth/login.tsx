@@ -62,11 +62,15 @@ export default function LoginScreen() {
         </View>
 
         {/* Tab switcher */}
-        <View style={styles.tabBar}>
+        <View style={[styles.tabBar, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowBase } as any : null]}>
           {(['login', 'register'] as const).map(t => (
             <TouchableOpacity
               key={t}
-              style={[styles.tab, tab === t && styles.tabActive]}
+              style={[
+                styles.tab, 
+                tab === t && styles.tabActive,
+                Platform.OS === 'web' && tab === t ? { boxShadow: Colors.clayShadowActive } as any : null
+              ]}
               onPress={() => setTab(t)}
               activeOpacity={0.7}
             >
@@ -80,16 +84,16 @@ export default function LoginScreen() {
         {/* Form */}
         <GlassCard tint="light" style={styles.form}>
           {tab === 'register' && (
-            <View style={styles.inputRow}>
+            <View style={[styles.inputRow, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowActive } as any : null]}>
               <User color={Colors.textMuted} size={20} />
               <TextInput style={styles.input} placeholder="الاسم الكامل" placeholderTextColor={Colors.textMuted} value={name} onChangeText={setName} />
             </View>
           )}
-          <View style={styles.inputRow}>
+          <View style={[styles.inputRow, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowActive } as any : null]}>
             <Phone color={Colors.textMuted} size={20} />
             <TextInput style={styles.input} placeholder="الإيميل" placeholderTextColor={Colors.textMuted} keyboardType="email-address" value={email} onChangeText={setEmail} autoCapitalize="none" />
           </View>
-          <View style={styles.inputRow}>
+          <View style={[styles.inputRow, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowActive } as any : null]}>
             <Lock color={Colors.textMuted} size={20} />
             <TextInput style={styles.input} placeholder="كلمة المرور" placeholderTextColor={Colors.textMuted} secureTextEntry value={password} onChangeText={setPassword} />
           </View>
@@ -141,10 +145,7 @@ const styles = StyleSheet.create({
   logo: { fontSize: 40, fontWeight: '800', color: Colors.primary, letterSpacing: 1, marginBottom: 8 },
   subtitle: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600' },
   
-  tabBar: { flexDirection: 'row', marginBottom: 20, padding: 6, backgroundColor: Colors.bgDeep, borderRadius: 100, ...Platform.select({
-    web: { boxShadow: `0px 4px 12px rgba(210, 195, 180, 0.3)` },
-    default: { shadowColor: '#D0C5B9', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }
-  }) },
+  tabBar: { flexDirection: 'row', marginBottom: 20, padding: 6, backgroundColor: Colors.bgDeep, borderRadius: 100 },
   tab: { flex: 1, paddingVertical: 14, alignItems: 'center', borderRadius: 100 },
   tabActive: { backgroundColor: Colors.primaryDim },
   tabText: { color: Colors.textMuted, fontWeight: '700', fontSize: 15 },
@@ -156,11 +157,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgDeep, borderRadius: 100,
     paddingHorizontal: 20, paddingVertical: 16,
     borderWidth: 1, borderColor: '#FFFFFF',
-    ...Platform.select({
-      web: { boxShadow: `inset 0px 4px 8px rgba(210, 195, 180, 0.2)` },
-    })
   },
-  input: { flex: 1, color: Colors.text, fontSize: 16, fontWeight: '600' },
+  input: { flex: 1, color: Colors.text, fontSize: 16, fontWeight: '600', outlineStyle: 'none' } as any,
   forgot: { alignItems: 'flex-start' },
   forgotText: { color: Colors.secondary, fontSize: 14, fontWeight: '700' },
   submitBtn: { marginTop: 8 },

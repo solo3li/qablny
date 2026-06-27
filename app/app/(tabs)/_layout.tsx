@@ -21,7 +21,10 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          Platform.OS === 'web' ? { boxShadow: Colors.clayShadowBase } as any : null
+        ],
         tabBarActiveTintColor: Colors.secondary,
         tabBarInactiveTintColor: Colors.textMuted,
         tabBarShowLabel: true,

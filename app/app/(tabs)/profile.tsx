@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { axiosClient } from '../../src/api/axiosClient';
@@ -52,9 +52,9 @@ export default function ProfileScreen() {
         {/* Profile Header */}
         <View style={styles.header}>
           <View style={styles.avatarWrap}>
-            <Image source={{ uri: user.profileImageUrl || 'https://i.pravatar.cc/300' }} style={styles.avatar} />
+            <Image source={{ uri: user.profileImageUrl || 'https://i.pravatar.cc/300' }} style={[styles.avatar, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowBase } as any : null]} />
             {user.isVip && (
-              <View style={styles.vipRing}>
+              <View style={[styles.vipRing, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowPrimary } as any : null]}>
                 <Star size={14} color={Colors.primary} fill={Colors.primary} />
               </View>
             )}
@@ -71,7 +71,7 @@ export default function ProfileScreen() {
           {user.interests && user.interests.length > 0 && (
             <View style={styles.interests}>
               {user.interests.map(i => (
-                <View key={i} style={styles.interestTag}>
+                <View key={i} style={[styles.interestTag, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowBase } as any : null]}>
                   <Text style={styles.interestText}>{i}</Text>
                 </View>
               ))}
@@ -138,7 +138,9 @@ export default function ProfileScreen() {
             <React.Fragment key={item.label}>
               <TouchableOpacity style={styles.menuItem}>
                 <View style={styles.menuLeft}>
-                  <View style={styles.menuIcon}>{item.icon}</View>
+                  <View style={[styles.menuIcon, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowActive } as any : null]}>
+                    {item.icon}
+                  </View>
                   <View>
                     <Text style={styles.menuLabel}>{item.label}</Text>
                     <Text style={styles.menuSub}>{item.sub}</Text>
@@ -204,7 +206,7 @@ const styles = StyleSheet.create({
   menuCard: { marginHorizontal: 24, marginBottom: 24, overflow: 'hidden', padding: 0 },
   menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20 },
   menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  menuIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+  menuIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.bgDeep, alignItems: 'center', justifyContent: 'center' },
   menuLabel: { fontSize: 16, fontWeight: '800', color: Colors.text },
   menuSub: { fontSize: 13, color: Colors.textMuted, marginTop: 2, fontWeight: '600' },
   menuDiv: { height: 2, backgroundColor: Colors.glassBorder, marginHorizontal: 20 },

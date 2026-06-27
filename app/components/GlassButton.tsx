@@ -29,7 +29,11 @@ export function GlassButton({ title, loading, variant = 'primary', icon, style, 
     return '#FFFFFF';
   };
 
-  const shadowColor = disabled ? 'transparent' : getBgColor();
+  const getClayShadow = () => {
+    if (disabled || variant === 'outline') return 'none';
+    if (variant === 'secondary') return Colors.clayShadowSecondary;
+    return Colors.clayShadowPrimary;
+  };
 
   return (
     <TouchableOpacity 
@@ -38,7 +42,7 @@ export function GlassButton({ title, loading, variant = 'primary', icon, style, 
         styles.button, 
         { backgroundColor: getBgColor() },
         variant === 'outline' && { borderWidth: 2, borderColor: Colors.glassBorder },
-        Platform.OS === 'web' && variant !== 'outline' && !disabled ? { boxShadow: `0px 8px 16px -4px ${shadowColor}80, inset 0px 4px 8px rgba(255,255,255,0.4)` } as any : null,
+        Platform.OS === 'web' && variant !== 'outline' && !disabled ? { boxShadow: getClayShadow() } as any : null,
         style
       ]} 
       disabled={disabled || loading}
@@ -62,6 +66,8 @@ const styles = StyleSheet.create({
   button: {
     height: 56,
     borderRadius: 100, // Pill shape
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',

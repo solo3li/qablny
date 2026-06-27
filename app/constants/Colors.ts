@@ -1,7 +1,4 @@
 export const Colors = {
-  // Backgrounds (Minimalist Elegance)
-  bg: '#FFFFFF', // Pure White
-  bgDeep: '#F9FAFB', // Very soft grey
   // --- Claymorphism Theme ---
   
   // Backgrounds
@@ -23,10 +20,16 @@ export const Colors = {
   textSecondary: '#8A6D61', // Lighter Brown
   textMuted: '#C2B1A8',  // Disabled/Placeholder text
 
-  // Borders & Shadows
+  // Borders
   glassBorder: '#F2E8DF',// Slightly darker cream for borders
   glassBorderBright: '#FFFFFF', // Highlight border for 3D effect
   glassBg: 'rgba(255, 255, 255, 0.95)', // Semi-transparent white
+
+  // Claymorphism Shadows (Web)
+  clayShadowBase: '8px 8px 16px rgba(210, 195, 180, 0.6), -8px -8px 16px #FFFFFF, inset -4px -4px 8px rgba(210, 195, 180, 0.2), inset 4px 4px 8px #FFFFFF',
+  clayShadowActive: 'inset 6px 6px 12px rgba(210, 195, 180, 0.6), inset -6px -6px 12px #FFFFFF',
+  clayShadowPrimary: '8px 8px 16px rgba(210, 195, 180, 0.5), -8px -8px 16px #FFFFFF, inset -4px -4px 8px rgba(200, 100, 80, 0.2), inset 4px 4px 8px rgba(255, 255, 255, 0.6)',
+  clayShadowSecondary: '8px 8px 16px rgba(210, 195, 180, 0.5), -8px -8px 16px #FFFFFF, inset -4px -4px 8px rgba(100, 180, 150, 0.2), inset 4px 4px 8px rgba(255, 255, 255, 0.6)',
 
   // Gradients (Optional soft backgrounds)
   gradMain: ['#F5F1EB', '#F2EBE1'] as const,

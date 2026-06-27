@@ -1,4 +1,4 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { Colors } from '../constants/Colors';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -11,6 +11,7 @@ export default function RootLayout() {
   const { checkAuth, token, isLoading } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
 
   usePushNotifications();
 
@@ -19,7 +20,7 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !rootNavigationState?.key) return;
 
     const inProtectedGroup = segments[0] === '(tabs)' || segments[0] === 'chat';
     const inAuthGroup = segments[0] === 'auth';
@@ -31,7 +32,7 @@ export default function RootLayout() {
       // Redirect to home if user is authenticated but tries to access login screen
       router.replace('/(tabs)');
     }
-  }, [token, isLoading, segments]);
+  }, [token, isLoading, segments, rootNavigationState?.key]);
 
   return (
     <>

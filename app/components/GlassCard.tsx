@@ -13,10 +13,19 @@ export function GlassCard({ children, style, glowColor, tint = 'light', ...props
     tint === 'secondary' ? Colors.secondaryDim : 
     Colors.bgDeep;
 
-  const shadowColor = glowColor || (tint === 'primary' ? Colors.primary : tint === 'secondary' ? Colors.secondary : '#D0C5B9');
+  const getClayShadow = () => {
+    if (tint === 'primary') return Colors.clayShadowPrimary;
+    if (tint === 'secondary') return Colors.clayShadowSecondary;
+    return Colors.clayShadowBase;
+  };
 
   return (
-    <View style={[styles.card, { backgroundColor: bgColor }, style]} {...props}>
+    <View style={[
+      styles.card, 
+      { backgroundColor: bgColor },
+      Platform.OS === 'web' ? { boxShadow: getClayShadow() } as any : null,
+      style
+    ]} {...props}>
       {children}
     </View>
   );
@@ -29,11 +38,8 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
     overflow: 'hidden',
     padding: 16,
-    // Claymorphism shadow effect
+    // Native shadow fallback
     ...Platform.select({
-      web: {
-        boxShadow: `0px 12px 24px -8px rgba(210, 195, 180, 0.5), inset 0px 4px 10px rgba(255, 255, 255, 0.8)`,
-      },
       default: {
         shadowColor: '#D0C5B9',
         shadowOffset: { width: 0, height: 12 },
