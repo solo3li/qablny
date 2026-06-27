@@ -14,7 +14,7 @@ import { Track } from 'livekit-client';
 import '@livekit/components-styles';
 
 // The URL for the LiveKit Server (must match backend)
-const LIVEKIT_URL = 'wss://livekit.178.62.192.74.nip.io';
+const LIVEKIT_URL = 'ws://localhost:7880';
 
 // A sub-component to render the remote video track
 function RemoteVideo() {
