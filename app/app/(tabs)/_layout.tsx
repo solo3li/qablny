@@ -1,17 +1,34 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Colors } from '../../constants/Colors';
-import { Video, Search, MessageSquare, User } from 'lucide-react-native';
-import { StyleSheet, View, Text, Platform } from 'react-native';
+import { Home, Heart, MessageSquare, User, Plus } from 'lucide-react-native';
+import { StyleSheet, View, Text, Platform, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '../../store/useAppStore';
 
 function TabIcon({ icon, focused }: { icon: React.ReactNode; focused: boolean }) {
   return (
-    <View style={[styles.tabIcon, focused && styles.tabIconActive]}>
+    <View style={styles.tabIcon}>
       {icon}
     </View>
   );
 }
+
+const CustomFloatingButton = ({ children, onPress }: any) => (
+  <TouchableOpacity
+    style={styles.floatingButtonContainer}
+    onPress={onPress}
+    activeOpacity={0.8}
+  >
+    <LinearGradient
+      colors={Colors.gradPrimary}
+      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+      style={styles.floatingButton}
+    >
+      <Plus color="#FFFFFF" size={28} strokeWidth={2.5} />
+    </LinearGradient>
+  </TouchableOpacity>
+);
 
 export default function TabLayout() {
   const friends = useAppStore(state => state.friends);
@@ -23,38 +40,54 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: [
           styles.tabBar,
-          Platform.OS === 'web' ? { boxShadow: Colors.clayShadowBase } as any : null
+          Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null
         ],
+        tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.secondary,
         tabBarInactiveTintColor: Colors.textMuted,
-        tabBarShowLabel: true,
-        tabBarLabelStyle: styles.tabLabel,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'فيديو',
+          title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon focused={focused} icon={<Video color={color} size={22} />} />
+            <TabIcon focused={focused} icon={<Home color={color} size={24} strokeWidth={focused ? 2.5 : 2} />} />
           ),
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'بحث',
+          title: 'Matches',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon focused={focused} icon={<Search color={color} size={22} />} />
+            <TabIcon focused={focused} icon={<Heart color={color} size={24} strokeWidth={focused ? 2.5 : 2} />} />
           ),
         }}
       />
+      
+      <Tabs.Screen
+        name="action"
+        options={{
+          title: 'New',
+          tabBarIcon: () => null,
+          tabBarButton: (props) => <CustomFloatingButton {...props} />,
+        }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            // Handle floating action button press (e.g., open modal or go to explore)
+            navigation.navigate('explore');
+          },
+        })}
+      />
+
       <Tabs.Screen
         name="messages"
         options={{
-          title: 'رسائل',
+          title: 'Chats',
           tabBarIcon: ({ color, focused }) => (
             <View>
-              <TabIcon focused={focused} icon={<MessageSquare color={color} size={22} />} />
+              <TabIcon focused={focused} icon={<MessageSquare color={color} size={24} strokeWidth={focused ? 2.5 : 2} />} />
               {totalUnread > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{totalUnread > 9 ? '9+' : totalUnread}</Text>
@@ -67,9 +100,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'حسابي',
+          title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon focused={focused} icon={<User color={color} size={22} />} />
+            <TabIcon focused={focused} icon={<User color={color} size={24} strokeWidth={focused ? 2.5 : 2} />} />
           ),
         }}
       />
@@ -82,45 +115,56 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 24,
     marginHorizontal: 24,
-    height: 72,
+    height: 70,
     borderRadius: 100,
-    backgroundColor: Colors.bgDeep,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 0,
     paddingBottom: 0,
-    // Claymorphism shadow effect
     ...Platform.select({
-      web: {
-        boxShadow: `0px 12px 24px -8px rgba(210, 195, 180, 0.4)`,
-      },
       default: {
-        shadowColor: '#D0C5B9',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
-        shadowRadius: 16,
+        shadowOpacity: 0.08,
+        shadowRadius: 24,
         elevation: 8,
       }
     }),
   },
-  tabLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    marginTop: 4,
-  },
   tabIcon: {
-    width: 44, height: 44,
-    alignItems: 'center', justifyContent: 'center',
-    borderRadius: 22,
-    marginTop: 8,
-  },
-  tabIconActive: {
-    backgroundColor: Colors.secondaryDim,
+    alignItems: 'center', 
+    justifyContent: 'center',
   },
   badge: {
-    position: 'absolute', top: 6, right: -4,
-    backgroundColor: Colors.primary,
+    position: 'absolute', top: -4, right: -8,
+    backgroundColor: Colors.danger,
     borderRadius: 10, minWidth: 20, height: 20,
     alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
-  badgeText: { color: Colors.bgDeep, fontSize: 10, fontWeight: '800' },
+  badgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+  
+  floatingButtonContainer: {
+    top: -24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  floatingButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      web: { boxShadow: Colors.shadowGlow } as any,
+      default: {
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+        elevation: 12,
+      }
+    }),
+  }
 });

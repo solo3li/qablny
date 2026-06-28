@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { GlassButton } from '../../components/GlassButton';
 import { GlassCard } from '../../components/GlassCard';
 import { Colors } from '../../constants/Colors';
@@ -53,23 +54,23 @@ export default function LoginScreen() {
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Decorative Orbs */}
-        <View style={[styles.orb, { top: -60, right: -60, backgroundColor: Colors.primaryDim }]} />
-        <View style={[styles.orb2, { bottom: -80, left: -60, backgroundColor: Colors.secondaryDim }]} />
+        <LinearGradient colors={Colors.gradPrimary} style={[styles.orb, { top: -60, right: -60 }]} />
+        <LinearGradient colors={Colors.gradSecondary} style={[styles.orb2, { bottom: -80, left: -60 }]} />
 
         <View style={styles.header}>
-          <Text style={styles.logo}>💖 قابلنى</Text>
+          <Text style={styles.logo}>قابلنى</Text>
           <Text style={styles.subtitle}>تواصل بلا حدود</Text>
         </View>
 
         {/* Tab switcher */}
-        <View style={[styles.tabBar, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowBase } as any : null]}>
+        <View style={[styles.tabBar, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
           {(['login', 'register'] as const).map(t => (
             <TouchableOpacity
               key={t}
               style={[
                 styles.tab, 
                 tab === t && styles.tabActive,
-                Platform.OS === 'web' && tab === t ? { boxShadow: Colors.clayShadowActive } as any : null
+                Platform.OS === 'web' && tab === t ? { boxShadow: Colors.shadowLight } as any : null
               ]}
               onPress={() => setTab(t)}
               activeOpacity={0.7}
@@ -84,16 +85,16 @@ export default function LoginScreen() {
         {/* Form */}
         <GlassCard tint="light" style={styles.form}>
           {tab === 'register' && (
-            <View style={[styles.inputRow, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowActive } as any : null]}>
+            <View style={styles.inputRow}>
               <User color={Colors.textMuted} size={20} />
               <TextInput style={styles.input} placeholder="الاسم الكامل" placeholderTextColor={Colors.textMuted} value={name} onChangeText={setName} />
             </View>
           )}
-          <View style={[styles.inputRow, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowActive } as any : null]}>
+          <View style={styles.inputRow}>
             <Phone color={Colors.textMuted} size={20} />
             <TextInput style={styles.input} placeholder="الإيميل" placeholderTextColor={Colors.textMuted} keyboardType="email-address" value={email} onChangeText={setEmail} autoCapitalize="none" />
           </View>
-          <View style={[styles.inputRow, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowActive } as any : null]}>
+          <View style={styles.inputRow}>
             <Lock color={Colors.textMuted} size={20} />
             <TextInput style={styles.input} placeholder="كلمة المرور" placeholderTextColor={Colors.textMuted} secureTextEntry value={password} onChangeText={setPassword} />
           </View>
@@ -139,15 +140,15 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
-  orb: { position: 'absolute', width: 250, height: 250, borderRadius: 125 },
-  orb2: { position: 'absolute', width: 200, height: 200, borderRadius: 100 },
+  orb: { position: 'absolute', width: 250, height: 250, borderRadius: 125, opacity: 0.15 },
+  orb2: { position: 'absolute', width: 200, height: 200, borderRadius: 100, opacity: 0.15 },
   header: { alignItems: 'center', marginBottom: 32 },
-  logo: { fontSize: 40, fontWeight: '800', color: Colors.primary, letterSpacing: 1, marginBottom: 8 },
+  logo: { fontSize: 40, fontWeight: '900', color: Colors.primary, letterSpacing: -1, marginBottom: 8 },
   subtitle: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600' },
   
   tabBar: { flexDirection: 'row', marginBottom: 20, padding: 6, backgroundColor: Colors.bgDeep, borderRadius: 100 },
   tab: { flex: 1, paddingVertical: 14, alignItems: 'center', borderRadius: 100 },
-  tabActive: { backgroundColor: Colors.primaryDim },
+  tabActive: { backgroundColor: Colors.surface },
   tabText: { color: Colors.textMuted, fontWeight: '700', fontSize: 15 },
   tabTextActive: { color: Colors.primary, fontWeight: '800' },
   
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: Colors.bgDeep, borderRadius: 100,
     paddingHorizontal: 20, paddingVertical: 16,
-    borderWidth: 1, borderColor: '#FFFFFF',
+    borderWidth: 1, borderColor: Colors.glassBorderBright,
   },
   input: { flex: 1, color: Colors.text, fontSize: 16, fontWeight: '600', outlineStyle: 'none' } as any,
   forgot: { alignItems: 'flex-start' },

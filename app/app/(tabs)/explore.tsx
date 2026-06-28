@@ -39,7 +39,7 @@ export default function ExploreScreen() {
                 style={[
                   styles.optionBtn, 
                   filterGender === opt.key && styles.optionBtnActive,
-                  Platform.OS === 'web' ? { boxShadow: filterGender === opt.key ? Colors.clayShadowActive : Colors.clayShadowBase } as any : null
+                  Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null
                 ]}
                 onPress={() => setFilterGender(opt.key)}
                 activeOpacity={0.7}
@@ -62,9 +62,9 @@ export default function ExploreScreen() {
           <GlassCard style={styles.ageCard} tint="light">
             <View style={styles.ageRow}>
               <Text style={styles.ageLabel}>من</Text>
-              <View style={[styles.ageValueBox, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowActive } as any : null]}><Text style={styles.ageValue}>{ageRange[0]}</Text></View>
+              <View style={[styles.ageValueBox, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}><Text style={styles.ageValue}>{ageRange[0]}</Text></View>
               <Text style={styles.ageLabel}>إلى</Text>
-              <View style={[styles.ageValueBox, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowActive } as any : null]}><Text style={styles.ageValue}>{ageRange[1]}</Text></View>
+              <View style={[styles.ageValueBox, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}><Text style={styles.ageValue}>{ageRange[1]}</Text></View>
               <Text style={styles.ageLabel}>سنة</Text>
             </View>
             <View style={styles.ageBtns}>
@@ -74,7 +74,7 @@ export default function ExploreScreen() {
                   style={[
                     styles.agePreset, 
                     ageRange[0] === r[0] && ageRange[1] === r[1] && styles.agePresetActive,
-                    Platform.OS === 'web' ? { boxShadow: ageRange[0] === r[0] && ageRange[1] === r[1] ? Colors.clayShadowActive : Colors.clayShadowBase } as any : null
+                    Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null
                   ]}
                   onPress={() => setAgeRange(r)}
                   activeOpacity={0.7}
@@ -101,7 +101,7 @@ export default function ExploreScreen() {
                 style={[
                   styles.regionBtn, 
                   filterRegion === r && styles.regionBtnActive,
-                  Platform.OS === 'web' ? { boxShadow: filterRegion === r ? Colors.clayShadowActive : Colors.clayShadowBase } as any : null
+                  Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null
                 ]}
                 onPress={() => setFilterRegion(r)}
                 activeOpacity={0.7}
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, flex: 1 },
   optionsRow: { flexDirection: 'row', gap: 10 },
-  optionBtn: { flex: 1, alignItems: 'center', gap: 8, paddingVertical: 16, borderRadius: 24, backgroundColor: Colors.bgDeep, borderWidth: 1, borderColor: '#FFFFFF' },
+  optionBtn: { flex: 1, alignItems: 'center', gap: 8, paddingVertical: 16, borderRadius: 24, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright },
   optionBtnActive: { backgroundColor: Colors.cyanDim, borderColor: Colors.cyan },
   optionEmoji: { fontSize: 28 },
   optionLabel: { fontSize: 14, fontWeight: '700', color: Colors.textSecondary },
@@ -136,14 +136,14 @@ const styles = StyleSheet.create({
   ageCard: { padding: 20 },
   ageRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
   ageLabel: { fontSize: 15, color: Colors.textSecondary, fontWeight: '700' },
-  ageValueBox: { backgroundColor: Colors.primaryDim, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: Colors.primary },
+  ageValueBox: { backgroundColor: Colors.surfaceHover, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: Colors.glassBorder },
   ageValue: { fontSize: 18, fontWeight: '800', color: Colors.primary },
   ageBtns: { flexDirection: 'row', gap: 8 },
-  agePreset: { flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 16, backgroundColor: Colors.bgDeep, borderWidth: 1, borderColor: '#FFFFFF' },
+  agePreset: { flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 16, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright },
   agePresetActive: { backgroundColor: Colors.primaryDim, borderColor: Colors.primary },
   agePresetText: { fontSize: 14, fontWeight: '700', color: Colors.textMuted },
   regionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  regionBtn: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 100, backgroundColor: Colors.bgDeep, borderWidth: 1, borderColor: '#FFFFFF' },
+  regionBtn: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 100, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright },
   regionBtnActive: { backgroundColor: Colors.secondaryDim, borderColor: Colors.secondary },
   regionText: { fontSize: 14, color: Colors.textSecondary, fontWeight: '700' },
   regionTextActive: { color: Colors.secondary },

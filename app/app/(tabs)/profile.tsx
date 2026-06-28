@@ -52,9 +52,9 @@ export default function ProfileScreen() {
         {/* Profile Header */}
         <View style={styles.header}>
           <View style={styles.avatarWrap}>
-            <Image source={{ uri: user.profileImageUrl || 'https://i.pravatar.cc/300' }} style={[styles.avatar, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowBase } as any : null]} />
+            <Image source={{ uri: user.profileImageUrl || 'https://i.pravatar.cc/300' }} style={[styles.avatar, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]} />
             {user.isVip && (
-              <View style={[styles.vipRing, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowPrimary } as any : null]}>
+              <View style={[styles.vipRing, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
                 <Star size={14} color={Colors.primary} fill={Colors.primary} />
               </View>
             )}
@@ -71,7 +71,7 @@ export default function ProfileScreen() {
           {user.interests && user.interests.length > 0 && (
             <View style={styles.interests}>
               {user.interests.map(i => (
-                <View key={i} style={[styles.interestTag, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowBase } as any : null]}>
+                <View key={i} style={[styles.interestTag, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
                   <Text style={styles.interestText}>{i}</Text>
                 </View>
               ))}
@@ -138,7 +138,7 @@ export default function ProfileScreen() {
             <React.Fragment key={item.label}>
               <TouchableOpacity style={styles.menuItem}>
                 <View style={styles.menuLeft}>
-                  <View style={[styles.menuIcon, Platform.OS === 'web' ? { boxShadow: Colors.clayShadowActive } as any : null]}>
+                  <View style={[styles.menuIcon, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
                     {item.icon}
                   </View>
                   <View>
@@ -171,14 +171,14 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24, paddingBottom: 24 },
   avatarWrap: { position: 'relative', marginBottom: 16 },
   avatar: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: '#FFFFFF' },
-  vipRing: { position: 'absolute', bottom: 0, right: 0, backgroundColor: Colors.bgDeep, borderRadius: 100, padding: 8, borderWidth: 1, borderColor: Colors.primary },
+  vipRing: { position: 'absolute', bottom: 0, right: 0, backgroundColor: Colors.surface, borderRadius: 100, padding: 8, borderWidth: 1, borderColor: Colors.glassBorderBright },
   name: { fontSize: 28, fontWeight: '800', color: Colors.text, marginBottom: 6 },
   bio: { fontSize: 16, color: Colors.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: 10, fontWeight: '500' },
   locationRow: { flexDirection: 'row', gap: 6, alignItems: 'center', marginBottom: 16 },
   locationText: { fontSize: 14, color: Colors.textMuted, fontWeight: '700' },
   dot: { color: Colors.textMuted },
   interests: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  interestTag: { backgroundColor: Colors.bgDeep, borderRadius: 100, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: '#FFFFFF' },
+  interestTag: { backgroundColor: Colors.surface, borderRadius: 100, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: Colors.glassBorderBright },
   interestText: { color: Colors.textSecondary, fontSize: 14, fontWeight: '700' },
   statsCard: { flexDirection: 'row', marginHorizontal: 24, marginBottom: 24, padding: 20 },
   stat: { flex: 1, alignItems: 'center', gap: 4 },
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   plansRow: { flexDirection: 'row', gap: 10, marginHorizontal: 24, marginBottom: 24 },
   planCard: { flex: 1, padding: 16, alignItems: 'center' },
   planBest: { borderColor: Colors.primary },
-  bestBadge: { backgroundColor: Colors.bgDeep, borderRadius: 100, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 10 },
+  bestBadge: { backgroundColor: Colors.surface, borderRadius: 100, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 10 },
   bestText: { color: Colors.primary, fontSize: 12, fontWeight: '800' },
   planName: { fontSize: 16, fontWeight: '800', color: Colors.text, marginBottom: 4 },
   planPrice: { fontSize: 26, fontWeight: '800', color: Colors.primary },
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   menuCard: { marginHorizontal: 24, marginBottom: 24, overflow: 'hidden', padding: 0 },
   menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20 },
   menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  menuIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.bgDeep, alignItems: 'center', justifyContent: 'center' },
+  menuIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   menuLabel: { fontSize: 16, fontWeight: '800', color: Colors.text },
   menuSub: { fontSize: 13, color: Colors.textMuted, marginTop: 2, fontWeight: '600' },
   menuDiv: { height: 2, backgroundColor: Colors.glassBorder, marginHorizontal: 20 },
