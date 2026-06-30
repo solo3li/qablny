@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - master
-      - runnning
+      # - runnning
 
 jobs:
   build:

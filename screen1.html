@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>مكالمة مباشرة - VibeConnect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#8e7069",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#e3beb7",
+                        "on-primary-fixed-variant": "#8c1800",
+                        "on-secondary-fixed": "#3e001f",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#ffd9e3",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed-variant": "#8d004d",
+                        "background": "#f8f9fa",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-tertiary-fixed-variant": "#005144",
+                        "on-error": "#ffffff",
+                        "secondary": "#b40064",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f3f4f5",
+                        "surface-bright": "#f8f9fa",
+                        "surface-container": "#edeeef",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#ffb4a4",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#5e0d00",
+                        "secondary-fixed-dim": "#ffb0ca",
+                        "surface-dim": "#d9dadb",
+                        "primary-container": "#ff5f3d",
+                        "on-surface": "#191c1d",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#3d0600",
+                        "inverse-primary": "#ffb4a4",
+                        "primary": "#b3290b",
+                        "on-secondary-container": "#fffbff",
+                        "surface": "#f8f9fa",
+                        "tertiary-container": "#00a790",
+                        "on-surface-variant": "#5a413b",
+                        "secondary-container": "#e1027f",
+                        "surface-tint": "#b3290b",
+                        "primary-fixed": "#ffdad3",
+                        "tertiary-fixed-dim": "#00dfc1",
+                        "surface-variant": "#e1e3e4",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-tertiary-container": "#00342b",
+                        "on-tertiary-fixed": "#00201a",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#006b5b",
+                        "tertiary-fixed": "#26fedc"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "sm": "8px",
+                        "margin-mobile": "20px",
+                        "xs": "4px",
+                        "gutter": "16px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-md": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "body-sm": ["Plus Jakarta Sans"],
+                        "headline-sm": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Particle Animation */
+        @keyframes floatUp {
+            0% { transform: translateY(100px) scale(0.5); opacity: 0; }
+            50% { opacity: 1; transform: translateY(-100px) scale(1) translateX(20px); }
+            100% { transform: translateY(-300px) scale(1.2) translateX(-20px); opacity: 0; }
+        }
+        .particle {
+            position: absolute;
+            bottom: 0;
+            pointer-events: none;
+            animation: floatUp 3s ease-in-out infinite;
+        }
+        
+        /* Gift Tray Animation */
+        .gift-tray-enter {
+            transform: translateY(100%);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .gift-tray-active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background h-screen w-full overflow-hidden relative font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Main Video Canvas -->
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover" data-alt="Full screen vertical video feed of a vibrant, expressive young person laughing and waving. High contrast, energetic lighting typical of a live streaming social app. The subject is well-lit against a modern, slightly blurred background, exuding optimism and connection." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTxqLbOE6UoS9I55CFGKgF6T_imqSQrvsyuqQK3DqnjzwTzFe6bLyZb5dZ6ah1Gt470mSjbD6OrwXQB4eT8p5UlhTSNGVXc1Uqx3pjAhnP7_bx679g1IP4XuvbQ5eeTG5k6AQ_C1WHonV05i6PiTKOA1Koh8j02oaCIqb20EPDfsWONoeRBgmJgrPnDTRCxXRLUix_SZRPa0CGcCQR9_pSsc1ALoBx0jBCb2xR9hCH3p6GvnXggTZfopVUQGzzvmUqkpKDeVF1zMZV"/>
+<!-- Gradient Overlay for legibility -->
+<div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 pointer-events-none"></div>
+</div>
+<!-- Particle Container -->
+<div class="absolute inset-0 z-10 pointer-events-none overflow-hidden" id="particle-container">
+<!-- Particles injected via JS -->
+</div>
+<!-- Top Navigation / Status Area -->
+<div class="absolute top-0 left-0 w-full z-30 pt-safe-top">
+<div class="flex justify-between items-center px-margin-mobile py-sm">
+<!-- Back/Dismiss -->
+<button class="w-10 h-10 rounded-full bg-black/30 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:bg-black/50 transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<!-- Live Badge & Info -->
+<div class="flex items-center gap-xs bg-black/30 backdrop-blur-xl border border-white/20 rounded-full py-1 px-3">
+<div class="w-2 h-2 rounded-full bg-error animate-pulse"></div>
+<span class="text-white font-label-md text-label-md">مكالمة مباشرة</span>
+<span class="text-white/80 font-label-md text-label-md mr-2">04:23</span>
+</div>
+<!-- Trailing Actions -->
+<button class="w-10 h-10 rounded-full bg-black/30 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:bg-black/50 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- User Mini Avatar (Picture-in-Picture) -->
+<div class="absolute top-20 right-margin-mobile z-30 w-24 h-36 rounded-[24px] overflow-hidden border-2 border-white shadow-[0_8px_30px_rgba(0,0,0,0.3)] bg-black">
+<img class="w-full h-full object-cover" data-alt="Small picture-in-picture vertical video feed of the local user. A smiling face in bright, even lighting, typical of a front-facing mobile camera during a video call. Modern and approachable aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLM_lwSagingLJrlG-f9RqXbvt-CLSS6Gw-ddtaNUR5MrkQwd_hObN42uoxoYzWmCH_WbntLwNkvZMgZg7__FAf5hVoUdRhnSU2RziP7-ZmjTw6NjkV03KN10DGRNJP1ht4E8hdGxoFAzIg5gaJ8YeDVgAFdlrteBFX_pTjFq_muZBPiINdh_A8Ndx8uYT2MxQ6ylsgyccsL99Sz_Kal_5QS25-DDKcfMClpY7vfSpQPqg8csouMxeE__bP-7VxF4Bc5-tyQ7g1NR0"/>
+<div class="absolute bottom-1 left-1 bg-black/50 backdrop-blur-md rounded-full p-1">
+<span class="material-symbols-outlined text-white text-[16px]">mic</span>
+</div>
+</div>
+<!-- Interactive Overlay Area (Bottom) -->
+<div class="absolute bottom-0 left-0 w-full z-40 px-margin-mobile pb-lg bg-gradient-to-t from-black/80 to-transparent pt-xl">
+<!-- Live Chat/Event Log (Simplified) -->
+<div class="h-32 overflow-y-auto mb-md space-y-2 fade-mask" style="-webkit-mask-image: linear-gradient(to bottom, transparent, black 20%); mask-image: linear-gradient(to bottom, transparent, black 20%);">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full" data-alt="Tiny circular avatar of a user sending a message in the chat stream. Bright colorful background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3PCO5i5YMZTiMKc5FS91lQxX0kV7ygYIOoHvpbWXxvcHvcZBJ4zua35G0qZM284PkeMG_epl0wwiPSywECs98BLsMG29vmcBNrdHB9UYOVK_gOzy6vcQmxeN5HcG3oCcgJ3LFxpS1kFYOrBoLFA8AscjTMKFjYyxZPPEOQggf1DeyoXkMDW1goc-7A9JTak-UEM0gpdu4aq91wtpNwPe66quUG2_g3LunjWCeNY4EQw9_mAsFKhI4lWeZF4u8cUe52m-uHJL0rG34"/>
+<span class="text-white/70 font-label-md text-label-md">أحمد:</span>
+<span class="text-white font-body-sm text-body-sm drop-shadow-md">مرحباً! 👋</span>
+</div>
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full" data-alt="Tiny circular avatar of another user in the live chat. Vibrant and modern." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFPK_u13EFpZzhQn0WwKhI6tCrWW-kVUgTyRxzN0lmQcfOL88S3MvJO8wT00nTyuxOIygr7mENxRA-Y8KWCxsIow3sOIJ76UKSYY7i57Sk2d1MUMnawAAMkxW1RKxtsgzcMnZwm0taYkAY3Gf5nA7zB7eTsiHhohSHGQqvh1Km33aojk1Qq8ChktQ-J3lZo6OqoPL5EOQ_MKIopLY3gudf8JzBmcgd0KrkeYjPfeIr1PwIIQlVNmY9-nGNdso119kfBLE9GTFaHQ_u"/>
+<span class="text-white/70 font-label-md text-label-md">سارة انضمت</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="bg-secondary-container text-on-secondary-container rounded-full px-2 py-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] filled text-secondary">favorite</span>
+<span class="font-label-md text-label-md">نور أرسلت قلوب</span>
+</div>
+</div>
+</div>
+<!-- Controls Row -->
+<div class="flex justify-between items-center relative">
+<!-- Left Controls -->
+<div class="flex gap-3">
+<button class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/30 transition-colors border border-white/10">
+<span class="material-symbols-outlined">chat</span>
+</button>
+<button class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/30 transition-colors border border-white/10">
+<span class="material-symbols-outlined">flip_camera_ios</span>
+</button>
+</div>
+<!-- Primary Actions (End Call & Gift) -->
+<div class="flex gap-4">
+<!-- Gift Button (Magenta/Secondary) -->
+<button class="w-14 h-14 rounded-full bg-gradient-to-br from-secondary to-secondary-container flex items-center justify-center text-white shadow-[0_4px_20px_rgba(180,0,100,0.4)] hover:scale-105 transition-transform" id="gift-toggle">
+<span class="material-symbols-outlined filled text-[28px]">featured_seasonal_and_gifts</span>
+</button>
+<!-- End Call (Red/Error) -->
+<button class="w-14 h-14 rounded-full bg-error flex items-center justify-center text-white shadow-lg hover:scale-105 transition-transform">
+<span class="material-symbols-outlined filled text-[28px]">call_end</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Glassmorphic Gift Tray Bottom Sheet -->
+<div class="fixed bottom-0 left-0 w-full z-50 bg-white/80 dark:bg-black/80 backdrop-blur-2xl rounded-t-[24px] border-t border-white/20 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-lg gift-tray-enter pointer-events-none" id="gift-tray">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">إرسال هدية</h3>
+<div class="flex items-center gap-1 bg-surface-container-high px-3 py-1 rounded-full">
+<span class="material-symbols-outlined filled text-primary text-[18px]">toll</span>
+<span class="font-label-md text-label-md text-on-surface">1,250</span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-4 mb-md">
+<!-- Gift Item: Rose -->
+<button class="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-surface-container-low transition-colors group">
+<div class="w-16 h-16 rounded-full bg-gradient-to-tr from-pink-100 to-rose-50 flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+<span class="text-3xl">🌹</span>
+</div>
+<div class="text-center">
+<div class="font-label-md text-label-md text-on-surface">وردة</div>
+<div class="font-body-sm text-body-sm text-primary flex items-center justify-center gap-0.5">
+<span class="material-symbols-outlined filled text-[14px]">toll</span> 10
+                    </div>
+</div>
+</button>
+<!-- Gift Item: Crown -->
+<button class="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-surface-container-low transition-colors group">
+<div class="w-16 h-16 rounded-full bg-gradient-to-tr from-yellow-100 to-amber-50 flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm relative">
+<span class="text-3xl">👑</span>
+</div>
+<div class="text-center">
+<div class="font-label-md text-label-md text-on-surface">تاج</div>
+<div class="font-body-sm text-body-sm text-primary flex items-center justify-center gap-0.5">
+<span class="material-symbols-outlined filled text-[14px]">toll</span> 50
+                    </div>
+</div>
+</button>
+<!-- Gift Item: Rocket -->
+<button class="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-surface-container-low transition-colors group">
+<div class="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+<span class="text-3xl">🚀</span>
+</div>
+<div class="text-center">
+<div class="font-label-md text-label-md text-on-surface">صاروخ</div>
+<div class="font-body-sm text-body-sm text-primary flex items-center justify-center gap-0.5">
+<span class="material-symbols-outlined filled text-[14px]">toll</span> 100
+                    </div>
+</div>
+</button>
+<!-- Gift Item: Diamond -->
+<button class="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-surface-container-low transition-colors group">
+<div class="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-100 to-teal-50 flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+<span class="text-3xl">💎</span>
+</div>
+<div class="text-center">
+<div class="font-label-md text-label-md text-on-surface">ماسة</div>
+<div class="font-body-sm text-body-sm text-primary flex items-center justify-center gap-0.5">
+<span class="material-symbols-outlined filled text-[14px]">toll</span> 500
+                    </div>
+</div>
+</button>
+</div>
+<button class="w-full py-3 bg-surface-container rounded-full text-on-surface font-label-md text-label-md hover:bg-surface-container-high transition-colors" id="close-gift-tray">
+            إغلاق
+        </button>
+</div>
+<script>
+        // Toggle Gift Tray
+        const giftToggleBtn = document.getElementById('gift-toggle');
+        const closeGiftBtn = document.getElementById('close-gift-tray');
+        const giftTray = document.getElementById('gift-tray');
+
+        function toggleGiftTray() {
+            const isActive = giftTray.classList.contains('gift-tray-active');
+            if (isActive) {
+                giftTray.classList.remove('gift-tray-active');
+                giftTray.classList.add('pointer-events-none');
+            } else {
+                giftTray.classList.add('gift-tray-active');
+                giftTray.classList.remove('pointer-events-none');
+            }
+        }
+
+        giftToggleBtn.addEventListener('click', toggleGiftTray);
+        closeGiftBtn.addEventListener('click', toggleGiftTray);
+
+        // Particle Animation Logic
+        const container = document.getElementById('particle-container');
+        const colors = ['#ff5f3d', '#e1027f', '#00a790', '#ffd9e3'];
+        const icons = ['favorite', 'star', 'sparkles'];
+
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle material-symbols-outlined filled absolute right-10 bottom-32';
+            
+            // Randomize properties
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const icon = icons[Math.floor(Math.random() * icons.length)];
+            const size = Math.random() * 16 + 16; // 16px to 32px
+            const duration = Math.random() * 2 + 2; // 2s to 4s
+            const delay = Math.random() * 2;
+            const xOffset = (Math.random() - 0.5) * 100;
+
+            particle.style.color = color;
+            particle.style.fontSize = `${size}px`;
+            particle.style.animationDuration = `${duration}s`;
+            particle.style.animationDelay = `${delay}s`;
+            particle.innerText = icon;
+            
+            // Random horizontal drift using CSS variables or inline styles
+            particle.style.left = `${Math.random() * 100}%`;
+
+            container.appendChild(particle);
+
+            // Cleanup
+            setTimeout(() => {
+                particle.remove();
+            }, (duration + delay) * 1000);
+        }
+
+        // Generate particles periodically to simulate a stream of likes/reactions
+        setInterval(createParticle, 400);
+    </script>
+</body></html>
