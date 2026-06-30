@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   giftFloatImage: { width: 150, height: 150 },
 
   // Bottom Overlay
-  bottomOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 20, zIndex: 40 },
+  bottomOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 120 : 110, zIndex: 40 },
   
   // Chat
   chatStream: { height: 100, justifyContent: 'flex-end', marginBottom: 12 },
@@ -424,8 +424,8 @@ const styles = StyleSheet.create({
   chatAvatarPlaceholder: { width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 6 },
   chatSender: { color: 'rgba(255,255,255,0.7)', fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', marginRight: 4 },
   chatText: { color: '#fff', fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium' },
-  systemMessageBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.secondaryContainer, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  systemMessageText: { color: Colors.onSecondaryContainer, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold', marginLeft: 6 },
+  systemMessageBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  systemMessageText: { color: '#fff', fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold', marginLeft: 6 },
 
   // Controls Row
   controlsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   skipBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,255,255,0.15)', borderWidth: 1, borderColor: Colors.cyan, alignItems: 'center', justifyContent: 'center' },
   giftBtn: { width: 50, height: 50, borderRadius: 25, overflow: 'hidden', shadowColor: Colors.secondary, shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.4, shadowRadius: 10 },
   giftBtnGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  endCallBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: Colors.error, alignItems: 'center', justifyContent: 'center', shadowColor: Colors.error, shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.4, shadowRadius: 10 },
+  endCallBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: Colors.danger, alignItems: 'center', justifyContent: 'center', shadowColor: Colors.danger, shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.4, shadowRadius: 10 },
 
   // Gift Tray
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
