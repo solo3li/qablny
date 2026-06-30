@@ -29,12 +29,6 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: 🏗 Setup Expo and EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: 📦 Install dependencies
         working-directory: ./app
         run: npm install --legacy-peer-deps
@@ -45,15 +39,19 @@ jobs:
           jq ".expo.version = \"1.0.${{ github.run_number }}\" | .expo.android.versionCode = ${{ github.run_number }}" app.json > app_tmp.json && mv app_tmp.json app.json
           echo "App version set to 1.0.${{ github.run_number }}"
 
-      - name: 🚀 Build Android locally inside GitHub Action
+      - name: ⚙️ Prebuild Android Project
         working-directory: ./app
-        run: eas build --platform android --profile preview --local --non-interactive
+        run: npx expo prebuild --platform android --clean
+
+      - name: 🚀 Build Android APK (Gradle Debug)
+        working-directory: ./app/android
+        run: ./gradlew assembleDebug
 
       - name: 📦 Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: Release v1.0.${{ github.run_number }}
-          files: ./app/build/*.apk
+          files: ./app/android/app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
