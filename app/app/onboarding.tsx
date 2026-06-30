@@ -19,19 +19,19 @@ const slides = [
     id: '2', emoji: '🔍',
     title: 'ابحث بذكاء',
     desc: 'فلترة دقيقة حسب الجنس والمنطقة الجغرافية لمطابقة تناسب ذوقك.',
-    color: Colors.purple,
+    color: Colors.primary,
   },
   {
     id: '3', emoji: '🌐',
     title: 'ترجمة لحظية',
     desc: 'تجاوز حاجز اللغة مع ترجمة فورية للرسائل لأكثر من 50 لغة.',
-    color: Colors.pink,
+    color: Colors.secondary,
   },
   {
     id: '4', emoji: '🎁',
     title: 'أرسل هدايا ✨',
     desc: 'عبّر عن مشاعرك بهدايا افتراضية مبهرة وارتقِ إلى مستوى VIP.',
-    color: Colors.gold,
+    color: Colors.primaryContainer,
   },
 ];
 
@@ -49,7 +49,7 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <LinearGradient colors={['#040710', '#070B14']} style={styles.container}>
+    <LinearGradient colors={Colors.gradMain} style={styles.container}>
       {/* Background orbs */}
       <View style={[styles.orb, { backgroundColor: slides[activeIdx].color, top: -80, right: -80 }]} />
 
@@ -88,13 +88,12 @@ export default function OnboardingScreen() {
       <View style={styles.footer}>
         <GlassButton
           title={activeIdx === slides.length - 1 ? 'ابدأ الآن 🚀' : 'التالي'}
-          variant={activeIdx === slides.length - 1 ? 'primary' : 'ghost'}
-          size="lg"
+          variant={activeIdx === slides.length - 1 ? 'primary' : 'outline'}
           onPress={next}
           style={styles.btn}
         />
         {activeIdx < slides.length - 1 && (
-          <GlassButton title="تخطى" variant="ghost" size="sm" onPress={() => router.push('/auth/login')} />
+          <GlassButton title="تخطى" variant="outline" onPress={() => router.push('/auth/login')} />
         )}
       </View>
     </LinearGradient>
@@ -116,8 +115,8 @@ const styles = StyleSheet.create({
     })
   },
   emoji: { fontSize: 62 },
-  title: { fontSize: 28, fontWeight: '800', textAlign: 'center', marginBottom: 16, letterSpacing: 0.5 },
-  desc: { fontSize: 16, color: Colors.textSecondary, textAlign: 'center', lineHeight: 26 },
+  title: { fontSize: 28, fontFamily: 'PlusJakartaSans_800ExtraBold', textAlign: 'center', marginBottom: 16, letterSpacing: 0.5 },
+  desc: { fontSize: 16, fontFamily: 'PlusJakartaSans_500Medium', color: Colors.textSecondary, textAlign: 'center', lineHeight: 26 },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 24 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder },
   footer: { padding: 24, paddingBottom: 48, gap: 12, alignItems: 'center' },

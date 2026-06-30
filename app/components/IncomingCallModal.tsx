@@ -62,7 +62,7 @@ export function IncomingCallModal() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(255,255,255,0.75)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.text,
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'PlusJakartaSans_700Bold',
     marginBottom: 4,
   },
   typeText: {
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   name: {
     color: Colors.text,
     fontSize: 24,
-    fontWeight: '800',
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
     marginBottom: 32,
   },
   actions: {

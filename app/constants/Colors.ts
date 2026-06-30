@@ -1,42 +1,43 @@
 export const Colors = {
-  // --- Hype UI Theme ---
+  // --- Vibe Live Connect Theme ---
   
   // Backgrounds
-  bg: '#FFFFFF',         // Pure White
-  bgDeep: '#F5F5F5',     // Very light gray for search bars / inactive tabs
-  surface: '#FFFFFF',    // White
-  surfaceHover: '#F9F9F9',
+  bg: '#f8f9fa',         // Surface Bright
+  bgDeep: '#edeeef',     // Surface Container
+  surface: '#ffffff',    // Surface Container Lowest
+  surfaceHover: '#f3f4f5',// Surface Container Low
 
   // Accents & Buttons (Vibrant Gradients)
-  primary: '#FF512F',    // Orange-Pink
-  primaryDim: '#FFE8E3',
-  secondary: '#DD2476',  // Deep Pink
-  secondaryDim: '#FBE3EE',
-  cyan: '#9B51E0',       // Purple 
-  cyanDim: '#EFE5F9',
+  primary: '#b3290b',    // Primary
+  primaryDim: '#ffb4a4', // Primary Fixed Dim
+  primaryContainer: '#ff5f3d',
+  secondary: '#b40064',  // Secondary
+  secondaryDim: '#ffb0ca',
+  cyan: '#006b5b',       // Tertiary
+  cyanDim: '#00dfc1',
 
   // Text
-  text: '#1C1C1E',       // Almost Black
-  textSecondary: '#8E8E93', // Gray
-  textMuted: '#C7C7CC',  // Light Gray
+  text: '#191c1d',       // On Surface
+  textSecondary: '#5a413b', // On Surface Variant
+  textMuted: '#8e7069',  // Outline
 
   // Borders
-  glassBorder: '#E5E5EA',
-  glassBorderBright: '#F2F2F7',
-  glassBg: 'rgba(255, 255, 255, 0.95)',
+  glassBorder: '#e1e3e4',// Surface Variant
+  glassBorderBright: '#ffffff',
+  glassBg: 'rgba(255, 255, 255, 0.7)',
 
   // Shadows
-  shadowLight: '0px 8px 24px rgba(0, 0, 0, 0.08)',
-  shadowGlow: '0px 10px 24px rgba(255, 81, 47, 0.35)',
+  shadowLight: '0px 4px 20px rgba(0, 0, 0, 0.05)',
+  shadowGlow: '0px 10px 24px rgba(255, 95, 61, 0.3)',
 
   // Gradients
-  gradMain: ['#FFFFFF', '#F9F9F9'] as const,
-  gradPrimary: ['#FF8A00', '#FF007A'] as const, // Orange to Pink
-  gradSecondary: ['#FF007A', '#9B51E0'] as const, // Pink to Purple
-  gradCard: ['#FFFFFF', '#FFFFFF'] as string[],
+  gradMain: ['#ffffff', '#f8f9fa'] as const,
+  gradPrimary: ['#ff5f3d', '#b40064'] as const, // Coral to Pink
+  gradSecondary: ['#b40064', '#006b5b'] as const, // Pink to Teal
+  gradCard: ['#ffffff', '#ffffff'] as string[],
 
   // States
-  online: '#00D084',     // Vibrant Green
-  danger: '#FF3B30',     // Red
-  success: '#34C759',
+  online: '#00a790',     // Tertiary Container (Teal)
+  danger: '#ba1a1a',     // Error
+  success: '#006b5b',
 };

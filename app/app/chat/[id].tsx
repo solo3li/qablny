@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, Image, FlatList, TextInput,
@@ -134,7 +135,7 @@ function VideoBubble({ msg }: { msg: ChatMessage }) {
   if (msg.isUploading || !msg.mediaUrl) {
     return (
       <View style={[styles.bubble, styles.bubbleMe, styles.uploadingRow]}>
-        <ActivityIndicator color={Colors.purple} size="small" />
+        <ActivityIndicator color={Colors.primary} size="small" />
         <Text style={styles.uploadingText}>🎬 جاري الرفع...</Text>
       </View>
     );
@@ -197,7 +198,7 @@ function CallBubble({ msg }: { msg: ChatMessage }) {
 
   return (
     <View style={[styles.callBubble, { backgroundColor: bgColor, borderColor }, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
-      <View style={[styles.callIconWrap, { backgroundColor: isMissed ? Colors.dangerDim : 'rgba(0,0,0,0.2)' }]}>
+      <View style={[styles.callIconWrap, { backgroundColor: isMissed ? (Colors.danger + '22') : Colors.surfaceHover }]}>
         {isMissed ? (
           <Phone color={Colors.danger} size={20} />
         ) : isVideo ? (
@@ -249,8 +250,8 @@ function MessageContextMenu({
 
         {msg.isMe && msg.type === 'text' && (
           <TouchableOpacity style={styles.contextItem} onPress={() => { onEdit(); onClose(); }}>
-            <Pencil color={Colors.gold} size={16} />
-            <Text style={[styles.contextItemText, { color: Colors.gold }]}>تعديل</Text>
+            <Pencil color={Colors.primaryContainer} size={16} />
+            <Text style={[styles.contextItemText, { color: Colors.primaryContainer }]}>تعديل</Text>
           </TouchableOpacity>
         )}
 
@@ -269,8 +270,8 @@ function MessageContextMenu({
 
 const ATTACH_OPTIONS = [
   { id: 'image', icon: <ImageIcon color={Colors.cyan} size={22} />, label: 'صورة', color: Colors.cyanDim, border: Colors.glassBorderBright },
-  { id: 'video', icon: <Film color={Colors.purple} size={22} />, label: 'فيديو', color: Colors.purpleDim, border: Colors.purple + '44' },
-  { id: 'location', icon: <MapPin color={Colors.gold} size={22} />, label: 'موقع', color: Colors.goldDim, border: Colors.gold + '44' },
+  { id: 'video', icon: <Film color={Colors.primary} size={22} />, label: 'فيديو', color: Colors.primaryDim, border: Colors.primary + '44' },
+  { id: 'location', icon: <MapPin color={Colors.primaryContainer} size={22} />, label: 'موقع', color: (Colors.primaryContainer + '22'), border: Colors.primaryContainer + '44' },
 ];
 
 const dummyLocations = [
@@ -515,7 +516,7 @@ export default function ChatScreen() {
   let statusColor = Colors.textMuted;
   if (isRecordingVoice) {
     headerStatus = 'يسجل مقطع صوتي...';
-    statusColor = Colors.pink;
+    statusColor = Colors.secondary;
   } else if (isTyping) {
     headerStatus = 'يكتب الآن...';
     statusColor = Colors.cyan;
@@ -543,7 +544,7 @@ export default function ChatScreen() {
       )}
 
       {/* ── Header ─────────────────────────────── */}
-      <GlassCard style={styles.header} borderRadius={0} intensity={40}>
+      <GlassCard style={styles.header}  intensity={40}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft color={Colors.text} size={26} />
         </TouchableOpacity>
@@ -608,7 +609,7 @@ export default function ChatScreen() {
 
       {/* ── Attachment Sheet ────────────────────── */}
       {showAttach && (
-        <GlassCard style={styles.attachSheet} borderRadius={20} intensity={60}>
+        <GlassCard style={styles.attachSheet}  intensity={60}>
           <View style={styles.attachGrid}>
             {ATTACH_OPTIONS.map(opt => (
               <TouchableOpacity key={opt.id} style={styles.attachItem} onPress={() => handleAttach(opt.id)}>
@@ -626,7 +627,7 @@ export default function ChatScreen() {
       <View style={styles.inputAreaOuter}>
         {editingMsgId && (
           <View style={styles.editBar}>
-            <Pencil color={Colors.gold} size={14} />
+            <Pencil color={Colors.primaryContainer} size={14} />
             <Text style={styles.editBarText}>تعديل الرسالة</Text>
             <TouchableOpacity onPress={handleCancelEdit}>
               <X color={Colors.textMuted} size={16} />
@@ -681,12 +682,12 @@ export default function ChatScreen() {
                 <TouchableOpacity
                   style={[styles.sendBtn, {
                     backgroundColor: editingMsgId ? 'rgba(255,209,102,0.15)' : Colors.cyanDim,
-                    borderColor: editingMsgId ? Colors.gold : Colors.glassBorderBright,
+                    borderColor: editingMsgId ? Colors.primaryContainer : Colors.glassBorderBright,
                   }]}
                   onPress={handleSendText}
                 >
                   {editingMsgId
-                    ? <Check color={Colors.gold} size={20} strokeWidth={2.5} />
+                    ? <Check color={Colors.primaryContainer} size={20} strokeWidth={2.5} />
                     : <Send color={Colors.cyan} size={20} />
                   }
                 </TouchableOpacity>
@@ -714,13 +715,13 @@ const styles = StyleSheet.create({
   headerAvatar: { width: 42, height: 42, borderRadius: 21 },
   headerOnlineDot: { position: 'absolute', bottom: 0, right: 0, width: 11, height: 11, borderRadius: 6, backgroundColor: Colors.online, borderWidth: 2, borderColor: '#070B14' },
   headerInfo: { flex: 1 },
-  headerName: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  headerName: { fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text },
   headerStatus: { fontSize: 12, marginTop: 1 },
   headerActions: { flexDirection: 'row', gap: 8 },
   headerBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.cyanDim, borderWidth: 1, borderColor: Colors.glassBorderBright, alignItems: 'center', justifyContent: 'center' },
 
   translateToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginVertical: 8, backgroundColor: Colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1, borderColor: Colors.glassBorder },
-  translateText: { fontSize: 12, fontWeight: '600' },
+  translateText: { fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold' },
 
   messagesList: { padding: 16, gap: 14, paddingBottom: 20 },
   msgRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
@@ -739,23 +740,23 @@ const styles = StyleSheet.create({
   checkB: { position: 'absolute', left: 7, top: 0 },
 
   // Reply quote
-  replyQuote: { flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 8, overflow: 'hidden', marginBottom: 6 },
+  replyQuote: { flexDirection: 'row', backgroundColor: Colors.surfaceHover, borderRadius: 8, overflow: 'hidden', marginBottom: 6 },
   replyAccent: { width: 3, backgroundColor: Colors.cyan },
   replyQuoteContent: { flex: 1, paddingHorizontal: 8, paddingVertical: 5 },
-  replyQuoteName: { fontSize: 11, fontWeight: '700', color: Colors.cyan, marginBottom: 2 },
+  replyQuoteName: { fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.cyan, marginBottom: 2 },
   replyQuoteText: { fontSize: 12, color: Colors.textSecondary },
 
   // Context menu
-  contextOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: 'rgba(0,0,0,0.55)' },
+  contextOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: Colors.glassBg },
   contextMenu: { position: 'absolute', top: '35%', backgroundColor: Colors.bgDeep, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#FFFFFF', minWidth: 160, maxWidth: 220, ...Platform.select({ web: { boxShadow: `0px 4px 12px rgba(210, 195, 180, 0.3)` } }) },
   contextMenuMe: { right: 16 },
   contextMenuThem: { left: 60 },
   contextPreview: { padding: 12, paddingBottom: 8 },
-  contextPreviewName: { fontSize: 11, fontWeight: '700', color: Colors.cyan, marginBottom: 3 },
+  contextPreviewName: { fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.cyan, marginBottom: 3 },
   contextPreviewText: { fontSize: 13, color: Colors.textSecondary, lineHeight: 18 },
   contextDivider: { height: 1, backgroundColor: Colors.glassBorder, marginHorizontal: 12 },
   contextItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 16 },
-  contextItemText: { fontSize: 14, fontWeight: '600', color: Colors.text },
+  contextItemText: { fontSize: 14, fontFamily: 'PlusJakartaSans_600SemiBold', color: Colors.text },
 
   // Bubbles
   bubble: { borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
@@ -776,27 +777,27 @@ const styles = StyleSheet.create({
   mediaCaption: { padding: 10 },
   videoWrap: { position: 'relative' },
   videoOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  videoPlayBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)' },
-  videoTag: { position: 'absolute', top: 8, left: 8, flexDirection: 'row', gap: 4, alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  videoTagText: { color: Colors.text, fontSize: 11, fontWeight: '600' },
+  videoPlayBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.surfaceHover, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.glassBorderBright },
+  videoTag: { position: 'absolute', top: 8, left: 8, flexDirection: 'row', gap: 4, alignItems: 'center', backgroundColor: Colors.surfaceHover, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  videoTagText: { color: Colors.text, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold' },
 
   // Location
   locationBubble: { borderRadius: 16, overflow: 'hidden', width: 230 },
   mapPlaceholder: { height: 130, position: 'relative', alignItems: 'center', justifyContent: 'center' },
   mapGrid: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row', justifyContent: 'space-around' },
-  mapGridLine: { width: 1, backgroundColor: 'rgba(0,240,255,0.08)', flex: 1, marginHorizontal: 10 },
+  mapGridLine: { width: 1, backgroundColor: Colors.cyan + '22', flex: 1, marginHorizontal: 10 },
   mapGridH: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'column', justifyContent: 'space-around' },
-  mapGridLineH: { height: 1, backgroundColor: 'rgba(0,240,255,0.08)', marginVertical: 10 },
+  mapGridLineH: { height: 1, backgroundColor: Colors.cyan + '22', marginVertical: 10 },
   mapPin: { zIndex: 10 },
   locationInfo: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 10, paddingBottom: 2 },
-  locationName: { fontSize: 13, fontWeight: '700', color: Colors.text, flex: 1 },
+  locationName: { fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text, flex: 1 },
   locationCoords: { fontSize: 11, color: Colors.textMuted, paddingHorizontal: 10, paddingBottom: 10 },
 
   // Call Bubble
   callBubble: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, borderWidth: 1, minWidth: 200 },
   callIconWrap: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   callInfo: { flex: 1 },
-  callTitle: { fontSize: 14, fontWeight: '700' },
+  callTitle: { fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' },
   callDuration: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
 
   // Image modal
@@ -809,7 +810,7 @@ const styles = StyleSheet.create({
   attachGrid: { flexDirection: 'row', justifyContent: 'space-around' },
   attachItem: { alignItems: 'center', gap: 8 },
   attachIcon: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  attachLabel: { color: Colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  attachLabel: { color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold' },
 
   // Input area
   inputAreaOuter: { borderTopWidth: 1, borderTopColor: Colors.glassBorder, backgroundColor: Colors.glassBg },
@@ -817,17 +818,17 @@ const styles = StyleSheet.create({
   inputBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 10, paddingBottom: 16 },
   attachToggleBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   input: { flex: 1, color: Colors.text, fontSize: 15, minHeight: 44, maxHeight: 120, backgroundColor: Colors.surface, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: Colors.glassBorder, outlineStyle: 'none' } as any,
-  inputEdit: { borderColor: Colors.gold + '60', backgroundColor: 'rgba(255,209,102,0.05)' },
+  inputEdit: { borderColor: Colors.primaryContainer + '60', backgroundColor: 'rgba(255,209,102,0.05)' },
   sendBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
 
   // Edit bar
-  editBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: 'rgba(255,209,102,0.08)', borderBottomWidth: 1, borderBottomColor: Colors.gold + '30' },
-  editBarText: { flex: 1, color: Colors.gold, fontSize: 13, fontWeight: '600' },
+  editBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: 'rgba(255,209,102,0.08)', borderBottomWidth: 1, borderBottomColor: Colors.primaryContainer + '30' },
+  editBarText: { flex: 1, color: Colors.primaryContainer, fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold' },
 
   // Recording
-  cancelRec: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.dangerDim, borderWidth: 1, borderColor: Colors.danger + '55', alignItems: 'center', justifyContent: 'center' },
+  cancelRec: { width: 40, height: 40, borderRadius: 20, backgroundColor: (Colors.danger + '22'), borderWidth: 1, borderColor: Colors.danger + '55', alignItems: 'center', justifyContent: 'center' },
   recordingInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   recDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.danger },
-  recTime: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  recTime: { fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text },
   recLabel: { fontSize: 13, color: Colors.textMuted },
 });

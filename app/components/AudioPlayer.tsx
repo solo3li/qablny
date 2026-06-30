@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: (Colors.text + '11'),
     borderRadius: 24,
     padding: 8,
     minWidth: 160,
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   waveform: {
     flex: 1,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: (Colors.text + '33'),
     borderRadius: 2,
     overflow: 'hidden',
   },

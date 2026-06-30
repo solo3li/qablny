@@ -139,7 +139,7 @@ export default function MessagesScreen() {
                 <View style={styles.chatBottomRow}>
                   <Text style={[
                     styles.chatMessage,
-                    item.unread > 0 && { color: Colors.text, fontWeight: '700' }
+                    item.unread > 0 && { color: Colors.text, fontFamily: 'PlusJakartaSans_700Bold' }
                   ]} numberOfLines={2}>
                     {voiceUsers[item.id] ? '🎙 جاري تسجيل مقطع صوتي...' : typingUsers[item.id] ? '✍️ يكتب الآن...' : (item.lastMessage || 'بدأت المحادثة')}
                   </Text>
@@ -155,7 +155,7 @@ export default function MessagesScreen() {
           )}
           ListEmptyComponent={() => (
             <View style={{alignItems: 'center', marginTop: 60}}>
-              <Text style={{color: Colors.textSecondary, fontWeight: '600'}}>لا توجد محادثات</Text>
+              <Text style={{color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_600SemiBold'}}>لا توجد محادثات</Text>
             </View>
           )}
         />
@@ -167,7 +167,7 @@ export default function MessagesScreen() {
           renderItem={({ item }) => <FriendRequestCard request={item} onAccept={() => {}} onReject={() => {}} />}
           ListEmptyComponent={() => (
             <View style={{alignItems: 'center', marginTop: 60}}>
-              <Text style={{color: Colors.textSecondary, fontWeight: '600'}}>لا توجد طلبات معلقة</Text>
+              <Text style={{color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_600SemiBold'}}>لا توجد طلبات معلقة</Text>
             </View>
           )}
         />
@@ -191,25 +191,25 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg, paddingTop: Platform.OS === 'ios' ? 50 : 20 },
   
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingBottom: 16, paddingTop: 10 },
-  logoText: { fontSize: 32, fontWeight: '900', color: Colors.primary, letterSpacing: -0.5 },
+  logoText: { fontSize: 32, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.primary, letterSpacing: -0.5 },
   headerActions: { flexDirection: 'row', gap: 16 },
   iconBtn: { padding: 4 },
   notificationDot: { position: 'absolute', top: 0, right: 0, width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.danger, borderWidth: 2, borderColor: Colors.bg },
 
   searchPillOuter: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bgDeep, borderRadius: 100, marginHorizontal: 24, padding: 4, paddingLeft: 16, marginBottom: 24 },
   searchInner: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  searchInput: { flex: 1, color: Colors.text, fontSize: 16, fontWeight: '600', paddingVertical: 10, outlineStyle: 'none' } as any,
+  searchInput: { flex: 1, color: Colors.text, fontSize: 16, fontFamily: 'PlusJakartaSans_600SemiBold', paddingVertical: 10, outlineStyle: 'none' } as any,
   myChatsToggle: { backgroundColor: Colors.surface, borderRadius: 100, paddingHorizontal: 20, paddingVertical: 10, ...Platform.select({ web: { boxShadow: Colors.shadowLight } as any, default: { elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 } }) },
-  myChatsText: { color: Colors.text, fontWeight: '800', fontSize: 14 },
+  myChatsText: { color: Colors.text, fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 14 },
 
   crushesSection: { marginBottom: 10 },
-  sectionTitle: { paddingHorizontal: 24, fontSize: 16, fontWeight: '800', color: Colors.text, marginBottom: 12 },
+  sectionTitle: { paddingHorizontal: 24, fontSize: 16, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text, marginBottom: 12 },
   crushesList: { paddingHorizontal: 20, gap: 16 },
   crushItem: { alignItems: 'center', width: 72 },
   crushRing: { width: 68, height: 68, borderRadius: 34, padding: 3, justifyContent: 'center', alignItems: 'center' },
   crushAvatarWrap: { width: '100%', height: '100%', borderRadius: 34, backgroundColor: Colors.bg, padding: 2 },
   crushAvatar: { width: '100%', height: '100%', borderRadius: 34 },
-  crushName: { marginTop: 6, fontSize: 13, fontWeight: '700', color: Colors.text },
+  crushName: { marginTop: 6, fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text },
 
   chatListContent: { paddingHorizontal: 24, paddingBottom: 120 },
   separator: { height: 1, backgroundColor: Colors.bgDeep, marginVertical: 4 },
@@ -219,14 +219,14 @@ const styles = StyleSheet.create({
   onlineStatusDot: { position: 'absolute', bottom: 2, right: 2, width: 14, height: 14, borderRadius: 7, backgroundColor: Colors.online, borderWidth: 2, borderColor: Colors.bg },
   chatDetails: { flex: 1, justifyContent: 'center' },
   chatTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  chatName: { fontSize: 16, fontWeight: '800', color: Colors.text },
+  chatName: { fontSize: 16, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text },
   activeBadge: { backgroundColor: '#E8F8F2', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  activeBadgeText: { color: Colors.online, fontSize: 10, fontWeight: '800' },
-  chatTime: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
+  activeBadgeText: { color: Colors.online, fontSize: 10, fontFamily: 'PlusJakartaSans_800ExtraBold' },
+  chatTime: { fontSize: 12, color: Colors.textMuted, fontFamily: 'PlusJakartaSans_600SemiBold' },
   chatBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 },
-  chatMessage: { flex: 1, fontSize: 14, color: Colors.textSecondary, fontWeight: '500', lineHeight: 20 },
+  chatMessage: { flex: 1, fontSize: 14, color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_500Medium', lineHeight: 20 },
   unreadCircle: { backgroundColor: Colors.secondary, minWidth: 22, height: 22, borderRadius: 11, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 6, marginTop: 2 },
-  unreadText: { color: '#FFF', fontSize: 11, fontWeight: '800' },
+  unreadText: { color: '#FFF', fontSize: 11, fontFamily: 'PlusJakartaSans_800ExtraBold' },
 
   fab: { position: 'absolute', bottom: 100, right: 24, ...Platform.select({ web: { boxShadow: Colors.shadowGlow } as any, default: { elevation: 8, shadowColor: Colors.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12 } }) },
   fabGradient: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },

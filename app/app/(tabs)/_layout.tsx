@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
-  badgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+  badgeText: { color: '#FFFFFF', fontSize: 10, fontFamily: 'PlusJakartaSans_800ExtraBold' },
   
   floatingButtonContainer: {
     top: -24,

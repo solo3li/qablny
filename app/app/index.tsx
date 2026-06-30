@@ -82,10 +82,10 @@ const styles = StyleSheet.create({
   },
   iconEmoji: { fontSize: 44 },
   appName: {
-    fontSize: 42, fontWeight: '800', color: Colors.primary,
+    fontSize: 42, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.primary,
     letterSpacing: 2, marginBottom: 16,
   },
-  tagline: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600' },
+  tagline: { fontSize: 16, color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_600SemiBold' },
   footer: { position: 'absolute', bottom: 60, flexDirection: 'row', gap: 10 },
   dot: { width: 12, height: 12, borderRadius: 6, opacity: 0.8 },
 });

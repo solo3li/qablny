@@ -23,7 +23,7 @@ export function GiftModal({ visible, onClose, onSendGift }: GiftModalProps) {
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
-        <GlassCard style={styles.giftsSheet} borderRadius={24}>
+        <GlassCard style={styles.giftsSheet} >
           <View style={styles.modalHandle} />
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>🎁 أرسل هدية</Text>
@@ -51,15 +51,15 @@ export function GiftModal({ visible, onClose, onSendGift }: GiftModalProps) {
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(255,255,255,0.75)' },
   giftsSheet: { margin: 12, padding: 24, maxHeight: '60%' },
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.glassBorder, alignSelf: 'center', marginBottom: 20 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 20, fontWeight: '700', color: Colors.text },
+  modalTitle: { fontSize: 20, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text },
   giftsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   giftItem: { width: '48%', alignItems: 'center', gap: 6, backgroundColor: Colors.surface, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: Colors.glassBorder },
   giftEmoji: { fontSize: 34 },
   giftName: { color: Colors.textSecondary, fontSize: 14 },
   giftCost: { backgroundColor: '#332b00', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  giftCostText: { color: '#FFD700', fontSize: 12, fontWeight: '700' },
+  giftCostText: { color: '#FFD700', fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold' },
 });

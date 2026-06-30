@@ -6,12 +6,28 @@ import { useAuthStore } from '../src/store/authStore';
 import { IncomingCallModal } from '../components/IncomingCallModal';
 import { ActiveCallModal } from '../components/ActiveCallModal';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
+import { 
+  useFonts, 
+  PlusJakartaSans_400Regular, 
+  PlusJakartaSans_500Medium, 
+  PlusJakartaSans_600SemiBold, 
+  PlusJakartaSans_700Bold, 
+  PlusJakartaSans_800ExtraBold 
+} from '@expo-google-fonts/plus-jakarta-sans';
 
 export default function RootLayout() {
   const { checkAuth, token, isLoading } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
   const rootNavigationState = useRootNavigationState();
+
+  const [fontsLoaded] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+  });
 
   usePushNotifications();
 
@@ -33,6 +49,10 @@ export default function RootLayout() {
       router.replace('/(tabs)');
     }
   }, [token, isLoading, segments, rootNavigationState?.key]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <>

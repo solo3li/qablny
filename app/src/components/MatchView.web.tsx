@@ -123,13 +123,13 @@ export default function MatchScreenWeb() {
       <View style={styles.centerContainer}>
         <View style={styles.radarRing} />
         <View style={[styles.radarRing, { width: 300, height: 300, opacity: 0.05 }]} />
-        <GlassCard style={{ alignItems: 'center', padding: 40 }} borderRadius={30}>
+        <GlassCard style={{ alignItems: 'center', padding: 40 }} >
           <Text style={styles.logo}>📡</Text>
-          <Text style={{ color: Colors.text, fontSize: 24, fontWeight: 'bold', marginVertical: 10 }}>مستعد للقاء؟ (الويب)</Text>
+          <Text style={{ color: Colors.text, fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold', marginVertical: 10 }}>مستعد للقاء؟ (الويب)</Text>
           <Text style={{ color: Colors.textMuted, textAlign: 'center', marginBottom: 30 }}>ابحث عن أصدقاء جدد حول العالم وتواصل معهم بالفيديو فوراً.</Text>
           <GlassButton 
             title="ابدأ البحث 🚀" 
-            size="lg" 
+             
             variant="primary" 
             onPress={handleStartSearch} 
             style={{ width: '100%' }}
@@ -145,9 +145,9 @@ export default function MatchScreenWeb() {
         <View style={[styles.radarRing, styles.pulsing]} />
         <View style={[styles.radarRing, { width: 300, height: 300, opacity: 0.1 }]} />
         <Search color={Colors.cyan} size={60} style={{ marginBottom: 20 }} />
-        <Text style={{ color: Colors.cyan, fontSize: 24, fontWeight: 'bold' }}>جاري البحث...</Text>
+        <Text style={{ color: Colors.cyan, fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold' }}>جاري البحث...</Text>
         <Text style={{ color: Colors.textMuted, marginTop: 10, marginBottom: 40 }}>يتم الآن التوصيل بشخص مناسب لك</Text>
-        <GlassButton title="إلغاء البحث" variant="ghost" onPress={() => setIsSearching(false)} />
+        <GlassButton title="إلغاء البحث" variant="outline" onPress={() => setIsSearching(false)} />
       </View>
     );
   }
@@ -171,7 +171,7 @@ export default function MatchScreenWeb() {
       )}
 
       <LinearGradient
-        colors={['transparent', 'rgba(4,7,16,0.5)', 'rgba(4,7,16,0.95)']}
+        colors={['transparent', Colors.bg + '80', Colors.bg]}
         style={StyleSheet.absoluteFillObject}
       />
 
@@ -179,7 +179,7 @@ export default function MatchScreenWeb() {
         <GlassCard style={styles.topLeft}>
           <Text style={styles.locationText}>📍 {remotePeer?.location || 'غير محدد'}</Text>
         </GlassCard>
-        <GlassButton variant="danger" size="sm" icon={<Flag color={Colors.danger} size={16} />} title="إبلاغ" />
+        <GlassButton variant="danger"  icon={<Flag color={Colors.danger} size={16} />} title="إبلاغ" />
       </View>
 
       {sentGift && (
@@ -194,7 +194,7 @@ export default function MatchScreenWeb() {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={[styles.circleBtn, { borderColor: Colors.danger + '55', backgroundColor: Colors.dangerDim }]} onPress={handleSkip}>
+          <TouchableOpacity style={[styles.circleBtn, { borderColor: Colors.danger + '55', backgroundColor: (Colors.danger + '22') }]} onPress={handleSkip}>
             <SkipForward color={Colors.danger} size={26} />
           </TouchableOpacity>
           <TouchableOpacity style={[styles.mainBtn, { borderColor: Colors.glassBorderBright, backgroundColor: Colors.cyanDim }]} onPress={handleSkip}>
@@ -206,14 +206,14 @@ export default function MatchScreenWeb() {
         </View>
 
         <View style={styles.secondary}>
-          <GlassButton icon={<Gift color={Colors.gold} size={18} />} title="إرسال هدية" variant="gold" size="sm" onPress={() => setGiftsOpen(true)} style={{ flex: 1 }} />
-          <GlassButton icon={<MessageCircle color={Colors.text} size={18} />} title="رسالة" variant="ghost" size="sm" onPress={handleSendMessage} style={{ flex: 1 }} />
+          <GlassButton icon={<Gift color={Colors.primaryContainer} size={18} />} title="إرسال هدية" variant="primary"  onPress={() => setGiftsOpen(true)} style={{ flex: 1 }} />
+          <GlassButton icon={<MessageCircle color={Colors.text} size={18} />} title="رسالة" variant="outline"  onPress={handleSendMessage} style={{ flex: 1 }} />
         </View>
       </View>
 
       <Modal visible={giftsOpen} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <GlassCard style={styles.giftsSheet} borderRadius={24}>
+          <GlassCard style={styles.giftsSheet} >
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>🎁 أرسل هدية</Text>
@@ -240,8 +240,8 @@ export default function MatchScreenWeb() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  centerContainer: { flex: 1, backgroundColor: Colors.background, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  centerContainer: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center', alignItems: 'center', padding: 24 },
   radarRing: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.cyan, opacity: 0.1 },
   pulsing: { backgroundColor: Colors.primary },
   logo: { fontSize: 60, marginBottom: 10 },
@@ -252,21 +252,21 @@ const styles = StyleSheet.create({
   giftFloatEmoji: { fontSize: 80 },
   bottom: { position: 'absolute', bottom: 80, left: 16, right: 16, gap: 16 },
   userInfo: { gap: 10 },
-  userName: { fontSize: 28, fontWeight: '800', color: Colors.text },
+  userName: { fontSize: 28, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   circleBtn: { width: 56, height: 56, borderRadius: 28, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   mainBtn: { flex: 1, height: 56, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  mainBtnText: { color: Colors.cyan, fontSize: 18, fontWeight: '800', letterSpacing: 0.5 },
+  mainBtnText: { color: Colors.cyan, fontSize: 18, fontFamily: 'PlusJakartaSans_800ExtraBold', letterSpacing: 0.5 },
   secondary: { flexDirection: 'row', gap: 12 },
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(255,255,255,0.75)' },
   giftsSheet: { margin: 12, padding: 24 },
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.glassBorder, alignSelf: 'center', marginBottom: 20 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 20, fontWeight: '700', color: Colors.text },
+  modalTitle: { fontSize: 20, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text },
   giftsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   giftItem: { width: '48%', alignItems: 'center', gap: 6, backgroundColor: Colors.surface, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: Colors.glassBorder },
   giftEmoji: { fontSize: 34 },
   giftName: { color: Colors.textSecondary, fontSize: 14 },
   giftCost: { backgroundColor: '#332b00', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  giftCostText: { color: '#FFD700', fontSize: 12, fontWeight: '700' },
+  giftCostText: { color: '#FFD700', fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold' },
 });

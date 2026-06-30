@@ -129,7 +129,7 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
       <View style={styles.overlay}>
         {/* Background */}
         <LinearGradient
-          colors={callType === 'video' ? ['#040710', '#0a1929', '#040710'] : ['#040710', '#0D1529', '#040710']}
+          colors={Colors.gradMain}
           style={StyleSheet.absoluteFillObject}
         />
 
@@ -251,7 +251,7 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
             )}
 
             <TouchableOpacity style={styles.ctrlBtn} onPress={() => setGiftsOpen(true)}>
-              <Gift color={Colors.gold} size={22} />
+              <Gift color={Colors.primaryContainer} size={22} />
               <Text style={styles.ctrlLabel}>هدية</Text>
             </TouchableOpacity>
           </View>
@@ -271,7 +271,7 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
         {/* Incoming Gift Animation */}
         {incomingGift && (
           <Animated.View style={[styles.giftFloat, { transform: [{ scale: giftScale }] }]}>
-            <Text style={[styles.giftFloatEmoji, { fontSize: 120, textShadowColor: 'rgba(255,215,0,0.8)', textShadowRadius: 20 }]}>
+            <Text style={[styles.giftFloatEmoji, { fontSize: 120, textShadowColor: Colors.primaryContainer, textShadowRadius: 20 }]}>
               {incomingGift}
             </Text>
           </Animated.View>
@@ -294,11 +294,11 @@ const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center' },
 
   videoBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  videoBgOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(4,7,16,0.65)' },
+  videoBgOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.75)' },
 
   topBar: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingHorizontal: 20, paddingBottom: 10 },
   minimizeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center' },
-  callTypeLabel: { color: Colors.textSecondary, fontSize: 14, fontWeight: '600' },
+  callTypeLabel: { color: Colors.textSecondary, fontSize: 14, fontFamily: 'PlusJakartaSans_600SemiBold' },
   giftFloat: { position: 'absolute', top: '40%', alignSelf: 'center', zIndex: 100 },
   giftFloatEmoji: { fontSize: 80 },
 
@@ -312,15 +312,15 @@ const styles = StyleSheet.create({
   avatar: { width: '100%', height: '100%' },
   connectedRing: { position: 'absolute', top: -3, left: -3, right: -3, bottom: -3, borderRadius: (AVATAR_SIZE + 6) / 2, borderWidth: 2, borderColor: Colors.online },
 
-  name: { fontSize: 28, fontWeight: '800', color: Colors.text },
+  name: { fontSize: 28, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.online },
   statusText: { fontSize: 15, color: Colors.textSecondary },
-  timer: { fontSize: 22, fontWeight: '700', color: Colors.cyan, letterSpacing: 2 },
+  timer: { fontSize: 22, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.cyan, letterSpacing: 2 },
 
   signalBars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, marginTop: 4 },
   signalBar: { width: 6, borderRadius: 3, backgroundColor: Colors.online },
-  signalText: { color: Colors.online, fontSize: 12, fontWeight: '600', marginLeft: 6 },
+  signalText: { color: Colors.online, fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold', marginLeft: 6 },
 
   // Self video pip
   selfVideoWrap: { position: 'absolute', top: 110, right: 16, width: 90, height: 130, borderRadius: 16, overflow: 'hidden', borderWidth: 2, borderColor: Colors.glassBorderBright },
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   controls: { width: '100%', paddingBottom: 60, paddingHorizontal: 20, gap: 28, alignItems: 'center' },
   secondaryControls: { flexDirection: 'row', gap: 16, flexWrap: 'wrap', justifyContent: 'center' },
   ctrlBtn: { alignItems: 'center', gap: 8, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, borderRadius: 20, paddingHorizontal: 18, paddingVertical: 14, minWidth: 80 },
-  ctrlBtnActive: { backgroundColor: 'rgba(255,59,92,0.1)', borderColor: Colors.danger + '55' },
-  ctrlLabel: { color: Colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  ctrlBtnActive: { backgroundColor: Colors.danger + '1A', borderColor: Colors.danger + '55' },
+  ctrlLabel: { color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold' },
   endBtn: { width: 72, height: 72, borderRadius: 36, backgroundColor: Colors.danger, alignItems: 'center', justifyContent: 'center' },
 });

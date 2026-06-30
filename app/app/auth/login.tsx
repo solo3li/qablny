@@ -99,7 +99,7 @@ export default function LoginScreen() {
             <TextInput style={styles.input} placeholder="كلمة المرور" placeholderTextColor={Colors.textMuted} secureTextEntry value={password} onChangeText={setPassword} />
           </View>
 
-          {errorMsg ? <Text style={{color: Colors.danger, textAlign: 'center', fontWeight: '800'}}>{errorMsg}</Text> : null}
+          {errorMsg ? <Text style={{color: Colors.danger, textAlign: 'center', fontFamily: 'PlusJakartaSans_800ExtraBold'}}>{errorMsg}</Text> : null}
 
           {tab === 'login' && (
             <TouchableOpacity style={styles.forgot}>
@@ -143,14 +143,14 @@ const styles = StyleSheet.create({
   orb: { position: 'absolute', width: 250, height: 250, borderRadius: 125, opacity: 0.15 },
   orb2: { position: 'absolute', width: 200, height: 200, borderRadius: 100, opacity: 0.15 },
   header: { alignItems: 'center', marginBottom: 32 },
-  logo: { fontSize: 40, fontWeight: '900', color: Colors.primary, letterSpacing: -1, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600' },
+  logo: { fontSize: 40, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.primary, letterSpacing: -1, marginBottom: 8 },
+  subtitle: { fontSize: 16, color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_600SemiBold' },
   
   tabBar: { flexDirection: 'row', marginBottom: 20, padding: 6, backgroundColor: Colors.bgDeep, borderRadius: 100 },
   tab: { flex: 1, paddingVertical: 14, alignItems: 'center', borderRadius: 100 },
   tabActive: { backgroundColor: Colors.surface },
-  tabText: { color: Colors.textMuted, fontWeight: '700', fontSize: 15 },
-  tabTextActive: { color: Colors.primary, fontWeight: '800' },
+  tabText: { color: Colors.textMuted, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15 },
+  tabTextActive: { color: Colors.primary, fontFamily: 'PlusJakartaSans_800ExtraBold' },
   
   form: { padding: 24, gap: 16 },
   inputRow: {
@@ -159,12 +159,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, paddingVertical: 16,
     borderWidth: 1, borderColor: Colors.glassBorderBright,
   },
-  input: { flex: 1, color: Colors.text, fontSize: 16, fontWeight: '600', outlineStyle: 'none' } as any,
+  input: { flex: 1, color: Colors.text, fontSize: 16, fontFamily: 'PlusJakartaSans_600SemiBold', outlineStyle: 'none' } as any,
   forgot: { alignItems: 'flex-start' },
-  forgotText: { color: Colors.secondary, fontSize: 14, fontWeight: '700' },
+  forgotText: { color: Colors.secondary, fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' },
   submitBtn: { marginTop: 8 },
   divider: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   divLine: { flex: 1, height: 2, backgroundColor: Colors.glassBorder, borderRadius: 2 },
-  divText: { color: Colors.textMuted, fontSize: 14, fontWeight: '800' },
+  divText: { color: Colors.textMuted, fontSize: 14, fontFamily: 'PlusJakartaSans_800ExtraBold' },
   dummyBtn: {},
 });

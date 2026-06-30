@@ -94,7 +94,7 @@ export function WaveformPlayer({ uri, durationSeconds, isMe = false }: WaveformP
 
   const progress = durationMs > 0 ? positionMs / durationMs : 0;
   const accentColor = isMe ? Colors.cyan : '#a78bfa';
-  const dimColor = isMe ? 'rgba(0,240,255,0.2)' : 'rgba(167,139,250,0.2)';
+  const dimColor = isMe ? (Colors.secondary + '33') : (Colors.primary + '33');
 
   return (
     <View style={[styles.container, isMe ? styles.containerMe : styles.containerThem]}>
@@ -102,7 +102,7 @@ export function WaveformPlayer({ uri, durationSeconds, isMe = false }: WaveformP
       <Animated.View style={{ transform: [{ scale: playAnim }] }}>
         <TouchableOpacity
           onPress={handlePlayPause}
-          style={[styles.playBtn, { backgroundColor: isMe ? Colors.cyanDim : 'rgba(139,92,246,0.2)', borderColor: accentColor + '60' }]}
+          style={[styles.playBtn, { backgroundColor: isMe ? Colors.cyanDim : (Colors.primary + '33'), borderColor: accentColor + '60' }]}
           activeOpacity={0.8}
         >
           {isPlaying
@@ -155,14 +155,14 @@ const styles = StyleSheet.create({
     maxWidth: 260,
   },
   containerMe: {
-    backgroundColor: 'rgba(0,240,255,0.07)',
+    backgroundColor: (Colors.secondary + '11'),
     borderWidth: 1,
-    borderColor: 'rgba(0,240,255,0.2)',
+    borderColor: (Colors.secondary + '33'),
   },
   containerThem: {
-    backgroundColor: 'rgba(139,92,246,0.07)',
+    backgroundColor: (Colors.primary + '11'),
     borderWidth: 1,
-    borderColor: 'rgba(167,139,250,0.2)',
+    borderColor: (Colors.primary + '33'),
   },
   playBtn: {
     width: 36,
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   },
   timer: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: 'PlusJakartaSans_700Bold',
     letterSpacing: 0.5,
     minWidth: 34,
     textAlign: 'right',
