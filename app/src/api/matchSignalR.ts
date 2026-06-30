@@ -25,7 +25,7 @@ class MatchSignalRService {
     const token = await AsyncStorage.getItem('accessToken');
     if (!token) throw new Error("No access token found");
 
-    const hubUrl = API_BASE_URL.replace('/api', '') + '/hubs/match';
+    const hubUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) + '/hubs/match' : API_BASE_URL + '/hubs/match';
 
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {
