@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, Platform, Alert } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MessageCircle, Gift, PhoneOff, Mic, RefreshCcw, MoreVertical, Search, Heart } from 'lucide-react-native';
+import { MessageCircle, Gift, PhoneOff, Mic, MicOff, Video, VideoOff, RefreshCcw, MoreVertical, Search, Heart, SkipForward, UserPlus } from 'lucide-react-native';
 import { matchSignalR } from '../../src/api/matchSignalR';
 import { router } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
 import { useAuthStore } from '../../src/store/authStore';
-import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks } from '@livekit/components-react';
+import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks, useLocalParticipant } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
 
@@ -36,11 +36,11 @@ function RemoteVideo() {
   );
 }
 
-function LocalVideo() {
+function LocalVideo({ isCameraOn }: { isCameraOn: boolean }) {
   const tracks = useTracks([Track.Source.Camera]);
   const localTrack = tracks.find((t: any) => t.participant.isLocal === true);
 
-  if (localTrack && localTrack.publication?.track) {
+  if (isCameraOn && localTrack && localTrack.publication?.track) {
     return (
       <VideoTrack 
         trackRef={localTrack} 
@@ -51,10 +51,149 @@ function LocalVideo() {
 
   return (
     <View style={{ width: '100%', height: '100%', backgroundColor: '#222', justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="small" color={Colors.text} />
+      {!isCameraOn ? (
+        <VideoOff color={Colors.textMuted} size={24} />
+      ) : (
+        <ActivityIndicator size="small" color={Colors.text} />
+      )}
     </View>
   );
 }
+
+// Separate component to access LiveKit hooks
+function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend, handleSendMessage, setGiftsOpen, sentGift, messages }: any) {
+  const { localParticipant } = useLocalParticipant();
+  const [micEnabled, setMicEnabled] = useState(true);
+  const [camEnabled, setCamEnabled] = useState(true);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setDuration(prev => prev + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const toggleMic = async () => {
+    if (localParticipant) {
+      await localParticipant.setMicrophoneEnabled(!micEnabled);
+      setMicEnabled(!micEnabled);
+    }
+  };
+
+  const toggleCam = async () => {
+    if (localParticipant) {
+      await localParticipant.setCameraEnabled(!camEnabled);
+      setCamEnabled(!camEnabled);
+    }
+  };
+
+  const formattedTime = `${Math.floor(duration / 60).toString().padStart(2, '0')}:${(duration % 60).toString().padStart(2, '0')}`;
+
+  return (
+    <>
+      <RemoteVideo />
+      
+      {/* PIP Local Video */}
+      <View style={styles.pipContainer}>
+        <LocalVideo isCameraOn={camEnabled} />
+        <View style={styles.pipMicIcon}>
+          {micEnabled ? <Mic color="#fff" size={14} /> : <MicOff color={Colors.danger} size={14} />}
+        </View>
+      </View>
+      <RoomAudioRenderer />
+
+      {/* Gradient Overlay */}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.4)', 'transparent', 'rgba(0,0,0,0.8)']}
+        style={[StyleSheet.absoluteFillObject, { pointerEvents: 'none' }]}
+      />
+
+      {/* Top Navigation / Status Area */}
+      <View style={styles.topNav}>
+        <TouchableOpacity style={styles.navIconBtn} onPress={handleEndCall}>
+          <Text style={{color: '#fff', fontSize: 20}}>←</Text>
+        </TouchableOpacity>
+        
+        <View style={styles.liveBadge}>
+          <View style={styles.liveDot} />
+          <Text style={styles.liveText}>مكالمة مباشرة</Text>
+          <Text style={styles.timeText}>{formattedTime}</Text>
+        </View>
+        
+        <TouchableOpacity style={styles.navIconBtn}>
+          <MoreVertical color="#fff" size={20} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Floating Gift Animation */}
+      {sentGift && (
+        <View style={styles.giftFloat}>
+          <Text style={styles.giftFloatEmoji}>{sentGift}</Text>
+        </View>
+      )}
+
+      {/* Interactive Overlay Area (Bottom) */}
+      <View style={styles.bottomOverlay}>
+        
+        {/* Chat Stream (Mock) */}
+        <View style={styles.chatStream}>
+          {messages.map((m: any, i: number) => (
+            <View key={i} style={styles.chatMessageRow}>
+              {m.type === 'system' ? (
+                 <View style={styles.systemMessageBadge}>
+                   <Heart color={Colors.secondary} size={12} fill={Colors.secondary} />
+                   <Text style={styles.systemMessageText}>{m.sender} {m.text}</Text>
+                 </View>
+              ) : (
+                <>
+                  <View style={styles.chatAvatarPlaceholder} />
+                  <Text style={styles.chatSender}>{m.sender}:</Text>
+                  <Text style={styles.chatText}>{m.text}</Text>
+                </>
+              )}
+            </View>
+          ))}
+        </View>
+
+        {/* Controls Row */}
+        <View style={styles.controlsRow}>
+          {/* Left Controls (4 smaller buttons) */}
+          <View style={styles.leftControls}>
+            <TouchableOpacity style={styles.glassBtn} onPress={handleSendMessage}>
+              <MessageCircle color="#fff" size={20} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.glassBtn} onPress={handleAddFriend}>
+              <UserPlus color="#fff" size={20} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.glassBtn} onPress={toggleMic}>
+              {micEnabled ? <Mic color="#fff" size={20} /> : <MicOff color={Colors.danger} size={20} />}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.glassBtn} onPress={toggleCam}>
+              {camEnabled ? <Video color="#fff" size={20} /> : <VideoOff color={Colors.danger} size={20} />}
+            </TouchableOpacity>
+          </View>
+
+          {/* Primary Actions (Right side, larger buttons) */}
+          <View style={styles.primaryActions}>
+            <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
+              <SkipForward color={Colors.cyan} size={24} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.giftBtn} onPress={() => setGiftsOpen(true)}>
+              <LinearGradient colors={[Colors.secondary, Colors.primary]} style={styles.giftBtnGradient}>
+                <Gift color="#fff" size={24} />
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.endCallBtn} onPress={handleEndCall}>
+              <PhoneOff color="#fff" size={24} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </>
+  );
+}
+
 
 export default function MatchScreenWeb() {
   const { user } = useAuthStore();
@@ -72,18 +211,16 @@ export default function MatchScreenWeb() {
     { id: 4, name: 'ماسة', emoji: '💎', coinCost: 500 },
   ]);
   const [messages, setMessages] = useState<{sender: string, text: string, type?: 'chat'|'system'}[]>([
-    { sender: 'أحمد', text: 'مرحباً! 👋', type: 'chat' },
-    { sender: 'سارة', text: 'انضمت', type: 'system' },
-    { sender: 'نور', text: 'أرسلت قلوب ❤️', type: 'system' }
+    { sender: 'النظام', text: 'المكالمة متصلة الآن ومؤمنة التشفير', type: 'system' }
   ]);
 
   useEffect(() => {
-    // We could fetch real gifts from the API, leaving static for now based on design
     matchSignalR.setOnMatchFound((data: any) => {
       setRoomName(data.roomName);
       setRemotePeer(data.matchedUser);
       setLivekitToken(data.liveKitToken);
       setIsSearching(false);
+      setMessages(prev => [...prev, { sender: data.matchedUser?.name || 'مستخدم', text: 'انضم للمكالمة', type: 'system' }]);
     });
 
     return () => {
@@ -110,6 +247,34 @@ export default function MatchScreenWeb() {
     await matchSignalR.leaveQueue();
   };
 
+  const handleSkip = async () => {
+    setLivekitToken(null);
+    setRemotePeer(null);
+    setIsSearching(true);
+    await matchSignalR.leaveQueue();
+    await matchSignalR.joinQueue({});
+  };
+
+  const handleAddFriend = async () => {
+    try {
+      await axiosClient.post(`/friends/request/${remotePeer.id}`);
+      alert('تم إرسال طلب الصداقة بنجاح!');
+    } catch (e: any) {
+      console.error('Failed to add friend', e);
+      const msg = e.response?.data?.message || e.response?.data?.Message || 'حدث خطأ أثناء إرسال طلب الصداقة';
+      alert(msg);
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (remotePeer) {
+      router.push({
+        pathname: `/chat/${remotePeer.id}`,
+        params: { name: remotePeer.name, image: remotePeer.profileImageUrl }
+      });
+    }
+  };
+
   const handleSendGift = async (gift: any) => {
     setSentGift(gift.emoji);
     setGiftsOpen(false);
@@ -117,6 +282,7 @@ export default function MatchScreenWeb() {
     try {
       if (remotePeer) {
         await axiosClient.post('/gifts/send', { giftId: gift.id, receiverId: remotePeer.id });
+        setMessages(prev => [...prev, { sender: 'أنت', text: `أرسلت ${gift.name} ${gift.emoji}`, type: 'system' }]);
       }
     } catch (e) {
       console.error('Gift sending failed', e);
@@ -158,7 +324,6 @@ export default function MatchScreenWeb() {
 
   return (
     <View style={styles.container}>
-      {/* Background Remote Video */}
       {livekitToken ? (
         <LiveKitRoom
           serverUrl={LIVEKIT_URL}
@@ -168,100 +333,20 @@ export default function MatchScreenWeb() {
           video={true}
           style={{ width: '100%', height: '100%', position: 'absolute' }}
         >
-          <RemoteVideo />
-          
-          {/* PIP Local Video */}
-          <View style={styles.pipContainer}>
-            <LocalVideo />
-            <View style={styles.pipMicIcon}>
-              <Mic color="#fff" size={14} />
-            </View>
-          </View>
-          <RoomAudioRenderer />
+          <CallInterface 
+            remotePeer={remotePeer}
+            handleEndCall={handleEndCall}
+            handleSkip={handleSkip}
+            handleAddFriend={handleAddFriend}
+            handleSendMessage={handleSendMessage}
+            setGiftsOpen={setGiftsOpen}
+            sentGift={sentGift}
+            messages={messages}
+          />
         </LiveKitRoom>
       ) : (
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#111' }]} />
       )}
-
-      {/* Gradient Overlay */}
-      <LinearGradient
-        colors={['rgba(0,0,0,0.4)', 'transparent', 'rgba(0,0,0,0.8)']}
-        style={[StyleSheet.absoluteFillObject, { pointerEvents: 'none' }]}
-      />
-
-      {/* Top Navigation / Status Area */}
-      <View style={styles.topNav}>
-        <TouchableOpacity style={styles.navIconBtn} onPress={handleEndCall}>
-          <Text style={{color: '#fff', fontSize: 20}}>←</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.liveBadge}>
-          <View style={styles.liveDot} />
-          <Text style={styles.liveText}>مكالمة مباشرة</Text>
-          <Text style={styles.timeText}>00:00</Text>
-        </View>
-        
-        <TouchableOpacity style={styles.navIconBtn}>
-          <MoreVertical color="#fff" size={20} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Floating Gift Animation */}
-      {sentGift && (
-        <View style={styles.giftFloat}>
-          <Text style={styles.giftFloatEmoji}>{sentGift}</Text>
-        </View>
-      )}
-
-      {/* Interactive Overlay Area (Bottom) */}
-      <View style={styles.bottomOverlay}>
-        
-        {/* Chat Stream (Mock) */}
-        <View style={styles.chatStream}>
-          {messages.map((m, i) => (
-            <View key={i} style={styles.chatMessageRow}>
-              {m.type === 'system' ? (
-                 <View style={styles.systemMessageBadge}>
-                   <Heart color={Colors.secondary} size={12} fill={Colors.secondary} />
-                   <Text style={styles.systemMessageText}>{m.sender} {m.text}</Text>
-                 </View>
-              ) : (
-                <>
-                  <View style={styles.chatAvatarPlaceholder} />
-                  <Text style={styles.chatSender}>{m.sender}:</Text>
-                  <Text style={styles.chatText}>{m.text}</Text>
-                </>
-              )}
-            </View>
-          ))}
-        </View>
-
-        {/* Controls Row */}
-        <View style={styles.controlsRow}>
-          {/* Left Controls */}
-          <View style={styles.leftControls}>
-            <TouchableOpacity style={styles.glassBtn}>
-              <MessageCircle color="#fff" size={22} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.glassBtn}>
-              <RefreshCcw color="#fff" size={22} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Primary Actions */}
-          <View style={styles.primaryActions}>
-            <TouchableOpacity style={styles.giftBtn} onPress={() => setGiftsOpen(true)}>
-              <LinearGradient colors={[Colors.secondary, Colors.primary]} style={styles.giftBtnGradient}>
-                <Gift color="#fff" size={28} />
-              </LinearGradient>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.endCallBtn} onPress={handleEndCall}>
-              <PhoneOff color="#fff" size={28} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
 
       {/* Gift Tray Bottom Sheet */}
       <Modal visible={giftsOpen} transparent animationType="slide">
@@ -322,25 +407,27 @@ const styles = StyleSheet.create({
   giftFloatEmoji: { fontSize: 100, textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: {width: 0, height: 10}, textShadowRadius: 20 },
 
   // Bottom Overlay
-  bottomOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 20, zIndex: 40 },
+  bottomOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 20, zIndex: 40 },
   
   // Chat
-  chatStream: { height: 120, justifyContent: 'flex-end', marginBottom: 16 },
-  chatMessageRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  chatAvatarPlaceholder: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 8 },
-  chatSender: { color: 'rgba(255,255,255,0.7)', fontSize: 14, fontFamily: 'PlusJakartaSans_600SemiBold', marginRight: 4 },
-  chatText: { color: '#fff', fontSize: 14, fontFamily: 'PlusJakartaSans_500Medium' },
-  systemMessageBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.secondaryContainer, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  systemMessageText: { color: Colors.onSecondaryContainer, fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold', marginLeft: 6 },
+  chatStream: { height: 100, justifyContent: 'flex-end', marginBottom: 12 },
+  chatMessageRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  chatAvatarPlaceholder: { width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 6 },
+  chatSender: { color: 'rgba(255,255,255,0.7)', fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', marginRight: 4 },
+  chatText: { color: '#fff', fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium' },
+  systemMessageBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.secondaryContainer, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  systemMessageText: { color: Colors.onSecondaryContainer, fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold', marginLeft: 6 },
 
   // Controls Row
   controlsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  leftControls: { flexDirection: 'row', gap: 12 },
-  glassBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
-  primaryActions: { flexDirection: 'row', gap: 16 },
-  giftBtn: { width: 60, height: 60, borderRadius: 30, overflow: 'hidden', shadowColor: Colors.secondary, shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.4, shadowRadius: 10 },
+  leftControls: { flexDirection: 'row', gap: 8 },
+  glassBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
+  
+  primaryActions: { flexDirection: 'row', gap: 10 },
+  skipBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,255,255,0.15)', borderWidth: 1, borderColor: Colors.cyan, alignItems: 'center', justifyContent: 'center' },
+  giftBtn: { width: 50, height: 50, borderRadius: 25, overflow: 'hidden', shadowColor: Colors.secondary, shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.4, shadowRadius: 10 },
   giftBtnGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  endCallBtn: { width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.error, alignItems: 'center', justifyContent: 'center', shadowColor: Colors.error, shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.4, shadowRadius: 10 },
+  endCallBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: Colors.error, alignItems: 'center', justifyContent: 'center', shadowColor: Colors.error, shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.4, shadowRadius: 10 },
 
   // Gift Tray
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
