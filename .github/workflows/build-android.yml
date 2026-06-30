@@ -43,17 +43,19 @@ jobs:
 
       - name: ⚙️ Prebuild Android Project
         working-directory: ./app
-        run: npx expo prebuild --platform android --clean
+        run: |
+          npx expo prebuild --platform android --clean
+          sed -i 's/def enableSeparateBuildPerCPUArchitecture = false/def enableSeparateBuildPerCPUArchitecture = true/' android/app/build.gradle
 
-      - name: 🚀 Build Android APK (Gradle Release)
+      - name: 🚀 Build Android APK (Gradle Debug Splits)
         working-directory: ./app/android
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleDebug
 
       - name: 📦 Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: Release v1.0.${{ github.run_number }}
-          files: ./app/android/app/build/outputs/apk/release/app-release.apk
+          files: ./app/android/app/build/outputs/apk/debug/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
