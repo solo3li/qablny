@@ -33,7 +33,7 @@ function ReadReceipt({ status }: { status?: ReadStatus }) {
   if (status === 'sent') {
     return <Check color="#6B7A99" size={11} strokeWidth={2.5} />;
   }
-  const color = status === 'read' ? Colors.cyan : '#6B7A99';
+  const color = status === 'read' ? Colors.primary : '#6B7A99';
   return (
     <View style={styles.receiptDouble}>
       <View style={styles.checkA}><Check color={color} size={11} strokeWidth={2.5} /></View>
@@ -70,8 +70,8 @@ function TextBubble({ msg }: { msg: ChatMessage }) {
   return (
     <View style={[styles.bubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
       {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
-      <Text style={styles.bubbleText}>{msg.text}</Text>
-      {msg.isEdited && <Text style={styles.editedLabel}>تم التعديل</Text>}
+      <Text style={[styles.bubbleText, msg.isMe && { color: '#ffffff' }]}>{msg.text}</Text>
+      {msg.isEdited && <Text style={[styles.editedLabel, msg.isMe && { color: 'rgba(255,255,255,0.7)' }]}>تم التعديل</Text>}
     </View>
   );
 }
@@ -81,8 +81,8 @@ function VoiceBubble({ msg }: { msg: ChatMessage }) {
   if (msg.isUploading) {
     return (
       <View style={[styles.bubble, styles.bubbleMe, styles.uploadingRow]}>
-        <ActivityIndicator color={Colors.cyan} size="small" />
-        <Text style={styles.uploadingText}>🎙 جاري الرفع...</Text>
+        <ActivityIndicator color={Colors.primary} size="small" />
+        <Text style={[styles.uploadingText, { color: '#fff' }]}>🎙 جاري الرفع...</Text>
       </View>
     );
   }
@@ -103,8 +103,8 @@ function ImageBubble({ msg }: { msg: ChatMessage }) {
   if (msg.isUploading || !msg.mediaUrl) {
     return (
       <View style={[styles.bubble, styles.bubbleMe, styles.uploadingRow]}>
-        <ActivityIndicator color={Colors.cyan} size="small" />
-        <Text style={styles.uploadingText}>📷 جاري الرفع...</Text>
+        <ActivityIndicator color={Colors.primary} size="small" />
+        <Text style={[styles.uploadingText, { color: '#fff' }]}>📷 جاري الرفع...</Text>
       </View>
     );
   }
@@ -115,7 +115,7 @@ function ImageBubble({ msg }: { msg: ChatMessage }) {
         <Image source={{ uri: msg.mediaUrl }} style={styles.mediaImg} resizeMode="cover" />
         {msg.text ? (
           <View style={[styles.mediaCaption, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
-            <Text style={styles.bubbleText}>{msg.text}</Text>
+            <Text style={[styles.bubbleText, msg.isMe && { color: '#ffffff' }]}>{msg.text}</Text>
           </View>
         ) : null}
       </TouchableOpacity>
@@ -174,10 +174,10 @@ function LocationBubble({ msg }: { msg: ChatMessage }) {
         <View style={styles.mapPin}><MapPin color={Colors.danger} size={28} fill={Colors.danger} /></View>
       </View>
       <View style={styles.locationInfo}>
-        <MapPin color={Colors.cyan} size={14} />
-        <Text style={styles.locationName}>{msg.locationName}</Text>
+        <MapPin color={msg.isMe ? '#fff' : Colors.primary} size={14} />
+        <Text style={[styles.locationName, msg.isMe && { color: '#fff' }]}>{msg.locationName}</Text>
       </View>
-      <Text style={styles.locationCoords}>
+      <Text style={[styles.locationCoords, msg.isMe && { color: 'rgba(255,255,255,0.7)' }]}>
         {msg.locationLat?.toFixed(4)}, {msg.locationLng?.toFixed(4)}
       </Text>
     </TouchableOpacity>
@@ -190,8 +190,8 @@ function CallBubble({ msg }: { msg: ChatMessage }) {
   const isMissed = msg.type === 'missedCall';
   const isVideo = msg.type === 'videoCall';
   
-  const iconColor = isMissed ? Colors.danger : (msg.isMe ? Colors.cyan : Colors.text);
-  const bgColor = msg.isMe ? Colors.cyanDim : Colors.surface;
+  const iconColor = isMissed ? Colors.danger : (msg.isMe ? Colors.primary : Colors.text);
+  const bgColor = msg.isMe ? (Colors.primary + '11') : Colors.surface;
   const borderColor = msg.isMe ? Colors.glassBorderBright : Colors.glassBorder;
 
   const durationText = msg.duration ? `(${Math.floor(msg.duration / 60)}:${String(msg.duration % 60).padStart(2, '0')})` : '';
@@ -244,7 +244,7 @@ function MessageContextMenu({
         <View style={styles.contextDivider} />
 
         <TouchableOpacity style={styles.contextItem} onPress={() => { onReply(); onClose(); }}>
-          <CornerUpLeft color={Colors.cyan} size={16} />
+          <CornerUpLeft color={Colors.primary} size={16} />
           <Text style={styles.contextItemText}>رد</Text>
         </TouchableOpacity>
 
@@ -269,8 +269,8 @@ function MessageContextMenu({
 // ─── Attachment Options ───────────────────────────────────────────────────────
 
 const ATTACH_OPTIONS = [
-  { id: 'image', icon: <ImageIcon color={Colors.cyan} size={22} />, label: 'صورة', color: Colors.cyanDim, border: Colors.glassBorderBright },
-  { id: 'video', icon: <Film color={Colors.primary} size={22} />, label: 'فيديو', color: Colors.primaryDim, border: Colors.primary + '44' },
+  { id: 'image', icon: <ImageIcon color={Colors.primary} size={22} />, label: 'صورة', color: Colors.primary + '22', border: Colors.primary + '44' },
+  { id: 'video', icon: <Film color={Colors.secondary} size={22} />, label: 'فيديو', color: Colors.secondary + '22', border: Colors.secondary + '44' },
   { id: 'location', icon: <MapPin color={Colors.primaryContainer} size={22} />, label: 'موقع', color: (Colors.primaryContainer + '22'), border: Colors.primaryContainer + '44' },
 ];
 
@@ -519,7 +519,7 @@ export default function ChatScreen() {
     statusColor = Colors.secondary;
   } else if (isTyping) {
     headerStatus = 'يكتب الآن...';
-    statusColor = Colors.cyan;
+    statusColor = Colors.primary;
   } else if (isOnline) {
     headerStatus = '● متصل الآن';
     statusColor = Colors.online;
@@ -530,7 +530,7 @@ export default function ChatScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <LinearGradient colors={['#040710', '#070B14']} style={StyleSheet.absoluteFillObject} />
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.bg }]} />
 
       {/* Context Menu */}
       {contextMsg && (
@@ -544,7 +544,7 @@ export default function ChatScreen() {
       )}
 
       {/* ── Header ─────────────────────────────── */}
-      <GlassCard style={styles.header}  intensity={40}>
+      <GlassCard style={styles.header} intensity={90}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft color={Colors.text} size={26} />
         </TouchableOpacity>
@@ -558,18 +558,18 @@ export default function ChatScreen() {
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerBtn} onPress={() => initiateCall(friend.id, 'voice')}>
-            <Phone color={Colors.cyan} size={20} />
+            <Phone color={Colors.primary} size={20} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerBtn} onPress={() => initiateCall(friend.id, 'video')}>
-            <Video color={Colors.cyan} size={20} />
+            <Video color={Colors.primary} size={20} />
           </TouchableOpacity>
         </View>
       </GlassCard>
 
       {/* Translation toggle */}
       <TouchableOpacity style={styles.translateToggle} onPress={() => setShowTranslation(!showTranslation)}>
-        <Languages color={showTranslation ? Colors.cyan : Colors.textMuted} size={14} />
-        <Text style={[styles.translateText, { color: showTranslation ? Colors.cyan : Colors.textMuted }]}>
+        <Languages color={showTranslation ? Colors.primary : Colors.textMuted} size={14} />
+        <Text style={[styles.translateText, { color: showTranslation ? Colors.primary : Colors.textMuted }]}>
           الترجمة {showTranslation ? 'مفعّلة ✓' : 'معطّلة'}
         </Text>
       </TouchableOpacity>
@@ -650,20 +650,20 @@ export default function ChatScreen() {
                 <Text style={styles.recLabel}>جاري التسجيل...</Text>
               </View>
               <TouchableOpacity
-                style={[styles.sendBtn, { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]}
+                style={[styles.sendBtn, { backgroundColor: Colors.primary + '22', borderColor: Colors.primary + '44' }]}
                 onPress={stopRecording}
               >
-                <Send color={Colors.cyan} size={20} />
+                <Send color={Colors.primary} size={20} />
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.inputBar}>
               {!editingMsgId && (
                 <TouchableOpacity
-                  style={[styles.attachToggleBtn, showAttach && { backgroundColor: Colors.cyanDim, borderColor: Colors.glassBorderBright }]}
+                  style={[styles.attachToggleBtn, showAttach && { backgroundColor: Colors.primary + '22', borderColor: Colors.primary + '44' }]}
                   onPress={() => setShowAttach(!showAttach)}
                 >
-                  <Plus color={showAttach ? Colors.cyan : Colors.textMuted} size={22} />
+                  <Plus color={showAttach ? Colors.primary : Colors.textMuted} size={22} />
                 </TouchableOpacity>
               )}
 
@@ -681,14 +681,14 @@ export default function ChatScreen() {
               {input.trim() ? (
                 <TouchableOpacity
                   style={[styles.sendBtn, {
-                    backgroundColor: editingMsgId ? 'rgba(255,209,102,0.15)' : Colors.cyanDim,
-                    borderColor: editingMsgId ? Colors.primaryContainer : Colors.glassBorderBright,
+                    backgroundColor: editingMsgId ? 'rgba(255,209,102,0.15)' : Colors.primary,
+                    borderColor: editingMsgId ? Colors.primaryContainer : Colors.primary,
                   }]}
                   onPress={handleSendText}
                 >
                   {editingMsgId
                     ? <Check color={Colors.primaryContainer} size={20} strokeWidth={2.5} />
-                    : <Send color={Colors.cyan} size={20} />
+                    : <Send color={'#ffffff'} size={20} />
                   }
                 </TouchableOpacity>
               ) : !editingMsgId ? (
@@ -741,18 +741,18 @@ const styles = StyleSheet.create({
 
   // Reply quote
   replyQuote: { flexDirection: 'row', backgroundColor: Colors.surfaceHover, borderRadius: 8, overflow: 'hidden', marginBottom: 6 },
-  replyAccent: { width: 3, backgroundColor: Colors.cyan },
+  replyAccent: { width: 3, backgroundColor: Colors.primary },
   replyQuoteContent: { flex: 1, paddingHorizontal: 8, paddingVertical: 5 },
-  replyQuoteName: { fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.cyan, marginBottom: 2 },
+  replyQuoteName: { fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.primary, marginBottom: 2 },
   replyQuoteText: { fontSize: 12, color: Colors.textSecondary },
 
   // Context menu
   contextOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: Colors.glassBg },
-  contextMenu: { position: 'absolute', top: '35%', backgroundColor: Colors.bgDeep, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#FFFFFF', minWidth: 160, maxWidth: 220, ...Platform.select({ web: { boxShadow: `0px 4px 12px rgba(210, 195, 180, 0.3)` } }) },
+  contextMenu: { position: 'absolute', top: '35%', backgroundColor: Colors.surface, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: Colors.glassBorder, minWidth: 160, maxWidth: 220, ...Platform.select({ web: { boxShadow: Colors.shadowLight } }) },
   contextMenuMe: { right: 16 },
   contextMenuThem: { left: 60 },
   contextPreview: { padding: 12, paddingBottom: 8 },
-  contextPreviewName: { fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.cyan, marginBottom: 3 },
+  contextPreviewName: { fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.primary, marginBottom: 3 },
   contextPreviewText: { fontSize: 13, color: Colors.textSecondary, lineHeight: 18 },
   contextDivider: { height: 1, backgroundColor: Colors.glassBorder, marginHorizontal: 12 },
   contextItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 16 },
@@ -760,12 +760,12 @@ const styles = StyleSheet.create({
 
   // Bubbles
   bubble: { borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
-  bubbleThem: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, borderBottomLeftRadius: 4 },
-  bubbleMe: { backgroundColor: Colors.cyanDim, borderWidth: 1, borderColor: Colors.glassBorderBright, borderBottomRightRadius: 4 },
+  bubbleThem: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, borderBottomLeftRadius: 4, ...Platform.select({ web: { boxShadow: Colors.shadowLight } }) },
+  bubbleMe: { backgroundColor: Colors.primary, borderWidth: 1, borderColor: Colors.primary, borderBottomRightRadius: 4, ...Platform.select({ web: { boxShadow: Colors.shadowGlow } }) },
   bubbleText: { color: Colors.text, fontSize: 15, lineHeight: 22 },
   editedLabel: { fontSize: 10, color: Colors.textMuted, marginTop: 3, fontStyle: 'italic' },
   translationBox: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, marginLeft: 4 },
-  translationText: { fontSize: 12, color: Colors.cyan, fontStyle: 'italic' },
+  translationText: { fontSize: 12, color: Colors.primary, fontStyle: 'italic' },
 
   // Uploading
   uploadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 160, paddingVertical: 12 },
@@ -785,9 +785,9 @@ const styles = StyleSheet.create({
   locationBubble: { borderRadius: 16, overflow: 'hidden', width: 230 },
   mapPlaceholder: { height: 130, position: 'relative', alignItems: 'center', justifyContent: 'center' },
   mapGrid: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row', justifyContent: 'space-around' },
-  mapGridLine: { width: 1, backgroundColor: Colors.cyan + '22', flex: 1, marginHorizontal: 10 },
+  mapGridLine: { width: 1, backgroundColor: Colors.primary + '22', flex: 1, marginHorizontal: 10 },
   mapGridH: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'column', justifyContent: 'space-around' },
-  mapGridLineH: { height: 1, backgroundColor: Colors.cyan + '22', marginVertical: 10 },
+  mapGridLineH: { height: 1, backgroundColor: Colors.primary + '22', marginVertical: 10 },
   mapPin: { zIndex: 10 },
   locationInfo: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 10, paddingBottom: 2 },
   locationName: { fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text, flex: 1 },
@@ -813,12 +813,12 @@ const styles = StyleSheet.create({
   attachLabel: { color: Colors.textSecondary, fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold' },
 
   // Input area
-  inputAreaOuter: { borderTopWidth: 1, borderTopColor: Colors.glassBorder, backgroundColor: Colors.glassBg },
-  inputBarOuter: {},
-  inputBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 10, paddingBottom: 16 },
+  inputAreaOuter: { borderTopWidth: 1, borderTopColor: Colors.glassBorder, backgroundColor: Colors.bg },
+  inputBarOuter: { backgroundColor: Colors.surface, marginHorizontal: 12, marginBottom: 24, borderRadius: 30, borderWidth: 1, borderColor: Colors.glassBorder, ...Platform.select({ web: { boxShadow: Colors.shadowLight } }) },
+  inputBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 10 },
   attachToggleBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  input: { flex: 1, color: Colors.text, fontSize: 15, minHeight: 44, maxHeight: 120, backgroundColor: Colors.surface, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: Colors.glassBorder, outlineStyle: 'none' } as any,
-  inputEdit: { borderColor: Colors.primaryContainer + '60', backgroundColor: 'rgba(255,209,102,0.05)' },
+  input: { flex: 1, color: Colors.text, fontSize: 15, minHeight: 44, maxHeight: 120, backgroundColor: 'transparent', paddingHorizontal: 12, paddingVertical: 10, outlineStyle: 'none' } as any,
+  inputEdit: { color: Colors.primaryContainer },
   sendBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
 
   // Edit bar
