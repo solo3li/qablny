@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, Platform, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, Platform, Alert, PanResponder, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
@@ -67,6 +67,21 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
   const [micEnabled, setMicEnabled] = useState(true);
   const [camEnabled, setCamEnabled] = useState(true);
   const [duration, setDuration] = useState(0);
+  const [isLocalMain, setIsLocalMain] = useState(false);
+
+  const pan = useRef(new Animated.ValueXY()).current;
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
+      onPanResponderRelease: (e, gestureState) => {
+        if (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5) {
+          setIsLocalMain(prev => !prev);
+        }
+        pan.extractOffset();
+      },
+    })
+  ).current;
 
   useEffect(() => {
     const timer = setInterval(() => setDuration(prev => prev + 1), 1000);
@@ -91,15 +106,18 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
 
   return (
     <>
-      <RemoteVideo />
+      {isLocalMain ? <LocalVideo isCameraOn={camEnabled} /> : <RemoteVideo />}
       
-      {/* PIP Local Video */}
-      <View style={styles.pipContainer}>
-        <LocalVideo isCameraOn={camEnabled} />
+      {/* Draggable PIP Local Video */}
+      <Animated.View 
+        style={[styles.pipContainer, { transform: [{ translateX: pan.x }, { translateY: pan.y }] }]}
+        {...panResponder.panHandlers}
+      >
+        {isLocalMain ? <RemoteVideo /> : <LocalVideo isCameraOn={camEnabled} />}
         <View style={styles.pipMicIcon}>
           {micEnabled ? <Mic color="#fff" size={14} /> : <MicOff color={Colors.danger} size={14} />}
         </View>
-      </View>
+      </Animated.View>
       <RoomAudioRenderer />
 
       {/* Gradient Overlay */}
@@ -116,7 +134,6 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
         
         <View style={styles.liveBadge}>
           <View style={styles.liveDot} />
-          <Text style={styles.liveText}>مكالمة مباشرة</Text>
           <Text style={styles.timeText}>{formattedTime}</Text>
         </View>
         
@@ -135,6 +152,19 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
           )}
         </View>
       )}
+
+      {/* Side Controls (Right) */}
+      <View style={styles.sideControls}>
+        <TouchableOpacity style={styles.glassBtn} onPress={toggleMic}>
+          {micEnabled ? <Mic color="#fff" size={20} /> : <MicOff color={Colors.danger} size={20} />}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.glassBtn} onPress={toggleCam}>
+          {camEnabled ? <Video color="#fff" size={20} /> : <VideoOff color={Colors.danger} size={20} />}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
+          <SkipForward color={Colors.cyan} size={24} />
+        </TouchableOpacity>
+      </View>
 
       {/* Interactive Overlay Area (Bottom) */}
       <View style={styles.bottomOverlay}>
@@ -161,7 +191,6 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
 
         {/* Controls Row */}
         <View style={styles.controlsRow}>
-          {/* Left Controls */}
           <View style={styles.leftControls}>
             <TouchableOpacity style={styles.glassBtn} onPress={handleSendMessage}>
               <MessageCircle color="#fff" size={20} />
@@ -169,20 +198,9 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
             <TouchableOpacity style={styles.glassBtn} onPress={handleAddFriend}>
               <UserPlus color="#fff" size={20} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.glassBtn} onPress={toggleMic}>
-              {micEnabled ? <Mic color="#fff" size={20} /> : <MicOff color={Colors.danger} size={20} />}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.glassBtn} onPress={toggleCam}>
-              {camEnabled ? <Video color="#fff" size={20} /> : <VideoOff color={Colors.danger} size={20} />}
-            </TouchableOpacity>
           </View>
 
-          {/* Primary Actions */}
           <View style={styles.primaryActions}>
-            <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
-              <SkipForward color={Colors.cyan} size={24} />
-            </TouchableOpacity>
-
             <TouchableOpacity style={styles.giftBtn} onPress={() => setGiftsOpen(true)}>
               <LinearGradient colors={[Colors.secondary, Colors.primary]} style={styles.giftBtnGradient}>
                 <Gift color="#fff" size={24} />
@@ -408,11 +426,10 @@ const styles = StyleSheet.create({
   logo: { fontSize: 60, marginBottom: 10 },
 
   // Top Nav
-  topNav: { position: 'absolute', top: Platform.OS === 'ios' ? 60 : 40, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 30 },
+  topNav: { position: 'absolute', top: Platform.OS === 'ios' ? 50 : 20, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 30 },
   navIconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   liveBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.danger, marginRight: 8 },
-  liveText: { color: '#fff', fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14, marginRight: 8 },
   timeText: { color: 'rgba(255,255,255,0.8)', fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 },
 
   // PIP Local Video
@@ -436,6 +453,9 @@ const styles = StyleSheet.create({
   systemMessageBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   systemMessageText: { color: '#fff', fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold', marginLeft: 6 },
 
+  // Side Controls
+  sideControls: { position: 'absolute', right: 20, top: '40%', gap: 15, zIndex: 40, alignItems: 'center' },
+  
   // Controls Row
   controlsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   leftControls: { flexDirection: 'row', gap: 8 },
