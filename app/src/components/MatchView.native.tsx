@@ -7,7 +7,7 @@ import { GlassButton } from '../../components/GlassButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MessageCircle, Gift, PhoneOff, Mic, MicOff, Video, VideoOff, RefreshCcw, MoreVertical, Search, Heart, SkipForward, UserPlus } from 'lucide-react-native';
 import { matchSignalR } from '../../src/api/matchSignalR';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
 import { useAuthStore } from '../../src/store/authStore';
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks, TrackReference, useLocalParticipant } from '@livekit/react-native';
@@ -199,6 +199,7 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
 }
 
 export default function MatchScreen() {
+  const navigation = useNavigation();
   const { user } = useAuthStore();
   const [isSearching, setIsSearching] = useState(false);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
@@ -231,6 +232,17 @@ export default function MatchScreen() {
       matchSignalR.leaveQueue();
     };
   }, []);
+
+  useEffect(() => {
+    const parent = navigation.getParent();
+    if (parent) {
+      if (livekitToken || isSearching) {
+        parent.setOptions({ tabBarStyle: { display: 'none' } });
+      } else {
+        parent.setOptions({ tabBarStyle: undefined });
+      }
+    }
+  }, [livekitToken, isSearching, navigation]);
 
   const handleStartSearch = async () => {
     setIsSearching(true);
