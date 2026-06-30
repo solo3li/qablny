@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   giftFloatImage: { width: 150, height: 150 },
 
   // Bottom Overlay
-  bottomOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 120 : 110, zIndex: 40 },
+  bottomOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 24, zIndex: 40 },
   
   // Chat
   chatStream: { height: 100, justifyContent: 'flex-end', marginBottom: 12 },
