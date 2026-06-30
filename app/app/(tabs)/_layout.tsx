@@ -32,6 +32,7 @@ const CustomFloatingButton = ({ children, onPress }: any) => (
 
 export default function TabLayout() {
   const friends = useAppStore(state => state.friends);
+  const isMatchMode = useAppStore(state => state.isMatchMode);
   const totalUnread = friends.reduce((acc, f) => acc + f.unread, 0);
 
   return (
@@ -40,7 +41,8 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: [
           styles.tabBar,
-          Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null
+          Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null,
+          isMatchMode ? { display: 'none' } : undefined,
         ],
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.secondary,

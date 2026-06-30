@@ -87,10 +87,12 @@ interface AppState {
   vipPlans: VipPlan[];
   chatMessages: Record<string, ChatMessage[]>;
   isLoggedIn: boolean;
+  isMatchMode: boolean;
   filterGender: 'all' | 'male' | 'female';
   filterRegion: string;
   login: (user: User) => void;
   logout: () => void;
+  setIsMatchMode: (v: boolean) => void;
   updateCoins: (amount: number) => void;
   nextMatch: () => void;
   setFilterGender: (g: 'all' | 'male' | 'female') => void;
@@ -190,11 +192,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   vipPlans,
   chatMessages,
   isLoggedIn: false,
+  isMatchMode: false,
   filterGender: 'all',
   filterRegion: 'العالم',
 
   login: (user) => set({ user, isLoggedIn: true }),
   logout: () => set({ user: null, isLoggedIn: false }),
+  setIsMatchMode: (v) => set({ isMatchMode: v }),
   updateCoins: (amount) => set((state) => ({
     user: state.user ? { ...state.user, coins: state.user.coins + amount } : null,
   })),

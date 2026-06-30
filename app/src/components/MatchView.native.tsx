@@ -10,6 +10,7 @@ import { matchSignalR } from '../../src/api/matchSignalR';
 import { router, useNavigation } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
 import { useAuthStore } from '../../src/store/authStore';
+import { useAppStore } from '../../store/useAppStore';
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks, TrackReference, useLocalParticipant } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 
@@ -233,16 +234,12 @@ export default function MatchScreen() {
     };
   }, []);
 
+  const setIsMatchMode = useAppStore(state => state.setIsMatchMode);
+
   useEffect(() => {
-    const parent = navigation.getParent();
-    if (parent) {
-      if (livekitToken || isSearching) {
-        parent.setOptions({ tabBarStyle: { display: 'none' } });
-      } else {
-        parent.setOptions({ tabBarStyle: undefined });
-      }
-    }
-  }, [livekitToken, isSearching, navigation]);
+    setIsMatchMode(!!livekitToken || isSearching);
+    return () => setIsMatchMode(false);
+  }, [livekitToken, isSearching, setIsMatchMode]);
 
   const handleStartSearch = async () => {
     setIsSearching(true);

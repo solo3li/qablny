@@ -9,6 +9,7 @@ import { matchSignalR } from '../../src/api/matchSignalR';
 import { router, useNavigation } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
 import { useAuthStore } from '../../src/store/authStore';
+import { useAppStore } from '../../store/useAppStore';
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks, useLocalParticipant } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
@@ -229,16 +230,13 @@ export default function MatchScreenWeb() {
     };
   }, []);
 
+  const setIsMatchMode = useAppStore(state => state.setIsMatchMode);
+
   useEffect(() => {
-    const parent = navigation.getParent();
-    if (parent) {
-      if (livekitToken || isSearching) {
-        parent.setOptions({ tabBarStyle: { display: 'none' } });
-      } else {
-        parent.setOptions({ tabBarStyle: undefined });
-      }
-    }
-  }, [livekitToken, isSearching, navigation]);
+    setIsMatchMode(!!livekitToken || isSearching);
+    // Cleanup when component unmounts
+    return () => setIsMatchMode(false);
+  }, [livekitToken, isSearching, setIsMatchMode]);
 
   const handleStartSearch = async () => {
     setIsSearching(true);
