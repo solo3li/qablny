@@ -4,7 +4,7 @@ import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MessageCircle, Gift, PhoneOff, Mic, MicOff, Video, VideoOff, RefreshCcw, MoreVertical, Search, Heart, SkipForward, UserPlus } from 'lucide-react-native';
+import { MessageCircle, Gift, PhoneOff, Mic, MicOff, Video, VideoOff, RefreshCcw, MoreVertical, Search, Heart, SkipForward, UserPlus, Settings } from 'lucide-react-native';
 import { matchSignalR } from '../../src/api/matchSignalR';
 import { router, useNavigation } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
@@ -68,6 +68,7 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
   const [camEnabled, setCamEnabled] = useState(true);
   const [duration, setDuration] = useState(0);
   const [isLocalMain, setIsLocalMain] = useState(false);
+  const [controlsExpanded, setControlsExpanded] = useState(false);
 
   const pan = useRef(new Animated.ValueXY()).current;
   const panResponder = useRef(
@@ -151,15 +152,23 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
 
       {/* Side Controls (Right) */}
       <View style={styles.sideControls}>
-        <TouchableOpacity style={styles.glassBtn} onPress={toggleMic}>
-          {micEnabled ? <Mic color="#fff" size={20} /> : <MicOff color={Colors.danger} size={20} />}
+        <TouchableOpacity style={styles.glassBtn} onPress={() => setControlsExpanded(!controlsExpanded)}>
+          <Settings color="#fff" size={20} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.glassBtn} onPress={toggleCam}>
-          {camEnabled ? <Video color="#fff" size={20} /> : <VideoOff color={Colors.danger} size={20} />}
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
-          <SkipForward color={Colors.cyan} size={24} />
-        </TouchableOpacity>
+
+        {controlsExpanded && (
+          <>
+            <TouchableOpacity style={styles.glassBtn} onPress={toggleMic}>
+              {micEnabled ? <Mic color="#fff" size={20} /> : <MicOff color={Colors.danger} size={20} />}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.glassBtn} onPress={toggleCam}>
+              {camEnabled ? <Video color="#fff" size={20} /> : <VideoOff color={Colors.danger} size={20} />}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
+              <SkipForward color={Colors.cyan} size={24} />
+            </TouchableOpacity>
+          </>
+        )}
       </View>
 
       {/* Interactive Overlay Area (Bottom) */}
