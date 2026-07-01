@@ -6,7 +6,7 @@ import { Track } from 'livekit-client';
 import { axiosClient } from '../src/api/axiosClient';
 
 // Use 10.0.2.2 for Android emulator
-const LIVEKIT_URL = 'wss://livekit.178.62.192.74.nip.io';
+const LIVEKIT_URL = 'wss://livekit.qablny.online';
 
 function RemoteVideo() {
   const tracks = useTracks([Track.Source.Camera]);

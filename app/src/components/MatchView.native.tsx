@@ -14,7 +14,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks, TrackReference, useLocalParticipant } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 
-const LIVEKIT_URL = 'wss://livekit.178.62.192.74.nip.io';
+const LIVEKIT_URL = 'wss://livekit.qablny.online';
 
 function RemoteVideo() {
   const tracks = useTracks([Track.Source.Camera]);

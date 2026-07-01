@@ -5,7 +5,7 @@ import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks, useLocalParticip
 import { Track } from 'livekit-client';
 import { axiosClient } from '../src/api/axiosClient';
 
-const LIVEKIT_URL = 'wss://livekit.178.62.192.74.nip.io';
+const LIVEKIT_URL = 'wss://livekit.qablny.online';
 
 function RemoteVideo() {
   const tracks = useTracks([Track.Source.Camera]);
