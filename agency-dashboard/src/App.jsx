@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAgencyStore } from './store/useAgencyStore';
-import { Users, Coins, Activity, UserPlus, Clock, LayoutDashboard, Settings, LogOut, Wallet, Target, Bell, Trash2, ArrowUpRight } from 'lucide-react';
+import { Users, Coins, Activity, UserPlus, Clock, LayoutDashboard, Settings, LogOut, Wallet, Target, Bell, Trash2, ArrowUpRight, ChevronLeft, Eye } from 'lucide-react';
 import './index.css';
 
 function DashboardTab({ hosts, activeHosts, totalHosts, totalEarnings, agencyCut }) {
@@ -64,8 +64,83 @@ function DashboardTab({ hosts, activeHosts, totalHosts, totalEarnings, agencyCut
   );
 }
 
+function HostDetailsView({ host, onBack }) {
+  // Mock data for host details
+  const recentGifts = [
+    { id: 1, amount: 500, from: 'User_X92', time: '10 mins ago' },
+    { id: 2, amount: 150, from: 'Guest_11', time: '1 hour ago' },
+    { id: 3, amount: 1000, from: 'VIP_Ahmed', time: '3 hours ago' },
+  ];
+
+  return (
+    <div className="host-details-view">
+      <button className="back-btn" onClick={onBack}>
+        <ChevronLeft size={18} /> Back to Hosts
+      </button>
+
+      <div className="host-profile-header">
+        <div className="host-avatar-large">{host.name.charAt(0)}</div>
+        <div className="host-profile-info">
+          <h2>{host.name}</h2>
+          <span className={`status-badge status-${host.status.replace(' ', '')}`}>
+            <span className="status-indicator"></span>{host.status}
+          </span>
+          <div className="host-meta">
+            <span>Joined: {host.joined}</span>
+            <span>ID: #{host.id}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="stats-grid" style={{marginTop:'2rem'}}>
+        <div className="stat-card">
+          <div className="stat-title"><Coins size={16} color="#FCD34D"/> Earnings (Today)</div>
+          <div className="stat-value">{host.earnings.toLocaleString()} <span style={{fontSize:'1rem', color:'#FCD34D'}}>Coins</span></div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-title"><Clock size={16} color="#3B82F6"/> Hours Logged</div>
+          <div className="stat-value">{host.hours} <span style={{fontSize:'1rem', color:'var(--text-muted)'}}>Hours</span></div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-title"><Activity size={16} color="#10B981"/> Match Rate</div>
+          <div className="stat-value">87 <span style={{fontSize:'1rem', color:'var(--text-muted)'}}>%</span></div>
+        </div>
+      </div>
+
+      <section className="table-container" style={{marginTop:'1.5rem'}}>
+        <div className="table-header">
+          <div className="table-title">Recent Gifts Received</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Sender</th>
+              <th>Time</th>
+              <th>Amount (Coins)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recentGifts.map(gift => (
+              <tr key={gift.id}>
+                <td>{gift.from}</td>
+                <td style={{color:'var(--text-muted)'}}>{gift.time}</td>
+                <td style={{color: '#10B981', fontWeight:'bold'}}>+{gift.amount}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  );
+}
+
 function HostsTab({ hosts, addHost }) {
   const { removeHost } = useAgencyStore();
+  const [selectedHost, setSelectedHost] = useState(null);
+
+  if (selectedHost) {
+    return <HostDetailsView host={selectedHost} onBack={() => setSelectedHost(null)} />;
+  }
 
   const handleInvite = () => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -89,7 +164,6 @@ function HostsTab({ hosts, addHost }) {
               <th>Status</th>
               <th>Earnings</th>
               <th>Hours Logged</th>
-              <th>Joined</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -104,11 +178,15 @@ function HostsTab({ hosts, addHost }) {
                 </td>
                 <td className="coins">{host.earnings.toLocaleString()}</td>
                 <td><Clock size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> {host.hours}h</td>
-                <td>{host.joined}</td>
                 <td>
-                  <button className="action-btn btn-danger" onClick={() => removeHost(host.id)}>
-                    <Trash2 size={16} /> Remove
-                  </button>
+                  <div style={{display:'flex', gap:'0.5rem'}}>
+                    <button className="action-btn btn-view" onClick={() => setSelectedHost(host)}>
+                      <Eye size={16} /> View
+                    </button>
+                    <button className="action-btn btn-danger" onClick={() => removeHost(host.id)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
