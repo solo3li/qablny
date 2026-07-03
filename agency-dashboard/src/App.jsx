@@ -1,13 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAgencyStore } from './store/useAgencyStore';
-import { Users, Coins, Activity, UserPlus, Clock, LayoutDashboard, Settings, LogOut, Wallet, Target, Bell, Trash2, ArrowUpRight, ChevronLeft, Eye } from 'lucide-react';
+import { Users, Coins, Activity, UserPlus, Clock, LayoutDashboard, Settings, LogOut, Wallet, Target, Bell, Trash2, ArrowUpRight, ChevronLeft, Eye, KeyRound } from 'lucide-react';
 import './index.css';
 
-function DashboardTab({ hosts, activeHosts, totalHosts, totalEarnings, agencyCut }) {
-  const { monthlyTarget, currentProgress } = useAgencyStore();
-  const progressPercent = Math.min((currentProgress / monthlyTarget) * 100, 100);
+function LoginView() {
+  const { login, isLoading, error } = useAgencyStore();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await login(username, password);
+  };
+
+  return (
+    <div className="login-container">
+      <div className="login-card">
+        <div className="login-header">
+          <KeyRound size={40} color="var(--primary)" />
+          <h2>Agency Login</h2>
+          <p>Sign in to manage your Qablny agency</p>
+        </div>
+        <form onSubmit={handleSubmit} className="settings-form">
+          <div className="form-group">
+            <label>Username</label>
+            <input type="text" value={username} onChange={e=>setUsername(e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label>Password</label>
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
+          </div>
+          {error && <div className="error-message">{error}</div>}
+          <button type="submit" className="invite-btn" disabled={isLoading} style={{marginTop:'1rem'}}>
+            {isLoading ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function DashboardTab() {
+  const { 
+    monthlyTarget, currentProgress, activeHosts, totalHosts, totalEarnings, agencyCut, hosts, fetchDashboardStats 
+  } = useAgencyStore();
   
-  // Get top 3 hosts by earnings
+  useEffect(() => {
+    fetchDashboardStats();
+    const interval = setInterval(fetchDashboardStats, 30000); // refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const progressPercent = monthlyTarget > 0 ? Math.min((currentProgress / monthlyTarget) * 100, 100) : 0;
   const topHosts = [...hosts].sort((a, b) => b.earnings - a.earnings).slice(0, 3);
 
   return (
@@ -22,7 +66,7 @@ function DashboardTab({ hosts, activeHosts, totalHosts, totalEarnings, agencyCut
           <div className="stat-value">{totalEarnings.toLocaleString()} <span style={{fontSize:'1rem', color:'#FCD34D'}}>Coins</span></div>
         </div>
         <div className="stat-card">
-          <div className="stat-title"><Coins size={16} color="#10B981"/> Agency Cut (20%)</div>
+          <div className="stat-title"><Coins size={16} color="#10B981"/> Agency Cut</div>
           <div className="stat-value" style={{color: '#10B981'}}>{agencyCut.toLocaleString()} <span style={{fontSize:'1rem'}}>Coins</span></div>
         </div>
       </section>
@@ -40,24 +84,28 @@ function DashboardTab({ hosts, activeHosts, totalHosts, totalEarnings, agencyCut
           <div className="progress-bar-bg">
             <div className="progress-bar-fill" style={{width: `${progressPercent}%`}}></div>
           </div>
-          <p className="target-subtext">{progressPercent.toFixed(1)}% Completed. Keep pushing to unlock the 5% agency bonus!</p>
+          <p className="target-subtext">{progressPercent.toFixed(1)}% Completed. Keep pushing to unlock the bonus!</p>
         </section>
 
         <section className="leaderboard-card">
           <div className="card-header">
             <h3>🏆 Top Performing Hosts</h3>
           </div>
-          <ul className="leaderboard-list">
-            {topHosts.map((h, idx) => (
-              <li key={h.id}>
-                <div className="leader-info">
-                  <span className={`rank rank-${idx+1}`}>#{idx+1}</span>
-                  <strong>{h.name}</strong>
-                </div>
-                <div className="coins">{h.earnings.toLocaleString()} C</div>
-              </li>
-            ))}
-          </ul>
+          {topHosts.length > 0 ? (
+            <ul className="leaderboard-list">
+              {topHosts.map((h, idx) => (
+                <li key={h.id}>
+                  <div className="leader-info">
+                    <span className={`rank rank-${idx+1}`}>#{idx+1}</span>
+                    <strong>{h.name}</strong>
+                  </div>
+                  <div className="coins">{h.earnings.toLocaleString()} C</div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p style={{color:'var(--text-muted)'}}>No data available yet.</p>
+          )}
         </section>
       </div>
     </>
@@ -65,12 +113,7 @@ function DashboardTab({ hosts, activeHosts, totalHosts, totalEarnings, agencyCut
 }
 
 function HostDetailsView({ host, onBack }) {
-  // Mock data for host details
-  const recentGifts = [
-    { id: 1, amount: 500, from: 'User_X92', time: '10 mins ago' },
-    { id: 2, amount: 150, from: 'Guest_11', time: '1 hour ago' },
-    { id: 3, amount: 1000, from: 'VIP_Ahmed', time: '3 hours ago' },
-  ];
+  const recentGifts = []; // Mocked for now until API is built
 
   return (
     <div className="host-details-view">
@@ -86,74 +129,49 @@ function HostDetailsView({ host, onBack }) {
             <span className="status-indicator"></span>{host.status}
           </span>
           <div className="host-meta">
-            <span>Joined: {host.joined}</span>
-            <span>ID: #{host.id}</span>
+            <span>Joined: {host.joinedDate}</span>
+            <span>ID: #{host.id.substring(0,8)}</span>
           </div>
         </div>
       </div>
 
       <div className="stats-grid" style={{marginTop:'2rem'}}>
         <div className="stat-card">
-          <div className="stat-title"><Coins size={16} color="#FCD34D"/> Earnings (Today)</div>
+          <div className="stat-title"><Coins size={16} color="#FCD34D"/> Earnings</div>
           <div className="stat-value">{host.earnings.toLocaleString()} <span style={{fontSize:'1rem', color:'#FCD34D'}}>Coins</span></div>
         </div>
         <div className="stat-card">
-          <div className="stat-title"><Clock size={16} color="#3B82F6"/> Hours Logged</div>
-          <div className="stat-value">{host.hours} <span style={{fontSize:'1rem', color:'var(--text-muted)'}}>Hours</span></div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-title"><Activity size={16} color="#10B981"/> Match Rate</div>
-          <div className="stat-value">87 <span style={{fontSize:'1rem', color:'var(--text-muted)'}}>%</span></div>
+          <div className="stat-title"><Clock size={16} color="#3B82F6"/> Matches Logged</div>
+          <div className="stat-value">{host.hoursLogged} <span style={{fontSize:'1rem', color:'var(--text-muted)'}}>Matches</span></div>
         </div>
       </div>
-
-      <section className="table-container" style={{marginTop:'1.5rem'}}>
-        <div className="table-header">
-          <div className="table-title">Recent Gifts Received</div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Sender</th>
-              <th>Time</th>
-              <th>Amount (Coins)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recentGifts.map(gift => (
-              <tr key={gift.id}>
-                <td>{gift.from}</td>
-                <td style={{color:'var(--text-muted)'}}>{gift.time}</td>
-                <td style={{color: '#10B981', fontWeight:'bold'}}>+{gift.amount}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
     </div>
   );
 }
 
-function HostsTab({ hosts, addHost }) {
-  const { removeHost } = useAgencyStore();
+function HostsTab() {
+  const { hosts, fetchHosts, removeHost, inviteCode } = useAgencyStore();
   const [selectedHost, setSelectedHost] = useState(null);
+
+  useEffect(() => {
+    fetchHosts();
+  }, []);
 
   if (selectedHost) {
     return <HostDetailsView host={selectedHost} onBack={() => setSelectedHost(null)} />;
   }
 
-  const handleInvite = () => {
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    alert(`Invite code generated: ${code}\nSend this to your new host!`);
-    setTimeout(() => addHost(`New Host ${code}`), 1000);
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(inviteCode);
+    alert(`Invite code copied: ${inviteCode}\nSend this to new hosts so they can join your agency!`);
   };
 
   return (
     <>
       <div style={{display:'flex', justifyContent:'space-between', marginBottom:'1.5rem'}}>
         <h2>Manage Hosts</h2>
-        <button className="invite-btn" onClick={handleInvite}>
-          <UserPlus size={18} /> Invite New Host
+        <button className="invite-btn" onClick={handleCopyCode}>
+          <UserPlus size={18} /> Copy Invite Code
         </button>
       </div>
       <section className="table-container">
@@ -163,12 +181,15 @@ function HostsTab({ hosts, addHost }) {
               <th>Host Name</th>
               <th>Status</th>
               <th>Earnings</th>
-              <th>Hours Logged</th>
+              <th>Matches</th>
+              <th>Joined</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {hosts.map((host) => (
+            {hosts.length === 0 ? (
+              <tr><td colSpan="6" style={{textAlign:'center', color:'var(--text-muted)'}}>No hosts found in this agency.</td></tr>
+            ) : hosts.map((host) => (
               <tr key={host.id}>
                 <td className="host-name">{host.name}</td>
                 <td>
@@ -177,13 +198,16 @@ function HostsTab({ hosts, addHost }) {
                   </span>
                 </td>
                 <td className="coins">{host.earnings.toLocaleString()}</td>
-                <td><Clock size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> {host.hours}h</td>
+                <td><Activity size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> {host.hoursLogged}</td>
+                <td>{host.joinedDate}</td>
                 <td>
                   <div style={{display:'flex', gap:'0.5rem'}}>
                     <button className="action-btn btn-view" onClick={() => setSelectedHost(host)}>
                       <Eye size={16} /> View
                     </button>
-                    <button className="action-btn btn-danger" onClick={() => removeHost(host.id)}>
+                    <button className="action-btn btn-danger" onClick={() => {
+                        if(window.confirm('Are you sure you want to remove this host?')) removeHost(host.id);
+                    }}>
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -198,7 +222,7 @@ function HostsTab({ hosts, addHost }) {
 }
 
 function WalletTab() {
-  const { transactions, requestWithdrawal, fixedSalary } = useAgencyStore();
+  const { transactions, requestWithdrawal, totalEarnings } = useAgencyStore();
   const [withdrawAmount, setWithdrawAmount] = useState('');
 
   const handleWithdraw = (e) => {
@@ -214,55 +238,21 @@ function WalletTab() {
     <div className="wallet-tab">
       <div className="split-grid">
         <section className="stat-card" style={{gridColumn: '1 / -1', background: 'linear-gradient(135deg, rgba(107, 70, 193, 0.2), transparent)'}}>
-           <div className="stat-title">Available Agency Balance + Manager Salary</div>
-           <div className="stat-value" style={{fontSize: '2.5rem'}}>{(12500 + fixedSalary).toLocaleString()} <span style={{fontSize:'1.2rem', color:'#FCD34D'}}>Coins</span></div>
+           <div className="stat-title">Available Agency Balance (Mocked)</div>
+           <div className="stat-value" style={{fontSize: '2.5rem'}}>{(totalEarnings * 0.2).toLocaleString()} <span style={{fontSize:'1.2rem', color:'#FCD34D'}}>Coins</span></div>
            <form className="withdraw-form" onSubmit={handleWithdraw}>
              <input type="number" placeholder="Amount to withdraw" value={withdrawAmount} onChange={(e)=>setWithdrawAmount(e.target.value)} required min="100"/>
              <button type="submit" className="invite-btn"><ArrowUpRight size={18}/> Request Withdrawal</button>
            </form>
         </section>
       </div>
-
-      <section className="table-container" style={{marginTop:'2rem'}}>
-        <div className="table-header"><div className="table-title">Transaction History</div></div>
-        <table>
-          <thead>
-            <tr>
-              <th>Date & Time</th>
-              <th>Type</th>
-              <th>Host / Source</th>
-              <th>Amount (Coins)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map(t => (
-              <tr key={t.id}>
-                <td style={{color:'var(--text-muted)'}}>{t.date}</td>
-                <td>{t.type}</td>
-                <td>{t.host}</td>
-                <td style={{color: t.amount > 0 ? '#10B981' : '#EF4444', fontWeight:'bold'}}>
-                  {t.amount > 0 ? '+' : ''}{t.amount.toLocaleString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
     </div>
   );
 }
 
 function SettingsTab() {
-  const { agencyName, managerName, updateSettings, sendAnnouncement, announcements } = useAgencyStore();
-  const [name, setName] = useState(agencyName);
-  const [manager, setManager] = useState(managerName);
+  const { agencyName, managerName, sendAnnouncement, announcements, inviteCode } = useAgencyStore();
   const [msg, setMsg] = useState('');
-
-  const handleSave = (e) => {
-    e.preventDefault();
-    updateSettings(name, manager);
-    alert('Settings saved!');
-  };
 
   const handleAnnounce = (e) => {
     e.preventDefault();
@@ -277,17 +267,20 @@ function SettingsTab() {
     <div className="split-grid">
       <section className="settings-card">
         <h3>Agency Profile</h3>
-        <form onSubmit={handleSave} className="settings-form">
+        <div className="settings-form" style={{marginTop:'1.5rem'}}>
           <div className="form-group">
             <label>Agency Name</label>
-            <input type="text" value={name} onChange={e=>setName(e.target.value)} />
+            <input type="text" value={agencyName} disabled />
           </div>
           <div className="form-group">
             <label>Manager Name</label>
-            <input type="text" value={manager} onChange={e=>setManager(e.target.value)} />
+            <input type="text" value={managerName} disabled />
           </div>
-          <button type="submit" className="invite-btn" style={{marginTop:'1rem'}}>Save Changes</button>
-        </form>
+          <div className="form-group">
+            <label>Unique Invite Code</label>
+            <input type="text" value={inviteCode} disabled style={{color:'var(--primary)', fontWeight:'bold', letterSpacing:'1px'}}/>
+          </div>
+        </div>
       </section>
 
       <section className="settings-card">
@@ -317,22 +310,20 @@ function SettingsTab() {
 }
 
 function App() {
-  const { agencyName, managerName, hosts, addHost } = useAgencyStore();
-  
-  const activeHosts = hosts.filter(h => h.status !== 'Offline').length;
-  const totalHosts = hosts.length;
-  const totalEarnings = hosts.reduce((acc, h) => acc + h.earnings, 0);
-  const agencyCut = totalEarnings * 0.20;
-
+  const { token, agencyName, managerName, logout } = useAgencyStore();
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  if (!token) {
+    return <LoginView />;
+  }
 
   const renderContent = () => {
     switch(activeTab) {
-      case 'dashboard': return <DashboardTab hosts={hosts} activeHosts={activeHosts} totalHosts={totalHosts} totalEarnings={totalEarnings} agencyCut={agencyCut}/>;
-      case 'hosts': return <HostsTab hosts={hosts} addHost={addHost} />;
+      case 'dashboard': return <DashboardTab />;
+      case 'hosts': return <HostsTab />;
       case 'wallet': return <WalletTab />;
       case 'settings': return <SettingsTab />;
-      default: return <DashboardTab hosts={hosts} activeHosts={activeHosts} totalHosts={totalHosts} totalEarnings={totalEarnings} agencyCut={agencyCut}/>;
+      default: return <DashboardTab />;
     }
   };
 
@@ -361,13 +352,13 @@ function App() {
         
         <div className="sidebar-footer">
           <div className="manager-info">
-            <div className="manager-avatar">{managerName.charAt(0)}</div>
+            <div className="manager-avatar">{managerName.charAt(0).toUpperCase()}</div>
             <div>
               <div className="manager-name">{managerName}</div>
               <div className="manager-role">Agency Manager</div>
             </div>
           </div>
-          <button className="logout-btn">
+          <button className="logout-btn" onClick={logout}>
             <LogOut size={18} />
           </button>
         </div>

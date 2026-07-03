@@ -21,6 +21,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<UserBlock>       UserBlocks       => Set<UserBlock>();
     public DbSet<RefreshToken>    RefreshTokens    => Set<RefreshToken>();
     
+    // Agencies
+    public DbSet<Agency>          Agencies         => Set<Agency>();
+    public DbSet<AgencyManager>   AgencyManagers   => Set<AgencyManager>();
+
     // Admin & System
     public DbSet<AdminUser>       AdminUsers       => Set<AdminUser>();
     public DbSet<StaffShift>      StaffShifts      => Set<StaffShift>();
@@ -161,6 +165,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         b.Entity<SystemSetting>(e =>
         {
             e.HasKey(s => s.Key);
+        });
+
+        // Agencies
+        b.Entity<Agency>(e =>
+        {
+            e.HasIndex(a => a.InviteCode).IsUnique();
+        });
+
+        b.Entity<AgencyManager>(e =>
+        {
+            e.HasIndex(am => am.Username).IsUnique();
+            e.HasOne(am => am.Agency).WithMany(a => a.Managers)
+             .HasForeignKey(am => am.AgencyId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // User to Agency Relationship
+        b.Entity<User>(e =>
+        {
+            e.HasOne(u => u.Agency).WithMany(a => a.Hosts)
+             .HasForeignKey(u => u.AgencyId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // ── Seed Data ──────────────────────────────────────────────────────

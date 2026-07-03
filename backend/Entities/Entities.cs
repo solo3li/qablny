@@ -24,6 +24,7 @@ public class User
     public int      TotalMatches    { get; set; }
     public bool     IsBlocked       { get; set; }
     public string?  ExpoPushToken   { get; set; }
+    public Guid?    AgencyId        { get; set; }
 
     public ICollection<Friendship>       SentFriendRequests     { get; set; } = [];
     public ICollection<Friendship>       ReceivedFriendRequests { get; set; } = [];
@@ -35,6 +36,8 @@ public class User
     public ICollection<Report>           FiledReports           { get; set; } = [];
     public ICollection<Report>           ReceivedReports        { get; set; } = [];
     public ICollection<RefreshToken>     RefreshTokens          { get; set; } = [];
+    
+    public Agency?                       Agency                 { get; set; }
 }
 
 // ─── Friendship / Conversation / Message ──────────────────────────────────────
@@ -267,4 +270,32 @@ public class PushNotificationLog
     public string     TargetAudience { get; set; } = "All"; 
     public int        SentCount      { get; set; }
     public DateTime   SentAt         { get; set; } = DateTime.UtcNow;
+}
+
+// ─── Agencies ─────────────────────────────────────────────────────────────────
+public class Agency
+{
+    public Guid       Id                  { get; set; } = Guid.NewGuid();
+    public string     Name                { get; set; } = default!;
+    public string     InviteCode          { get; set; } = default!;
+    public int        AgencyCutPercentage { get; set; } = 20;
+    public int        TotalEarnings       { get; set; } = 0;
+    public bool       IsActive            { get; set; } = true;
+    public DateTime   CreatedAt           { get; set; } = DateTime.UtcNow;
+
+    public ICollection<User>          Hosts    { get; set; } = [];
+    public ICollection<AgencyManager> Managers { get; set; } = [];
+}
+
+public class AgencyManager
+{
+    public Guid       Id           { get; set; } = Guid.NewGuid();
+    public Guid       AgencyId     { get; set; }
+    public string     Username     { get; set; } = default!;
+    public string     PasswordHash { get; set; } = default!;
+    public string     FullName     { get; set; } = default!;
+    public bool       IsActive     { get; set; } = true;
+    public DateTime   CreatedAt    { get; set; } = DateTime.UtcNow;
+
+    public Agency     Agency       { get; set; } = default!;
 }

@@ -105,6 +105,7 @@ builder.Services.AddScoped<VipService>();
 builder.Services.AddScoped<ModerationService>();
 builder.Services.AddScoped<PresenceService>();
 builder.Services.AddScoped<MatchService>();
+builder.Services.AddScoped<AgencyService>();
 builder.Services.AddSingleton<LiveKitService>();
 builder.Services.AddSingleton<MinioStorageService>();
 builder.Services.AddHttpClient<PushNotificationService>();

@@ -77,6 +77,44 @@ public class UsersController(UserService users) : BaseController
         await users.DeleteAsync(UserId);
         return NoContent();
     }
+
+    public record JoinAgencyRequest(string InviteCode);
+
+    [HttpPost("me/agency/join")]
+    public async Task<IActionResult> JoinAgency([FromBody] JoinAgencyRequest req, [FromServices] Qablny.Data.AppDbContext db)
+    {
+        var agency = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+            db.Agencies, a => a.InviteCode == req.InviteCode && a.IsActive);
+            
+        if (agency == null)
+            return BadRequest(new { message = "كود الدعوة غير صحيح أو الوكالة غير نشطة." });
+
+        var user = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+            db.Users, u => u.Id == UserId);
+            
+        if (user == null) return NotFound();
+        if (user.AgencyId != null) return BadRequest(new { message = "أنت منضم بالفعل لوكالة أخرى." });
+
+        user.AgencyId = agency.Id;
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "تم الانضمام للوكالة بنجاح!" });
+    }
+
+    [HttpPost("me/agency/leave")]
+    public async Task<IActionResult> LeaveAgency([FromServices] Qablny.Data.AppDbContext db)
+    {
+        var user = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+            db.Users, u => u.Id == UserId);
+            
+        if (user == null) return NotFound();
+        if (user.AgencyId == null) return BadRequest(new { message = "أنت لست منضماً لأي وكالة." });
+
+        user.AgencyId = null;
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "تمت مغادرة الوكالة بنجاح." });
+    }
 }
 
 // ─── Friends ──────────────────────────────────────────────────────────────────
@@ -256,4 +294,31 @@ public class ModerationController(ModerationService moderation) : BaseController
     [HttpGet("blocked")]
     public async Task<List<BlockedUserDto>> GetBlocked() =>
         await moderation.GetBlockedAsync(UserId);
+}
+
+// ─── Agency ───────────────────────────────────────────────────────────────────
+[Route("api/agency")]
+public class AgencyController(AgencyService agencyService) : ControllerBase
+{
+    protected Guid AgencyId =>
+        Guid.Parse(User.FindFirstValue("AgencyId") ?? Guid.Empty.ToString());
+
+    [HttpPost("login")]
+    public async Task<AgencyAuthResponse> Login(AgencyLoginRequest req) =>
+        await agencyService.LoginAsync(req);
+
+    [HttpGet("dashboard"), Authorize(Roles = "AgencyManager")]
+    public async Task<AgencyDashboardDto> GetDashboard() =>
+        await agencyService.GetDashboardStatsAsync(AgencyId);
+
+    [HttpGet("hosts"), Authorize(Roles = "AgencyManager")]
+    public async Task<List<AgencyHostDto>> GetHosts() =>
+        await agencyService.GetHostsAsync(AgencyId);
+
+    [HttpPost("hosts/{hostId:guid}/remove"), Authorize(Roles = "AgencyManager")]
+    public async Task<IActionResult> RemoveHost(Guid hostId)
+    {
+        await agencyService.RemoveHostAsync(AgencyId, hostId);
+        return Ok();
+    }
 }

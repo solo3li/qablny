@@ -1,45 +1,124 @@
 import { create } from 'zustand';
 
-const initialHosts = [
-  { id: 1, name: 'Ahmed M.', status: 'Online', earnings: 1500, hours: 4.5, joined: '2026-05-12' },
-  { id: 2, name: 'Sara K.', status: 'In Call', earnings: 3200, hours: 8.2, joined: '2026-06-01' },
-  { id: 3, name: 'Omar Y.', status: 'Offline', earnings: 850, hours: 2.1, joined: '2026-06-15' },
-  { id: 4, name: 'Lina A.', status: 'Online', earnings: 1100, hours: 3.0, joined: '2026-06-20' },
-  { id: 5, name: 'Tariq H.', status: 'Offline', earnings: 2400, hours: 6.5, joined: '2026-07-01' },
-];
+const API_BASE_URL = 'http://localhost:5000/api'; // Or the actual IP of the backend
 
-const initialTransactions = [
-  { id: 101, type: 'Gift Received', amount: +500, host: 'Sara K.', date: '2026-07-03 14:30' },
-  { id: 102, type: 'Gift Received', amount: +1000, host: 'Ahmed M.', date: '2026-07-03 13:15' },
-  { id: 103, type: 'Withdrawal', amount: -2000, host: 'Agency', date: '2026-07-01 09:00' },
-  { id: 104, type: 'Gift Received', amount: +250, host: 'Lina A.', date: '2026-07-02 22:45' },
-];
-
-export const useAgencyStore = create((set) => ({
-  agencyName: 'Qablny Top Agency',
-  managerName: 'Admin',
-  fixedSalary: 5000,
+export const useAgencyStore = create((set, get) => ({
+  token: localStorage.getItem('agencyToken') || null,
+  agencyName: localStorage.getItem('agencyName') || '',
+  managerName: localStorage.getItem('managerName') || '',
+  inviteCode: localStorage.getItem('inviteCode') || '',
   
-  hosts: initialHosts,
-  transactions: initialTransactions,
+  hosts: [],
+  transactions: [],
   announcements: [],
   
-  // Targets (KPIs)
+  activeHosts: 0,
+  totalHosts: 0,
+  totalEarnings: 0,
+  agencyCut: 0,
   monthlyTarget: 100000,
-  currentProgress: 75400,
+  currentProgress: 0,
+  
+  isLoading: false,
+  error: null,
 
-  // Actions
-  addHost: (name) => set((state) => ({
-    hosts: [
-      ...state.hosts,
-      { id: Date.now(), name, status: 'Offline', earnings: 0, hours: 0, joined: new Date().toISOString().split('T')[0] }
-    ]
-  })),
+  login: async (username, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await fetch(`${API_BASE_URL}/agency/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      
+      if (!res.ok) throw new Error('Invalid credentials');
+      
+      const data = await res.json();
+      
+      localStorage.setItem('agencyToken', data.token);
+      localStorage.setItem('agencyName', data.agencyName);
+      localStorage.setItem('managerName', data.managerName);
+      localStorage.setItem('inviteCode', data.inviteCode);
+      
+      set({ 
+        token: data.token,
+        agencyName: data.agencyName,
+        managerName: data.managerName,
+        inviteCode: data.inviteCode,
+        isLoading: false 
+      });
+      return true;
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      return false;
+    }
+  },
 
-  removeHost: (id) => set((state) => ({
-    hosts: state.hosts.filter(h => h.id !== id)
-  })),
+  logout: () => {
+    localStorage.removeItem('agencyToken');
+    localStorage.removeItem('agencyName');
+    localStorage.removeItem('managerName');
+    localStorage.removeItem('inviteCode');
+    set({ token: null, hosts: [], transactions: [] });
+  },
 
+  fetchDashboardStats: async () => {
+    const { token } = get();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/agency/dashboard`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        set({
+          activeHosts: data.activeHosts,
+          totalHosts: data.totalHosts,
+          totalEarnings: data.totalEarnings,
+          agencyCut: data.agencyCut,
+          monthlyTarget: data.monthlyTarget,
+          currentProgress: data.currentProgress
+        });
+      } else if (res.status === 401) {
+        get().logout();
+      }
+    } catch (err) {
+      console.error("Failed to fetch dashboard stats", err);
+    }
+  },
+
+  fetchHosts: async () => {
+    const { token } = get();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/agency/hosts`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        set({ hosts: data });
+      }
+    } catch (err) {
+      console.error("Failed to fetch hosts", err);
+    }
+  },
+
+  removeHost: async (id) => {
+    const { token, hosts } = get();
+    try {
+      const res = await fetch(`${API_BASE_URL}/agency/hosts/${id}/remove`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        set({ hosts: hosts.filter(h => h.id !== id) });
+      }
+    } catch (err) {
+      console.error("Failed to remove host", err);
+    }
+  },
+
+  // Mocked for now since backend doesn't have withdrawal/announcement APIs yet
   requestWithdrawal: (amount) => set((state) => ({
     transactions: [
       { id: Date.now(), type: 'Withdrawal Pending', amount: -amount, host: 'Agency', date: new Date().toLocaleString() },
@@ -52,10 +131,5 @@ export const useAgencyStore = create((set) => ({
       { id: Date.now(), message, date: new Date().toLocaleString() },
       ...state.announcements
     ]
-  })),
-
-  updateSettings: (newName, newManager) => set(() => ({
-    agencyName: newName,
-    managerName: newManager
   }))
 }));

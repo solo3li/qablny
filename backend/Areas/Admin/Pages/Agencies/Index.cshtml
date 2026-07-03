@@ -1,0 +1,126 @@
+@page
+@model Qablny.Areas.Admin.Pages.Agencies.IndexModel
+@{
+    ViewData["Title"] = "إدارة الوكالات";
+}
+
+<div class="bx--row">
+    <div class="bx--col-lg-12">
+        <h2 class="admin-page-title">إدارة الوكالات (Agencies)</h2>
+        <p class="bx--type-body-long-1" style="margin-bottom: 2rem; color: #525252;">
+            يمكنك من هنا رؤية الوكالات الحالية، إنشاء وكالة جديدة، وتعيين حساب مدير خاص بكل وكالة لكي يتمكن من الدخول للوحة التحكم المخصصة للوكالات.
+        </p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div data-notification class="bx--inline-notification bx--inline-notification--success" role="alert" style="margin-bottom: 2rem; max-width: 100%;">
+        <div class="bx--inline-notification__details">
+            <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bx--inline-notification__icon" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10,1c-4.9,0-9,4.1-9,9s4.1,9,9,9s9-4.1,9-9S14.9,1,10,1z M8.7,13.5l-3.2-3.2l1-1l2.2,2.2l4.8-4.8l1,1L8.7,13.5z"></path></svg>
+            <div class="bx--inline-notification__text-wrapper">
+                <p class="bx--inline-notification__title">تم بنجاح!</p>
+                <p class="bx--inline-notification__subtitle">@Model.SuccessMessage</p>
+            </div>
+        </div>
+        <button tabindex="0" class="bx--inline-notification__close-button" data-notification-btn type="button" aria-label="close">
+            <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bx--inline-notification__close-icon" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M24 9.4L22.6 8 16 14.6 9.4 8 8 9.4 14.6 16 8 22.6 9.4 24 16 17.4 22.6 24 24 22.6 17.4 16 24 9.4z"></path></svg>
+        </button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div data-notification class="bx--inline-notification bx--inline-notification--error" role="alert" style="margin-bottom: 2rem; max-width: 100%;">
+        <div class="bx--inline-notification__details">
+            <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bx--inline-notification__icon" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10,1c-5,0-9,4-9,9s4,9,9,9s9-4,9-9S15,1,10,1z M13.5,14.5l-8-8l1-1l8,8L13.5,14.5z"></path></svg>
+            <div class="bx--inline-notification__text-wrapper">
+                <p class="bx--inline-notification__title">خطأ</p>
+                <p class="bx--inline-notification__subtitle">@Model.ErrorMessage</p>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="bx--row" style="margin-bottom: 3rem;">
+    <!-- Create Agency Form -->
+    <div class="bx--col-lg-5 bx--col-md-8">
+        <div class="bx--tile" style="padding: 2rem;">
+            <h4 style="margin-bottom: 1.5rem;">إنشاء وكالة جديدة</h4>
+            <form method="post">
+                <div class="bx--form-item" style="margin-bottom: 1rem;">
+                    <label for="agencyName" class="bx--label">اسم الوكالة</label>
+                    <input id="agencyName" name="AgencyName" type="text" class="bx--text-input" placeholder="مثال: Golden Agency" required>
+                </div>
+                
+                <div class="bx--form-item" style="margin-bottom: 1rem;">
+                    <label for="agencyCut" class="bx--label">نسبة الوكالة من الأرباح (%)</label>
+                    <input id="agencyCut" name="AgencyCut" type="number" class="bx--text-input" value="20" min="0" max="100" required>
+                </div>
+
+                <div class="bx--form-item" style="margin-bottom: 1rem;">
+                    <label for="managerName" class="bx--label">الاسم الكامل لمدير الوكالة</label>
+                    <input id="managerName" name="ManagerName" type="text" class="bx--text-input" placeholder="اسم المدير الحقيقي" required>
+                </div>
+
+                <div class="bx--form-item" style="margin-bottom: 1rem;">
+                    <label for="username" class="bx--label">اسم الدخول للمدير (Username)</label>
+                    <input id="username" name="Username" type="text" class="bx--text-input" placeholder="مثال: golden_admin" required>
+                </div>
+
+                <div class="bx--form-item" style="margin-bottom: 2rem;">
+                    <label for="password" class="bx--label">كلمة المرور للمدير</label>
+                    <input id="password" name="Password" type="password" class="bx--text-input" placeholder="••••••••" required>
+                </div>
+
+                <button class="bx--btn bx--btn--primary" type="submit">
+                    إنشاء الوكالة وتوليد الحساب
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- List of Agencies -->
+    <div class="bx--col-lg-7 bx--col-md-8">
+        <div class="bx--data-table-container">
+            <div class="bx--data-table-header">
+                <h4 class="bx--data-table-header__title">الوكالات المُسجلة</h4>
+                <p class="bx--data-table-header__description">قائمة بجميع الوكالات العاملة في التطبيق وكود الدعوة الخاص بها.</p>
+            </div>
+            <table class="bx--data-table">
+                <thead>
+                    <tr>
+                        <th><span class="bx--table-header-label">اسم الوكالة</span></th>
+                        <th><span class="bx--table-header-label">كود الدعوة</span></th>
+                        <th><span class="bx--table-header-label">نسبة الوكالة</span></th>
+                        <th><span class="bx--table-header-label">المضيفين</span></th>
+                        <th><span class="bx--table-header-label">الحالة</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Agencies.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding: 2rem; color: #525252;">لا توجد وكالات حتى الآن.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var agency in Model.Agencies)
+                        {
+                            <tr>
+                                <td>@agency.Name</td>
+                                <td><code style="background: #e5e5e5; padding: 2px 6px; border-radius: 4px;">@agency.InviteCode</code></td>
+                                <td>@agency.AgencyCutPercentage%</td>
+                                <td>@agency.HostsCount</td>
+                                <td>
+                                    @if(agency.IsActive) { <span style="color:#24a148;">نشطة</span> } else { <span style="color:#da1e28;">متوقفة</span> }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
