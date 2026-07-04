@@ -298,7 +298,7 @@ public class ModerationController(ModerationService moderation) : BaseController
 
 // ─── Agency ───────────────────────────────────────────────────────────────────
 [Route("api/agency")]
-public class AgencyController(AgencyService agencyService) : ControllerBase
+public class AgencyController(AgencyService agencyService) : BaseController
 {
     protected Guid AgencyId =>
         Guid.Parse(User.FindFirstValue("AgencyId") ?? Guid.Empty.ToString());
