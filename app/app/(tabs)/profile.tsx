@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Modal, TextInput } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { axiosClient } from '../../src/api/axiosClient';
@@ -12,6 +12,8 @@ export default function ProfileScreen() {
   const { user, logout, checkAuth } = useAuthStore();
   const [showVip, setShowVip] = useState(false);
   const [vipPlans, setVipPlans] = useState<any[]>([]);
+  const [showAgencyModal, setShowAgencyModal] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
 
   useEffect(() => {
     axiosClient.get('/vip/plans').then(res => setVipPlans(res.data)).catch(console.error);
@@ -29,6 +31,19 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleJoinAgency = async () => {
+    if (!inviteCode.trim()) return alert('الرجاء إدخال كود الدعوة');
+    try {
+      await axiosClient.post('/agency/join', { inviteCode });
+      alert('تم الانضمام للوكالة بنجاح!');
+      setShowAgencyModal(false);
+      setInviteCode('');
+    } catch (e: any) {
+      console.error(e);
+      alert(e.response?.data?.Message || 'حدث خطأ، تأكد من صحة كود الدعوة');
+    }
+  };
+
   if (!user) return (
     <View style={{ flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' }}>
       <ActivityIndicator color={Colors.primary} size="large" />
@@ -41,6 +56,7 @@ export default function ProfileScreen() {
   };
 
   const menuItems = [
+    { icon: <Users color={Colors.primary} size={20} />, label: 'الوكالات', sub: 'الانضمام لوكالة', onPress: () => setShowAgencyModal(true) },
     { icon: <Bell color={Colors.secondary} size={20} />, label: 'الإشعارات', sub: 'مفعّلة' },
     { icon: <Shield color={Colors.cyan} size={20} />, label: 'الخصوصية والأمان', sub: 'إعدادات الحماية' },
     { icon: <HelpCircle color={Colors.textMuted} size={20} />, label: 'مركز المساعدة', sub: 'أسئلة وإجابات' },
@@ -136,7 +152,7 @@ export default function ProfileScreen() {
         <GlassCard style={styles.menuCard} tint="light">
           {menuItems.map((item, i) => (
             <React.Fragment key={item.label}>
-              <TouchableOpacity style={styles.menuItem}>
+              <TouchableOpacity style={styles.menuItem} onPress={item.onPress}>
                 <View style={styles.menuLeft}>
                   <View style={[styles.menuIcon, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
                     {item.icon}
@@ -162,6 +178,29 @@ export default function ProfileScreen() {
           style={styles.logoutBtn}
         />
       </ScrollView>
+
+      {/* Agency Modal */}
+      <Modal visible={showAgencyModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <GlassCard style={styles.modalContent} tint="dark">
+            <Text style={styles.modalTitle}>الانضمام إلى وكالة</Text>
+            <Text style={styles.modalSub}>أدخل كود الدعوة الذي حصلت عليه من مدير الوكالة الخاصة بك.</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="مثال: TEST1234"
+              placeholderTextColor={Colors.textMuted}
+              value={inviteCode}
+              onChangeText={setInviteCode}
+              autoCapitalize="characters"
+            />
+            <View style={styles.modalActions}>
+              <GlassButton title="انضمام" variant="primary" onPress={handleJoinAgency} style={{ flex: 1 }} />
+              <GlassButton title="إلغاء" variant="outline" onPress={() => setShowAgencyModal(false)} style={{ flex: 1 }} />
+            </View>
+          </GlassCard>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -211,4 +250,10 @@ const styles = StyleSheet.create({
   menuSub: { fontSize: 13, color: Colors.textMuted, marginTop: 2, fontFamily: 'PlusJakartaSans_600SemiBold' },
   menuDiv: { height: 2, backgroundColor: Colors.glassBorder, marginHorizontal: 20 },
   logoutBtn: { marginHorizontal: 24 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 24 },
+  modalContent: { padding: 24, alignItems: 'center' },
+  modalTitle: { fontSize: 20, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text, marginBottom: 8 },
+  modalSub: { fontSize: 14, fontFamily: 'PlusJakartaSans_600SemiBold', color: Colors.textSecondary, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
+  modalInput: { width: '100%', backgroundColor: 'rgba(0,0,0,0.3)', borderWidth: 1, borderColor: Colors.glassBorderBright, borderRadius: 12, padding: 16, color: Colors.text, fontSize: 18, fontFamily: 'PlusJakartaSans_800ExtraBold', textAlign: 'center', marginBottom: 24 },
+  modalActions: { flexDirection: 'row', gap: 12, width: '100%' }
 });
