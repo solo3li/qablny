@@ -142,11 +142,23 @@ public class ChatHub(MessageService messages, PresenceService presence, AppDbCon
 
 /// <summary>Match hub: join queue, skip, leave</summary>
 [Authorize]
-public class MatchHub(MatchService matchService) : Hub
+public class MatchHub(MatchService matchService, CoinService coins) : Hub
 {
     public async Task JoinQueue(JoinQueueRequest filters)
     {
         var userId = CurrentUserId();
+
+        if (filters.PreferredGender.HasValue)
+        {
+            // Charge 5 coins for gender filter
+            var ok = await coins.DeductAsync(userId, 5, "استخدام فلتر الجنس في المطابقة", Context.ConnectionAborted);
+            if (!ok)
+            {
+                await Clients.Caller.SendAsync("Error", "رصيد العملات غير كافٍ لاستخدام الفلاتر.");
+                return;
+            }
+        }
+
         await matchService.JoinQueueAsync(userId, Context.ConnectionId, filters);
         await Clients.Caller.SendAsync("QueueJoined");
     }
