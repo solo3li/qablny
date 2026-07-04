@@ -6,13 +6,15 @@ import { Platform } from 'react-native';
 import { axiosClient } from '../api/axiosClient';
 import { useAuthStore } from '../store/authStore';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 export function usePushNotifications() {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
@@ -22,33 +24,29 @@ export function usePushNotifications() {
 
   useEffect(() => {
     if (!token) return;
+    // Skip push notifications on web entirely
+    if (Platform.OS === 'web') return;
 
     registerForPushNotificationsAsync().then(pushToken => {
       if (pushToken) {
         setExpoPushToken(pushToken);
-        // Send token to backend
         axiosClient.put('/users/me/push-token', { token: pushToken }).catch(console.error);
       }
     });
 
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      // Notification received in foreground
       console.log('Push received:', notification);
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      // User tapped the notification
       const data = response.notification.request.content.data;
       console.log('User tapped push:', data);
     });
 
     return () => {
-      if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
-      }
-      if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
-      }
+      // Use .remove() method which is more compatible
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
     };
   }, [token]);
 
