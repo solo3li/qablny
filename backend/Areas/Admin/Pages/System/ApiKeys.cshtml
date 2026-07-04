@@ -7,35 +7,45 @@
 <div class="bx--row">
     <div class="bx--col-lg-12">
         <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">مفاتيح وبروتوكولات الربط (API Keys)</h1>
-        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">مكان آمن لتغيير مفاتيح (LiveKit, MinIO, Firebase) دون الحاجة لإعادة كتابة الأكواد المرجعية.</p>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">عرض مفاتيح النظام المحفوظة في قاعدة البيانات. الأسرار مخفية جزئياً.</p>
     </div>
 </div>
 
 <div class="bx--row">
-    <div class="bx--col-md-6">
-        <form hx-post="/Admin/System/ApiKeys?handler=Save" hx-target="#main-content" hx-swap="innerHTML">
-            
-            <h4 class="bx--type-productive-heading-02" style="margin-bottom: 1rem;">خوادم LiveKit (WebRTC)</h4>
-            <div class="bx--form-item" style="margin-bottom: 1rem;">
-                <label class="bx--label">LiveKit URL</label>
-                <input type="text" class="bx--text-input" value="ws://178.62.192.74:7880">
-            </div>
-            <div class="bx--form-item" style="margin-bottom: 2rem;">
-                <label class="bx--label">API Key / Secret</label>
-                <input type="password" class="bx--text-input" value="******************">
-            </div>
+    <div class="bx--col-md-8">
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">المفتاح</span></th>
+                    <th><span class="bx--table-header-label">القيمة</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var kv in Model.Keys)
+                {
+                    <tr>
+                        <td><code style="background:#161616;color:#78a9ff;padding:2px 6px;border-radius:4px;">@kv.Key</code></td>
+                        <td style="font-family:monospace;color:@(kv.Value.Contains("****") ? "#f4f4f4" : "#24a148");">@kv.Value</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
 
-            <h4 class="bx--type-productive-heading-02" style="margin-bottom: 1rem;">خوادم MinIO (التخزين)</h4>
-            <div class="bx--form-item" style="margin-bottom: 1rem;">
-                <label class="bx--label">MinIO Endpoint</label>
-                <input type="text" class="bx--text-input" value="http://minio:9000">
-            </div>
-            <div class="bx--form-item" style="margin-bottom: 2rem;">
-                <label class="bx--label">Access Key / Secret</label>
-                <input type="password" class="bx--text-input" value="******************">
-            </div>
+        <div class="bx--tile" style="margin-top:2rem;background:#161616;border:1px solid #393939;">
+            <h4 style="color:#ff832b;margin-bottom:0.5rem;">⚠️ ملاحظة</h4>
+            <p style="color:#c6c6c6;font-size:0.875rem;">
+                لتغيير هذه المفاتيح، أضفها في جدول <code style="color:#78a9ff;">SystemSettings</code> بالديتابيس مباشرة
+                أو عبر متغيرات البيئة في <code style="color:#78a9ff;">helm-chart/values.yaml</code>.
+            </p>
+        </div>
 
-            <button class="bx--btn bx--btn--primary" type="submit">حفظ التغييرات</button>
-        </form>
+        <div class="bx--tile" style="margin-top:1rem;background:#0f3460;border:1px solid #0043ce;">
+            <h4 style="color:#a8c8fa;margin-bottom:0.5rem;">🔗 روابط مهمة</h4>
+            <ul style="color:#c6c6c6;font-size:0.875rem;list-style:disc;padding-right:1.5rem;">
+                <li>LiveKit Dashboard: <a href="http://livekit.qablny.online" target="_blank" style="color:#78a9ff;">livekit.qablny.online</a></li>
+                <li>MinIO Console: <a href="http://minio.qablny.online" target="_blank" style="color:#78a9ff;">minio.qablny.online</a></li>
+                <li>API Docs: <a href="http://api.qablny.online/swagger" target="_blank" style="color:#78a9ff;">api.qablny.online/swagger</a></li>
+            </ul>
+        </div>
     </div>
 </div>

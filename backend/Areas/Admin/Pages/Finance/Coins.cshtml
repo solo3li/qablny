@@ -1,14 +1,55 @@
 @page
 @model Qablny.Areas.Admin.Pages.Finance.CoinsModel
 @{
-    ViewData["Title"] = "باقات العملات";
+    ViewData["Title"] = "متجر العملات";
+    var success = TempData["SuccessMessage"] as string;
+    var error = TempData["ErrorMessage"] as string;
 }
 
 <div class="bx--row">
     <div class="bx--col-lg-12">
-        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">إدارة باقات العملات</h1>
-        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إنشاء باقات شحن الرصيد، تعديل أسعارها، وإضافة عروض أو بونص عليها.</p>
-        <button class="bx--btn bx--btn--primary" style="margin-bottom: 1rem;">إنشاء باقة جديدة +</button>
+        <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">إدارة حزم العملات</h1>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إنشاء وتعديل الحزم التي يشتريها المستخدمون للحصول على عملات.</p>
+        
+        @if (!string.IsNullOrEmpty(success))
+        {
+            <div class="bx--inline-notification bx--inline-notification--success" style="margin-bottom:1rem;">
+                <p><strong>@success</strong></p>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="bx--inline-notification bx--inline-notification--error" style="margin-bottom:1rem;">
+                <p><strong>@error</strong></p>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="bx--row" style="margin-bottom: 2rem;">
+    <div class="bx--col-md-10">
+        <div class="bx--tile">
+            <h4 class="bx--type-productive-heading-02" style="margin-bottom: 1rem;">إضافة حزمة جديدة</h4>
+            <form method="post" asp-page-handler="Add" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                <div class="bx--form-item">
+                    <label class="bx--label">الاسم</label>
+                    <input type="text" class="bx--text-input" name="Name" placeholder="مثال: حزمة البداية" required>
+                </div>
+                <div class="bx--form-item">
+                    <label class="bx--label">العملات</label>
+                    <input type="number" class="bx--text-input" name="Coins" min="1" placeholder="100" required>
+                </div>
+                <div class="bx--form-item">
+                    <label class="bx--label">السعر ($)</label>
+                    <input type="number" class="bx--text-input" name="Price" min="0" step="0.01" placeholder="1.99" required>
+                </div>
+                <div class="bx--form-item">
+                    <label class="bx--label">بونص إضافي</label>
+                    <input type="number" class="bx--text-input" name="Bonus" min="0" value="0">
+                </div>
+                <button class="bx--btn bx--btn--primary" type="submit">إضافة</button>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -17,23 +58,41 @@
         <table class="bx--data-table">
             <thead>
                 <tr>
-                    <th><span class="bx--table-header-label">اسم الباقة</span></th>
-                    <th><span class="bx--table-header-label">عدد العملات</span></th>
-                    <th><span class="bx--table-header-label">بونص مجاني</span></th>
-                    <th><span class="bx--table-header-label">السعر (USD)</span></th>
+                    <th><span class="bx--table-header-label">اسم الحزمة</span></th>
+                    <th><span class="bx--table-header-label">العملات الأساسية</span></th>
+                    <th><span class="bx--table-header-label">السعر ($)</span></th>
+                    <th><span class="bx--table-header-label">البونص</span></th>
+                    <th><span class="bx--table-header-label">الإجمالي</span></th>
+                    <th><span class="bx--table-header-label">الحالة</span></th>
                     <th><span class="bx--table-header-label">إجراءات</span></th>
                 </tr>
             </thead>
             <tbody>
+                @if(!Model.Packages.Any()) {
+                    <tr><td colspan="7" style="text-align: center;">لا توجد حزم مسجلة.</td></tr>
+                }
                 @foreach(var pkg in Model.Packages)
                 {
                     <tr>
-                        <td>@pkg.Name</td>
-                        <td style="font-weight:bold; color:#f1c21b;">@pkg.Coins <span style="font-size:0.8rem;">🪙</span></td>
-                        <td>@pkg.Bonus</td>
+                        <td style="font-weight:bold;">@pkg.Name</td>
+                        <td>@pkg.Coins 🪙</td>
                         <td>$@pkg.Price</td>
+                        <td style="color:#24a148;">+@pkg.Bonus</td>
+                        <td>@(pkg.Coins + pkg.Bonus)</td>
                         <td>
-                            <button class="bx--btn bx--btn--sm bx--btn--ghost">تعديل</button>
+                            @if(pkg.IsActive) {
+                                <span style="color: #24a148; font-weight:bold;">نشط</span>
+                            } else {
+                                <span style="color: #da1e28;">متوقف</span>
+                            }
+                        </td>
+                        <td>
+                            <form method="post" asp-page-handler="Toggle" style="margin: 0;">
+                                <input type="hidden" name="id" value="@pkg.Id" />
+                                <button type="submit" class="bx--btn bx--btn--sm @(pkg.IsActive ? "bx--btn--danger--ghost" : "bx--btn--ghost")">
+                                    @(pkg.IsActive ? "إيقاف" : "تفعيل")
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 }

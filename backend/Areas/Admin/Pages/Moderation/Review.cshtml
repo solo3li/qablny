@@ -2,12 +2,20 @@
 @model Qablny.Areas.Admin.Pages.Moderation.ReviewModel
 @{
     ViewData["Title"] = "مراجعة المحتوى";
+    var success = TempData["SuccessMessage"] as string;
 }
 
 <div class="bx--row">
     <div class="bx--col-lg-12">
         <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">مراجعة الصور والمحتوى</h1>
         <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">مراجعة الصور الرمزية (Profile Pictures) للمستخدمين الجدد للموافقة عليها أو رفضها.</p>
+        
+        @if (!string.IsNullOrEmpty(success))
+        {
+            <div class="bx--inline-notification bx--inline-notification--success" style="margin-bottom:1rem;">
+                <p><strong>@success</strong></p>
+            </div>
+        }
     </div>
 </div>
 
@@ -20,13 +28,19 @@
     @foreach(var user in Model.PendingUsers)
     {
         <div class="bx--col-md-3" style="margin-bottom: 1rem;">
-            <div class="bx--tile" style="text-align: center;">
-                <img src="@user.ProfileImageUrl" alt="Avatar" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; margin-bottom: 1rem;" />
+            <div class="bx--tile" style="text-align: center; padding: 1.5rem 1rem;">
+                <img src="@user.ProfileImageUrl" alt="Avatar" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; margin-bottom: 1rem;" />
                 <h4 class="bx--type-productive-heading-02" style="margin-bottom: 0.5rem;">@user.Name</h4>
-                <p style="font-size: 0.8rem; color: #525252; margin-bottom: 1rem;">@user.Id.ToString()[..8]</p>
+                <p style="font-size: 0.8rem; color: #525252; margin-bottom: 1.5rem;">@user.Id.ToString()[..8]</p>
                 <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                    <button class="bx--btn bx--btn--sm bx--btn--primary">قبول</button>
-                    <button class="bx--btn bx--btn--sm bx--btn--danger">رفض وحذف</button>
+                    <form method="post" asp-page-handler="Approve" style="margin: 0;">
+                        <input type="hidden" name="id" value="@user.Id" />
+                        <button type="submit" class="bx--btn bx--btn--sm bx--btn--primary">قبول</button>
+                    </form>
+                    <form method="post" asp-page-handler="Reject" style="margin: 0;">
+                        <input type="hidden" name="id" value="@user.Id" />
+                        <button type="submit" class="bx--btn bx--btn--sm bx--btn--danger" onclick="return confirm('هل متأكد من حذف الصورة المخالفة؟');">رفض وحذف</button>
+                    </form>
                 </div>
             </div>
         </div>

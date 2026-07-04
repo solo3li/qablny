@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Gift>            Gifts            => Set<Gift>();
     public DbSet<GiftTransaction> GiftTransactions => Set<GiftTransaction>();
     public DbSet<CoinTransaction> CoinTransactions => Set<CoinTransaction>();
+    public DbSet<CoinPackage>     CoinPackages     => Set<CoinPackage>();
     public DbSet<VipPlan>         VipPlans         => Set<VipPlan>();
     public DbSet<VipSubscription> VipSubscriptions => Set<VipSubscription>();
     public DbSet<MatchSession>    MatchSessions    => Set<MatchSession>();

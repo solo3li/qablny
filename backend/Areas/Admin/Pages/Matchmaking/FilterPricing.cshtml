@@ -2,31 +2,43 @@
 @model Qablny.Areas.Admin.Pages.Matchmaking.FilterPricingModel
 @{
     ViewData["Title"] = "تسعير الفلاتر";
+    var success = TempData["SuccessMessage"] as string;
 }
 
 <div class="bx--row">
     <div class="bx--col-lg-12">
         <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">تسعير الفلاتر (Filter Pricing)</h1>
         <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">تحديد تكلفة استخدام الفلاتر (مثل اختيار الجنس أو الدولة) بالعملات للمستخدمين العاديين.</p>
+        @if (!string.IsNullOrEmpty(success))
+        {
+            <div class="bx--inline-notification bx--inline-notification--success" style="margin-bottom:1rem;">
+                <p><strong>@success</strong></p>
+            </div>
+        }
     </div>
 </div>
 
 <div class="bx--row">
     <div class="bx--col-md-6">
-        <form hx-post="/Admin/Matchmaking/FilterPricing?handler=Save" hx-target="#main-content" hx-swap="innerHTML">
-            
+        <form method="post" asp-page-handler="Save">
             <div class="bx--form-item" style="margin-bottom: 1rem;">
-                <label class="bx--label">تكلفة فلتر الجنس (عملات)</label>
+                <label class="bx--label">تكلفة فلتر الجنس (عملات) 👤</label>
                 <input type="number" class="bx--text-input" name="GenderFilterCost" value="@Model.GenderFilterCost" min="0">
             </div>
-
-            <div class="bx--form-item" style="margin-bottom: 2rem;">
-                <label class="bx--label">تكلفة فلتر الدولة/المنطقة (عملات)</label>
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label class="bx--label">تكلفة فلتر الدولة/المنطقة (عملات) 📍</label>
                 <input type="number" class="bx--text-input" name="LocationFilterCost" value="@Model.LocationFilterCost" min="0">
             </div>
-
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label class="bx--label">تكلفة فلتر الاهتمامات (عملات) 🎯</label>
+                <input type="number" class="bx--text-input" name="InterestFilterCost" value="@Model.InterestFilterCost" min="0">
+            </div>
+            <div class="bx--form-item" style="margin-bottom: 2rem;">
+                <label class="bx--label">تكلفة فلتر السن (عملات) 🎂</label>
+                <input type="number" class="bx--text-input" name="AgeFilterCost" value="@Model.AgeFilterCost" min="0">
+            </div>
             <button class="bx--btn bx--btn--primary" type="submit">تحديث الأسعار</button>
-            <p style="margin-top: 1rem; color: #525252; font-size: 0.8rem;">ملاحظة: مشتركي الـ VIP يمكنهم استخدام هذه الفلاتر مجاناً.</p>
+            <p style="margin-top: 1rem; color: #525252; font-size: 0.8rem;">ملاحظة: مشتركو الـ VIP يمكنهم استخدام هذه الفلاتر مجاناً.</p>
         </form>
     </div>
 </div>

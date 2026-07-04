@@ -1,19 +1,56 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using Qablny.Data;
+using Qablny.Entities;
 
 namespace Qablny.Areas.Admin.Pages.Finance;
 
-public class CoinsModel : PageModel
+public class CoinsModel(AppDbContext db) : PageModel
 {
-    // Mock data since we didn't add CoinPackage to the DB yet
-    public record CoinPackage(Guid Id, string Name, int Coins, decimal Price, int Bonus);
+    public List<CoinPackage> Packages { get; set; } = [];
 
-    public List<CoinPackage> Packages { get; set; } = [
-        new CoinPackage(Guid.NewGuid(), "حزمة البداية", 100, 1.99m, 0),
-        new CoinPackage(Guid.NewGuid(), "حزمة التوفير", 500, 4.99m, 50),
-        new CoinPackage(Guid.NewGuid(), "الحزمة الكبرى", 1200, 9.99m, 200)
-    ];
+    [BindProperty] public string Name { get; set; } = string.Empty;
+    [BindProperty] public int Coins { get; set; }
+    [BindProperty] public decimal Price { get; set; }
+    [BindProperty] public int Bonus { get; set; }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
+        Packages = await db.CoinPackages.OrderByDescending(p => p.IsActive).ThenBy(p => p.Price).ToListAsync();
+    }
+
+    public async Task<IActionResult> OnPostAddAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Name) || Coins <= 0 || Price < 0)
+        {
+            TempData["ErrorMessage"] = "تأكد من إدخال اسم الحزمة، عدد العملات، والسعر بشكل صحيح.";
+            return RedirectToPage();
+        }
+
+        db.CoinPackages.Add(new CoinPackage
+        {
+            Name = Name,
+            Coins = Coins,
+            Price = Price,
+            Bonus = Bonus,
+            IsActive = true
+        });
+
+        await db.SaveChangesAsync();
+        TempData["SuccessMessage"] = "تمت إضافة حزمة العملات بنجاح.";
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostToggleAsync(Guid id)
+    {
+        var pkg = await db.CoinPackages.FindAsync(id);
+        if (pkg != null)
+        {
+            pkg.IsActive = !pkg.IsActive;
+            await db.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"تم {(pkg.IsActive ? "تفعيل" : "إيقاف")} حزمة {pkg.Name}.";
+        }
+        return RedirectToPage();
     }
 }

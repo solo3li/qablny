@@ -28,6 +28,7 @@ public class User
     public bool     IsBlocked       { get; set; }
     public string?  ExpoPushToken   { get; set; }
     public Guid?    AgencyId        { get; set; }
+    public bool     IsProfileImageApproved { get; set; } = false;
 
     public ICollection<Friendship>       SentFriendRequests     { get; set; } = [];
     public ICollection<Friendship>       ReceivedFriendRequests { get; set; } = [];
@@ -157,6 +158,16 @@ public class VipSubscription
 
     public User    User { get; set; } = default!;
     public VipPlan Plan { get; set; } = default!;
+}
+
+public class CoinPackage
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = string.Empty;
+    public int Coins { get; set; }
+    public decimal Price { get; set; }
+    public int Bonus { get; set; }
+    public bool IsActive { get; set; } = true;
 }
 
 // ─── Live Streaming ───────────────────────────────────────────────────────────
