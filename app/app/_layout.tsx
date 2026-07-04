@@ -65,6 +65,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="auth/login" />
+        <Stack.Screen name="notifications" options={{ headerShown: false, animation: 'slide_from_left' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
       </Stack>
