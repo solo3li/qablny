@@ -43,7 +43,12 @@ function RoomView({ isHost, roomName, roomId }: { isHost: boolean, roomName: str
       localParticipant.setCameraEnabled(true);
       localParticipant.setMicrophoneEnabled(true);
     }
-  }, [isHost, localParticipant]);
+    return () => {
+      if (isHost && roomId) {
+        api.post(`/live/${roomId}/end`).catch(() => {});
+      }
+    };
+  }, [isHost, localParticipant, roomId]);
 
   const handleSend = () => {
     if (!chatText.trim()) return;
