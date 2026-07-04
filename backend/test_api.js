@@ -135,6 +135,37 @@ async function runTests() {
     if (!callToken.token) throw new Error("LiveKit token not generated");
     log("LiveKit Token generated successfully.");
 
+    // 8. Live Streams
+    log("User A creates a Live Stream...");
+    const liveRoom = await request("/live", "POST", {
+      title: "User A's Awesome Stream",
+      coverImageUrl: "https://example.com/cover.jpg"
+    }, tokenA);
+    if (!liveRoom || !liveRoom.liveKitRoomName) throw new Error("Failed to create live room");
+    log(`Live Room created: ${liveRoom.liveKitRoomName}`);
+
+    log("User B fetches active live streams...");
+    const activeRooms = await request("/live", "GET", null, tokenB);
+    if (!activeRooms.find(r => r.id === liveRoom.id)) throw new Error("Live room not found in active list");
+    log(`Found ${activeRooms.length} active live rooms.`);
+
+    log("User B gets LiveKit token to join User A's stream...");
+    const viewerToken = await request(`/live/token/${liveRoom.liveKitRoomName}`, "GET", null, tokenB);
+    if (!viewerToken.token) throw new Error("Viewer token not generated");
+
+    log("User A ends the Live Stream...");
+    await request(`/live/${liveRoom.id}/end`, "POST", null, tokenA);
+    
+    log("User B fetches active live streams again...");
+    const activeRoomsAfter = await request("/live", "GET", null, tokenB);
+    if (activeRoomsAfter.find(r => r.id === liveRoom.id)) throw new Error("Live room still active after ending");
+    log("Live stream ended successfully.");
+
+    // 9. Profile Level & XP Check
+    log("Checking User A's updated Profile for Level/XP...");
+    const profileA = await request("/users/me", "GET", null, tokenA);
+    log(`User A Level: ${profileA.level ?? 1}, XP: ${profileA.xp ?? 0}, VIP Level: ${profileA.vipLevel ?? 0}`);
+
     log("\n✅ ALL ENDPOINTS TESTED SUCCESSFULLY!");
   } catch (e) {
     err("Test failed!", e);

@@ -11,7 +11,8 @@ public record AuthResponse(string AccessToken, string RefreshToken, DateTime Exp
 // ── User ──────────────────────────────────────────────────────────────────────
 public record UserDto(Guid Id, string Name, string? Bio, string? ProfileImageUrl,
     int Age, Gender Gender, string? Location, List<string> Interests,
-    int Coins, bool IsVip, bool IsOnline, DateTime LastSeen, DateTime JoinedAt, int TotalMatches);
+    int Coins, bool IsVip, bool IsOnline, DateTime LastSeen, DateTime JoinedAt, int TotalMatches,
+    int Level, int XP, int VipLevel);
 
 public record UpdateProfileRequest(string? Name, string? Bio, string? Location, List<string>? Interests, int? Age);
 

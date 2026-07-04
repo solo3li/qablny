@@ -54,7 +54,8 @@ public class UserService(AppDbContext db, MinioStorageService storage)
     public static UserDto ToDto(User u) => new(
         u.Id, u.Name, u.Bio, u.ProfileImageUrl,
         u.Age, u.Gender, u.Location, u.Interests,
-        u.Coins, u.IsVip, u.IsOnline, u.LastSeen, u.JoinedAt, u.TotalMatches);
+        u.Coins, u.IsVip, u.IsOnline, u.LastSeen, u.JoinedAt, u.TotalMatches,
+        u.Level, u.XP, u.VipLevel);
 }
 
 public class FriendService(AppDbContext db, PresenceService presence)
