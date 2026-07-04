@@ -59,7 +59,7 @@ public class AgencyService(AppDbContext db, IConfiguration config)
 
         int activeHosts = agency.Hosts.Count(h => h.IsOnline);
         int totalHosts = agency.Hosts.Count;
-        int totalEarnings = agency.TotalEarnings; // Can be aggregated from transactions
+        int totalEarnings = agency.Hosts.Sum(h => h.Coins); // Aggregated from actual host balances
         int agencyCut = (int)(totalEarnings * (agency.AgencyCutPercentage / 100.0));
 
         // Read real target from DB
@@ -86,7 +86,7 @@ public class AgencyService(AppDbContext db, IConfiguration config)
                 u.Name,
                 u.IsOnline ? "Online" : "Offline", // Status
                 u.Coins, // Earnings roughly mapping to coins for now
-                u.TotalMatches / 2, // Mock hours logged based on matches
+                u.TotalMatches, // Actual matches count
                 u.JoinedAt.ToString("yyyy-MM-dd")
             ))
             .ToListAsync();
@@ -141,5 +141,24 @@ public class AgencyService(AppDbContext db, IConfiguration config)
             pr.CreatedAt,
             pr.ProcessedAt
         );
+    }
+
+    public async Task<List<AgencyTransactionDto>> GetTransactionsAsync(Guid agencyId)
+    {
+        var transactions = await db.CoinTransactions
+            .Include(ct => ct.User)
+            .Where(ct => ct.User.AgencyId == agencyId)
+            .OrderByDescending(ct => ct.CreatedAt)
+            .Take(50)
+            .Select(ct => new AgencyTransactionDto(
+                ct.Id,
+                ct.Type.ToString(),
+                ct.User.Name,
+                ct.Amount,
+                ct.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+            ))
+            .ToListAsync();
+        
+        return transactions;
     }
 }

@@ -329,6 +329,10 @@ public class AgencyController(AgencyService agencyService) : BaseController
     [HttpPost("payouts"), Authorize(Roles = "AgencyManager")]
     public async Task<PayoutRequestDto> RequestPayout(CreatePayoutRequest req) =>
         await agencyService.RequestPayoutAsync(AgencyId, req);
+
+    [HttpGet("transactions"), Authorize(Roles = "AgencyManager")]
+    public async Task<List<AgencyTransactionDto>> GetTransactions() =>
+        await agencyService.GetTransactionsAsync(AgencyId);
 }
 
 // ─── Live Streaming ───────────────────────────────────────────────────────────

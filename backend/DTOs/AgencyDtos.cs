@@ -25,7 +25,7 @@ public record AgencyHostDto(
     string Name,
     string Status,
     int Earnings,
-    int HoursLogged,
+    int Matches,
     string JoinedDate
 );
 

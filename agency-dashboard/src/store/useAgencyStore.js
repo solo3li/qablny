@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 const API_BASE_URL = 'https://api.qablny.online/api';
 
+let pollInterval = null;
+
 export const useAgencyStore = create((set, get) => ({
   token: localStorage.getItem('agencyToken') || null,
   agencyName: localStorage.getItem('agencyName') || '',
@@ -56,6 +58,7 @@ export const useAgencyStore = create((set, get) => ({
   },
 
   logout: () => {
+    get().stopPolling();
     localStorage.removeItem('agencyToken');
     localStorage.removeItem('agencyName');
     localStorage.removeItem('managerName');
@@ -161,5 +164,43 @@ export const useAgencyStore = create((set, get) => ({
       { id: Date.now(), message, date: new Date().toLocaleString() },
       ...state.announcements
     ]
-  }))
+  })),
+
+  fetchTransactions: async () => {
+    const { token } = get();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/agency/transactions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        set({ transactions: data });
+      }
+    } catch (err) {
+      console.error("Failed to fetch transactions", err);
+    }
+  },
+
+  startPolling: () => {
+    if (pollInterval) return;
+    const { fetchDashboardStats, fetchHosts, fetchTransactions } = get();
+    // Initial fetch
+    fetchDashboardStats();
+    fetchHosts();
+    fetchTransactions();
+    
+    pollInterval = setInterval(() => {
+      fetchDashboardStats();
+      fetchHosts();
+      fetchTransactions();
+    }, 15000); // 15 seconds for more responsive updates
+  },
+
+  stopPolling: () => {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+  }
 }));

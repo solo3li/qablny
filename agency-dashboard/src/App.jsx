@@ -46,9 +46,7 @@ function DashboardTab() {
   } = useAgencyStore();
   
   useEffect(() => {
-    fetchDashboardStats();
-    const interval = setInterval(fetchDashboardStats, 30000); // refresh every 30s
-    return () => clearInterval(interval);
+    // Polling is now handled globally in App
   }, []);
 
   const progressPercent = monthlyTarget > 0 ? Math.min((currentProgress / monthlyTarget) * 100, 100) : 0;
@@ -156,7 +154,7 @@ function HostsTab() {
   const [selectedHost, setSelectedHost] = useState(null);
 
   useEffect(() => {
-    fetchHosts();
+    // Polling is now handled globally in App
   }, []);
 
   if (selectedHost) {
@@ -201,7 +199,7 @@ function HostsTab() {
                   </span>
                 </td>
                 <td className="coins">{host.earnings.toLocaleString()}</td>
-                <td><Activity size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> {host.hoursLogged}</td>
+                <td><Activity size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}}/> {host.matches}</td>
                 <td>{host.joinedDate}</td>
                 <td>
                   <div style={{display:'flex', gap:'0.5rem'}}>
@@ -385,8 +383,15 @@ function SettingsTab() {
 }
 
 function App() {
-  const { token, agencyName, managerName, logout } = useAgencyStore();
+  const { token, agencyName, managerName, logout, startPolling, stopPolling } = useAgencyStore();
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  useEffect(() => {
+    if (token) {
+      startPolling();
+    }
+    return () => stopPolling();
+  }, [token, startPolling, stopPolling]);
 
   if (!token) {
     return <LoginView />;
