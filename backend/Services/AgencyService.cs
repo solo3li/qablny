@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Qablny.Services;
 
-public class AgencyService(AppDbContext db, IConfiguration config)
+public class AgencyService(AppDbContext db, IConfiguration config, PresenceService presence)
 {
     public async Task<AgencyAuthResponse> LoginAsync(AgencyLoginRequest req)
     {
@@ -57,7 +57,12 @@ public class AgencyService(AppDbContext db, IConfiguration config)
 
         if (agency == null) throw new KeyNotFoundException("Agency not found");
 
-        int activeHosts = agency.Hosts.Count(h => h.IsOnline);
+        int activeHosts = 0;
+        foreach (var h in agency.Hosts)
+        {
+            if (await presence.IsOnlineAsync(h.Id))
+                activeHosts++;
+        }
         int totalHosts = agency.Hosts.Count;
         int totalEarnings = agency.Hosts.Sum(h => h.Coins); // Aggregated from actual host balances
         int agencyCut = (int)(totalEarnings * (agency.AgencyCutPercentage / 100.0));
@@ -79,17 +84,23 @@ public class AgencyService(AppDbContext db, IConfiguration config)
 
     public async Task<List<AgencyHostDto>> GetHostsAsync(Guid agencyId)
     {
-        var hosts = await db.Users
+        var dbHosts = await db.Users
             .Where(u => u.AgencyId == agencyId)
-            .Select(u => new AgencyHostDto(
+            .ToListAsync();
+            
+        var hosts = new List<AgencyHostDto>();
+        foreach (var u in dbHosts)
+        {
+            bool isOnline = await presence.IsOnlineAsync(u.Id);
+            hosts.Add(new AgencyHostDto(
                 u.Id,
                 u.Name,
-                u.IsOnline ? "Online" : "Offline", // Status
+                isOnline ? "Online" : "Offline", // Status
                 u.Coins, // Earnings roughly mapping to coins for now
                 u.TotalMatches, // Actual matches count
                 u.JoinedAt.ToString("yyyy-MM-dd")
-            ))
-            .ToListAsync();
+            ));
+        }
 
         return hosts;
     }
