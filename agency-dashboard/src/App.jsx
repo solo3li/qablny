@@ -151,6 +151,8 @@ function HostDetailsView({ host, onBack }) {
 
 function HostsTab() {
   const { hosts, fetchHosts, removeHost, inviteCode } = useAgencyStore();
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [selectedHost, setSelectedHost] = useState(null);
 
   useEffect(() => {
@@ -163,15 +165,16 @@ function HostsTab() {
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(inviteCode);
-    alert(`Invite code copied: ${inviteCode}\nSend this to new hosts so they can join your agency!`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <>
       <div style={{display:'flex', justifyContent:'space-between', marginBottom:'1.5rem'}}>
         <h2>Manage Hosts</h2>
-        <button className="invite-btn" onClick={handleCopyCode}>
-          <UserPlus size={18} /> Copy Invite Code
+        <button className="invite-btn" onClick={() => setShowInviteModal(true)}>
+          <UserPlus size={18} /> Invite Host
         </button>
       </div>
       <section className="table-container">
@@ -217,6 +220,42 @@ function HostsTab() {
           </tbody>
         </table>
       </section>
+
+      {showInviteModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{maxWidth: '400px', textAlign: 'center'}}>
+            <h3>Invite New Host</h3>
+            <p style={{color: '#a1a1aa', margin: '1rem 0'}}>
+              Share this code with new hosts so they can link their account to your agency.
+            </p>
+            <div style={{
+              background: '#09090b',
+              border: '1px solid #27272a',
+              padding: '1rem',
+              borderRadius: '8px',
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              letterSpacing: '2px',
+              margin: '1.5rem 0',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '1rem'
+            }}>
+              <span style={{color: '#a855f7'}}>{inviteCode}</span>
+            </div>
+            
+            <div style={{display: 'flex', gap: '1rem', justifyContent: 'center'}}>
+              <button className="invite-btn" onClick={handleCopyCode} style={{width: '100%', justifyContent: 'center'}}>
+                {copied ? 'Copied!' : 'Copy Code'}
+              </button>
+              <button className="btn-secondary" onClick={() => setShowInviteModal(false)} style={{width: '100%'}}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
