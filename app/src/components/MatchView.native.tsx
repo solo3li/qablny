@@ -5,7 +5,7 @@ import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MessageCircle, Gift, PhoneOff, Mic, MicOff, Video, VideoOff, RefreshCcw, MoreVertical, Search, Heart, SkipForward, UserPlus, Settings } from 'lucide-react-native';
+import { MessageCircle, Gift, PhoneOff, Mic, MicOff, Video, VideoOff, RefreshCcw, MoreVertical, Search, Heart, SkipForward, UserPlus, Settings, SlidersHorizontal, Users, Globe, X } from 'lucide-react-native';
 import { matchSignalR } from '../../src/api/matchSignalR';
 import { router, useNavigation } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
@@ -229,6 +229,14 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
 export default function MatchScreen() {
   const navigation = useNavigation();
   const { user } = useAuthStore();
+  const { filterGender, filterRegion, setFilterGender, setFilterRegion } = useAppStore();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const regions = ['العالم', 'الشرق الأوسط', 'الخليج العربي', 'شمال أفريقيا', 'أوروبا', 'أمريكا الشمالية', 'آسيا'];
+  const genderOptions = [
+    { key: 'all', label: 'الكل', emoji: '👥' },
+    { key: 'female', label: 'إناث', emoji: '👩' },
+    { key: 'male', label: 'ذكور', emoji: '👨' },
+  ] as const;
   const [isSearching, setIsSearching] = useState(false);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
@@ -273,7 +281,8 @@ export default function MatchScreen() {
     setLivekitToken(null);
     setRemotePeer(null);
     try {
-      await matchSignalR.joinQueue({});
+      const g = filterGender === 'all' ? undefined : (filterGender === 'female' ? 2 : 1);
+      await matchSignalR.joinQueue({ GenderPref: g, CallType: 'video' });
     } catch (e) {
       console.error('Search failed', e);
       setIsSearching(false);
@@ -332,6 +341,10 @@ export default function MatchScreen() {
   if (!isSearching && !livekitToken) {
     return (
       <View style={styles.centerContainer}>
+        <TouchableOpacity style={styles.filterIconBtn} onPress={() => setFiltersOpen(true)}>
+          <SlidersHorizontal color="#fff" size={24} />
+        </TouchableOpacity>
+
         <View style={styles.radarRing} />
         <View style={[styles.radarRing, { width: 300, height: 300, opacity: 0.05 }]} />
         <GlassCard style={{ alignItems: 'center', padding: 40 }} >
@@ -345,6 +358,61 @@ export default function MatchScreen() {
             style={{ width: '100%' }}
           />
         </GlassCard>
+
+        <Modal visible={filtersOpen} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity style={{flex: 1}} onPress={() => setFiltersOpen(false)} />
+            <View style={styles.filterTray}>
+              <View style={styles.trayHeader}>
+                <Text style={styles.trayTitle}>فلاتر البحث</Text>
+                <TouchableOpacity onPress={() => setFiltersOpen(false)}>
+                  <X color={Colors.text} size={24} />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Users color={Colors.cyan} size={18} />
+                  <Text style={styles.sectionTitle}>الجنس</Text>
+                </View>
+                <View style={styles.optionsRow}>
+                  {genderOptions.map(opt => (
+                    <TouchableOpacity
+                      key={opt.key}
+                      style={[styles.optionBtn, filterGender === opt.key && styles.optionBtnActive]}
+                      onPress={() => setFilterGender(opt.key)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.optionEmoji}>{opt.emoji}</Text>
+                      <Text style={[styles.optionLabel, filterGender === opt.key && styles.optionLabelActive]}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Globe color={Colors.secondary} size={18} />
+                  <Text style={styles.sectionTitle}>المنطقة الجغرافية</Text>
+                </View>
+                <View style={styles.regionsGrid}>
+                  {regions.map(r => (
+                    <TouchableOpacity
+                      key={r}
+                      style={[styles.regionBtn, filterRegion === r && styles.regionBtnActive]}
+                      onPress={() => setFilterRegion(r)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.regionText, filterRegion === r && styles.regionTextActive]}>{r}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -489,7 +557,25 @@ const styles = StyleSheet.create({
   giftEmojiBox: { width: 64, height: 64, borderRadius: 32, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: {width:0,height:2}, shadowOpacity: 0.1, shadowRadius: 4 },
   giftEmoji: { fontSize: 32 },
   giftName: { fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', color: Colors.text },
-  giftCostText: { fontSize: 12, fontFamily: 'PlusJakartaSans_500Medium', color: Colors.primary },
-  closeTrayBtn: { backgroundColor: Colors.surface, paddingVertical: 14, borderRadius: 24, alignItems: 'center', marginTop: 10 },
-  closeTrayText: { fontSize: 16, fontFamily: 'PlusJakartaSans_600SemiBold', color: Colors.text },
+  giftCostText: { color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 4 },
+  closeTrayBtn: { marginTop: 16, alignItems: 'center', padding: 12, backgroundColor: Colors.surface, borderRadius: 16 },
+  closeTrayText: { color: Colors.text, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 },
+
+  // Filters UI
+  filterIconBtn: { position: 'absolute', top: 60, right: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+  filterTray: { backgroundColor: '#1E1E1E', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
+  section: { marginBottom: 24, width: '100%' },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
+  sectionTitle: { fontSize: 18, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text, flex: 1 },
+  optionsRow: { flexDirection: 'row', gap: 10, width: '100%' },
+  optionBtn: { flex: 1, alignItems: 'center', gap: 8, paddingVertical: 16, borderRadius: 24, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright },
+  optionBtnActive: { backgroundColor: Colors.cyanDim, borderColor: Colors.cyan },
+  optionEmoji: { fontSize: 28 },
+  optionLabel: { fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.textSecondary },
+  optionLabelActive: { color: Colors.cyan },
+  regionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  regionBtn: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 100, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright },
+  regionBtnActive: { backgroundColor: Colors.secondaryDim, borderColor: Colors.secondary },
+  regionText: { fontSize: 14, color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_700Bold' },
+  regionTextActive: { color: Colors.secondary },
 });

@@ -57,15 +57,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Matches',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon focused={focused} icon={<Heart color={color} size={24} strokeWidth={focused ? 2.5 : 2} />} />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="live"
         options={{
