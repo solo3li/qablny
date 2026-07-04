@@ -3,7 +3,7 @@ import { Colors } from '../../constants/Colors';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Video, Users } from 'lucide-react-native';
-import { api } from '../../utils/api';
+import { axiosClient as api } from '../../src/api/axiosClient';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LiveRoomsScreen() {

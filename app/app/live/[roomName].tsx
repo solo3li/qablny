@@ -12,7 +12,7 @@ import {
 } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 import { Colors } from '../../constants/Colors';
-import { api } from '../../utils/api';
+import { axiosClient as api } from '../../src/api/axiosClient';
 import { X, Send, Heart, Gift } from 'lucide-react-native';
 import { useAppStore } from '../../store/useAppStore';
 
