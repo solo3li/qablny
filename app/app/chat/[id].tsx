@@ -24,8 +24,6 @@ import { uploadMedia } from '../../src/api/axiosClient';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import MapView, { Marker } from 'react-native-maps';
-
 // ─── Read Receipt ─────────────────────────────────────────────────────────────
 
 function ReadReceipt({ status }: { status?: ReadStatus }) {
@@ -167,20 +165,9 @@ function LocationBubble({ msg }: { msg: ChatMessage }) {
     <TouchableOpacity style={[styles.locationBubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
       {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
       <View style={styles.mapPlaceholder}>
-        <MapView 
-          style={StyleSheet.absoluteFillObject}
-          initialRegion={{
-            ...coords,
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
-          }}
-          scrollEnabled={false}
-          zoomEnabled={false}
-          pitchEnabled={false}
-          rotateEnabled={false}
-        >
-          <Marker coordinate={coords} />
-        </MapView>
+        <View style={{ flex: 1, backgroundColor: '#E5E5EA', justifyContent: 'center', alignItems: 'center' }}>
+          <MapPin color={Colors.primary} size={32} />
+        </View>
       </View>
       <View style={styles.locationInfo}>
         <MapPin color={msg.isMe ? '#fff' : Colors.primary} size={14} />

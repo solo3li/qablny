@@ -10,6 +10,7 @@ secrets:
 
 images:
   frontend: qablny-frontend:latest
+  agency: qablny-agency:latest
   backend: qablny-backend:latest
   postgres: postgres:16-alpine
   redis: redis:7-alpine

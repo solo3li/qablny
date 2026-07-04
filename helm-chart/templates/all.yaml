@@ -392,6 +392,7 @@ spec:
         - api.{{ .Values.domain }}
         - minio.{{ .Values.domain }}
         - livekit.{{ .Values.domain }}
+        - agency.{{ .Values.domain }}
       secretName: qablny-tls
   rules:
     - host: {{ .Values.domain }}
@@ -434,3 +435,47 @@ spec:
                 name: livekit
                 port:
                   number: 7880
+    - host: agency.{{ .Values.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: agency
+                port:
+                  number: 80
+---
+# Agency Dashboard
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agency
+  labels:
+    app: agency
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agency
+  template:
+    metadata:
+      labels:
+        app: agency
+    spec:
+      containers:
+        - name: agency
+          image: {{ .Values.images.agency }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agency
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: agency
