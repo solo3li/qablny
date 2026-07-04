@@ -23,6 +23,8 @@ import {
 import { uploadMedia } from '../../src/api/axiosClient';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import MapView, { Marker } from 'react-native-maps';
 
 // ─── Read Receipt ─────────────────────────────────────────────────────────────
 
@@ -160,18 +162,25 @@ function VideoBubble({ msg }: { msg: ChatMessage }) {
 }
 
 function LocationBubble({ msg }: { msg: ChatMessage }) {
+  const coords = { latitude: msg.locationLat || 0, longitude: msg.locationLng || 0 };
   return (
     <TouchableOpacity style={[styles.locationBubble, msg.isMe ? styles.bubbleMe : styles.bubbleThem]}>
       {msg.replyTo && <ReplyQuote replyTo={msg.replyTo} />}
       <View style={styles.mapPlaceholder}>
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.bgDeep }]} />
-        <View style={styles.mapGrid}>
-          {Array.from({ length: 6 }).map((_, i) => <View key={i} style={styles.mapGridLine} />)}
-        </View>
-        <View style={styles.mapGridH}>
-          {Array.from({ length: 4 }).map((_, i) => <View key={i} style={styles.mapGridLineH} />)}
-        </View>
-        <View style={styles.mapPin}><MapPin color={Colors.danger} size={28} fill={Colors.danger} /></View>
+        <MapView 
+          style={StyleSheet.absoluteFillObject}
+          initialRegion={{
+            ...coords,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          }}
+          scrollEnabled={false}
+          zoomEnabled={false}
+          pitchEnabled={false}
+          rotateEnabled={false}
+        >
+          <Marker coordinate={coords} />
+        </MapView>
       </View>
       <View style={styles.locationInfo}>
         <MapPin color={msg.isMe ? '#fff' : Colors.primary} size={14} />
@@ -427,8 +436,26 @@ export default function ChatScreen() {
       } catch (e) { console.error('Attach error', e); }
 
     } else if (type === 'location') {
-      const loc = dummyLocations[Math.floor(Math.random() * dummyLocations.length)];
-      sendMessage(id, { id: uid(), type: 'location', locationName: loc.name, locationLat: loc.lat, locationLng: loc.lng, isMe: true, time: now() });
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('صلاحية مفقودة', 'نحتاج صلاحية الموقع لإرسال موقعك.');
+          return;
+        }
+
+        let loc = await Location.getCurrentPositionAsync({});
+        sendMessage(id, { 
+          id: uid(), 
+          type: 'location', 
+          locationName: 'موقعي الحالي', 
+          locationLat: loc.coords.latitude, 
+          locationLng: loc.coords.longitude, 
+          isMe: true, 
+          time: now() 
+        });
+      } catch (e) {
+        Alert.alert('خطأ', 'حدث خطأ أثناء جلب الموقع.');
+      }
     }
   };
 

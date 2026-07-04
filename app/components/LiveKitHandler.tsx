@@ -74,26 +74,28 @@ function RoomControls({ muted, cameraOn, speaker }: { muted: boolean, cameraOn: 
   return null;
 }
 
-export function LiveKitHandler({ roomName, callType, muted, cameraOn, speaker }: { roomName: string, callType: 'voice' | 'video', muted: boolean, cameraOn: boolean, speaker: boolean }) {
-  const [token, setToken] = useState<string | null>(null);
+export function LiveKitHandler({ roomName, callType, muted, cameraOn, speaker, initialToken }: { roomName: string, callType: 'voice' | 'video', muted: boolean, cameraOn: boolean, speaker: boolean, initialToken?: string }) {
+  const [token, setToken] = useState<string | null>(initialToken || null);
 
   useEffect(() => {
-    axiosClient.get(`/match/token/${roomName}`).then(res => {
-      setToken(res.data.token);
-    }).catch(console.error);
-  }, [roomName]);
+    if (!initialToken) {
+      axiosClient.get(`/match/token/${roomName}`).then(res => {
+        setToken(res.data.token);
+      }).catch(console.error);
+    }
+  }, [roomName, initialToken]);
 
   if (!token) return null;
 
   return (
-    <LiveKitRoom
-      serverUrl={LIVEKIT_URL}
-      token={token}
-      connect={true}
-      audio={true} // Enabled by default, then controlled by RoomControls
-      video={callType === 'video'} // Start with video if video call
-      style={{ width: '100%', height: '100%', position: 'absolute' }}
-    >
+    <View style={{ flex: 1 }}>
+      <LiveKitRoom
+        serverUrl={LIVEKIT_URL}
+        token={token}
+        connect={true}
+        audio={true}
+        video={callType === 'video'}
+      >
       <RoomControls muted={muted} cameraOn={cameraOn && callType === 'video'} speaker={speaker} />
       {callType === 'video' && <RemoteVideo />}
       {callType === 'video' && (
@@ -101,7 +103,8 @@ export function LiveKitHandler({ roomName, callType, muted, cameraOn, speaker }:
           <LocalVideo />
         </View>
       )}
-    </LiveKitRoom>
+      </LiveKitRoom>
+    </View>
   );
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Colors } from '../../constants/Colors';
-import { Home, Heart, MessageSquare, User, Plus } from 'lucide-react-native';
+import { Home, Heart, MessageSquare, User, Plus, Wallet } from 'lucide-react-native';
 import { StyleSheet, View, Text, Platform, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '../../store/useAppStore';
@@ -25,7 +25,7 @@ const CustomFloatingButton = ({ children, onPress }: any) => (
       start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
       style={styles.floatingButton}
     >
-      <Plus color="#FFFFFF" size={28} strokeWidth={2.5} />
+      <Wallet color="#FFFFFF" size={28} strokeWidth={2.5} />
     </LinearGradient>
   </TouchableOpacity>
 );
@@ -68,17 +68,16 @@ export default function TabLayout() {
       />
       
       <Tabs.Screen
-        name="action"
+        name="wallet"
         options={{
-          title: 'New',
+          title: 'Store',
           tabBarIcon: () => null,
           tabBarButton: (props) => <CustomFloatingButton {...props} />,
         }}
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             e.preventDefault();
-            // Handle floating action button press (e.g., open modal or go to explore)
-            navigation.navigate('explore');
+            navigation.navigate('wallet');
           },
         })}
       />

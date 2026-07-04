@@ -1,16 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { useAppStore } from '../../store/useAppStore';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { Globe, Users, Star } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { matchSignalR } from '../../src/api/matchSignalR';
+import { Alert } from 'react-native';
 
 const regions = ['العالم', 'الشرق الأوسط', 'الخليج العربي', 'شمال أفريقيا', 'أوروبا', 'أمريكا الشمالية', 'آسيا'];
 
 export default function ExploreScreen() {
   const { filterGender, filterRegion, setFilterGender, setFilterRegion } = useAppStore();
   const [ageRange, setAgeRange] = useState([18, 35]);
+  const [isSearching, setIsSearching] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Setup listeners
+    matchSignalR.setOnQueueJoined(() => setIsSearching(true));
+    matchSignalR.setOnQueueLeft(() => setIsSearching(false));
+    matchSignalR.setOnMatchFound((payload) => {
+      setIsSearching(false);
+      // Navigate to match room
+      router.push({
+        pathname: '/match/[roomName]',
+        params: { 
+          roomName: payload.RoomName,
+          token: payload.LiveKitToken,
+          partnerId: payload.PartnerId,
+          partnerName: payload.PartnerName,
+          partnerImage: payload.PartnerImage || ''
+        }
+      });
+    });
+
+    return () => {
+      // Cleanup if user leaves screen
+      matchSignalR.leaveQueue();
+    };
+  }, []);
+
+  const handleApply = async () => {
+    try {
+      const g = filterGender === 'all' ? undefined : (filterGender === 'female' ? 2 : 1);
+      await matchSignalR.joinQueue({
+        GenderPref: g,
+        MinAge: ageRange[0],
+        MaxAge: ageRange[1],
+        CallType: 'video'
+      });
+    } catch (err) {
+      Alert.alert('خطأ', 'تعذر الاتصال بخادم المطابقة. حاول مجدداً.');
+    }
+  };
+
+  const handleCancelSearch = async () => {
+    await matchSignalR.leaveQueue();
+  };
 
   const genderOptions = [
     { key: 'all', label: 'الكل', emoji: '👥' },
@@ -113,7 +161,12 @@ export default function ExploreScreen() {
         </View>
 
         {/* Apply */}
-        <GlassButton title="تطبيق الفلاتر ✓" variant="primary" style={styles.applyBtn} />
+        <GlassButton 
+          title={isSearching ? "جاري البحث عن شريك... (إلغاء)" : "تطبيق الفلاتر والبحث ✓"} 
+          variant={isSearching ? "secondary" : "primary"} 
+          style={styles.applyBtn} 
+          onPress={isSearching ? handleCancelSearch : handleApply}
+        />
       </ScrollView>
     </View>
   );
