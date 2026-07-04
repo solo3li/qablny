@@ -6,7 +6,7 @@ import { axiosClient } from '../../src/api/axiosClient';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { router } from 'expo-router';
-import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle } from 'lucide-react-native';
+import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle, Wallet } from 'lucide-react-native';
 
 export default function ProfileScreen() {
   const { user, logout, checkAuth } = useAuthStore();
@@ -67,6 +67,15 @@ export default function ProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Profile Header */}
         <View style={styles.header}>
+          {/* Top icons: Notifications + Wallet */}
+          <View style={styles.profileTopIcons}>
+            <TouchableOpacity style={styles.profileTopIconBtn} onPress={() => router.push('/notifications' as any)}>
+              <Bell color={Colors.textMuted} size={22} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.profileTopIconBtn} onPress={() => router.push('/(tabs)/wallet' as any)}>
+              <Wallet color={Colors.primary} size={22} />
+            </TouchableOpacity>
+          </View>
           <View style={styles.avatarWrap}>
             <Image source={{ uri: user.profileImageUrl || 'https://i.pravatar.cc/300' }} style={[styles.avatar, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]} />
             {user.isVip && (
@@ -208,6 +217,8 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   header: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24, paddingBottom: 24 },
+  profileTopIcons: { flexDirection: 'row', gap: 10, alignSelf: 'flex-end', marginBottom: 12, marginTop: -10 },
+  profileTopIconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright, alignItems: 'center', justifyContent: 'center' },
   avatarWrap: { position: 'relative', marginBottom: 16 },
   avatar: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: '#FFFFFF' },
   vipRing: { position: 'absolute', bottom: 0, right: 0, backgroundColor: Colors.surface, borderRadius: 100, padding: 8, borderWidth: 1, borderColor: Colors.glassBorderBright },

@@ -1,9 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Colors } from '../../constants/Colors';
-import { Home, Heart, MessageSquare, User, Plus, Wallet, Video } from 'lucide-react-native';
-import { StyleSheet, View, Text, Platform, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Home, MessageSquare, User, Video } from 'lucide-react-native';
+import { StyleSheet, View, Text, Platform } from 'react-native';
 import { useAppStore } from '../../store/useAppStore';
 
 function TabIcon({ icon, focused }: { icon: React.ReactNode; focused: boolean }) {
@@ -13,22 +12,6 @@ function TabIcon({ icon, focused }: { icon: React.ReactNode; focused: boolean })
     </View>
   );
 }
-
-const CustomFloatingButton = ({ children, onPress }: any) => (
-  <TouchableOpacity
-    style={styles.floatingButtonContainer}
-    onPress={onPress}
-    activeOpacity={0.8}
-  >
-    <LinearGradient
-      colors={Colors.gradPrimary}
-      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-      style={styles.floatingButton}
-    >
-      <Wallet color="#FFFFFF" size={28} strokeWidth={2.5} />
-    </LinearGradient>
-  </TouchableOpacity>
-);
 
 export default function TabLayout() {
   const friends = useAppStore(state => state.friends);
@@ -67,20 +50,12 @@ export default function TabLayout() {
           ),
         }}
       />
-      
+
       <Tabs.Screen
         name="wallet"
         options={{
-          title: 'Store',
-          tabBarIcon: () => null,
-          tabBarButton: (props) => <CustomFloatingButton {...props} />,
+          href: null, // hide from tab bar but keep route
         }}
-        listeners={({ navigation }) => ({
-          tabPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('wallet');
-          },
-        })}
       />
 
       <Tabs.Screen
@@ -146,27 +121,4 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   badgeText: { color: '#FFFFFF', fontSize: 10, fontFamily: 'PlusJakartaSans_800ExtraBold' },
-  
-  floatingButtonContainer: {
-    top: -24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  floatingButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Platform.select({
-      web: { boxShadow: Colors.shadowGlow } as any,
-      default: {
-        shadowColor: Colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
-        shadowRadius: 16,
-        elevation: 12,
-      }
-    }),
-  }
 });

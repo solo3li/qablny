@@ -4,7 +4,7 @@ import { Colors } from '../../constants/Colors';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MessageCircle, Gift, PhoneOff, Mic, MicOff, Video, VideoOff, RefreshCcw, MoreVertical, Search, Heart, SkipForward, UserPlus, Settings, SlidersHorizontal, Users, Globe, X } from 'lucide-react-native';
+import { MessageCircle, Gift, PhoneOff, Mic, MicOff, Video, VideoOff, RefreshCcw, MoreVertical, Search, Heart, SkipForward, UserPlus, Settings, SlidersHorizontal, Users, Globe, X, Wallet, Bell } from 'lucide-react-native';
 import { matchSignalR } from '../../src/api/matchSignalR';
 import { router, useNavigation } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
@@ -338,6 +338,20 @@ export default function MatchScreenWeb() {
   if (!isSearching && !livekitToken) {
     return (
       <View style={styles.centerContainer}>
+        {/* Top bar: Notifications + Wallet */}
+        <View style={styles.homeTopBar}>
+          <Text style={styles.homeTitle}>قابل</Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity style={styles.homeTopIconBtn} onPress={() => router.push('/notifications' as any)}>
+              <Bell color={Colors.textMuted} size={22} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.homeTopIconBtn} onPress={() => router.push('/(tabs)/wallet' as any)}>
+              <Wallet color={Colors.primary} size={22} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Filter icon */}
         <TouchableOpacity style={styles.filterIconBtn} onPress={() => setFiltersOpen(true)}>
           <SlidersHorizontal color="#fff" size={24} />
         </TouchableOpacity>
@@ -554,8 +568,13 @@ const styles = StyleSheet.create({
   closeTrayBtn: { marginTop: 16, alignItems: 'center', padding: 12, backgroundColor: Colors.surface, borderRadius: 16 },
   closeTrayText: { color: Colors.text, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 },
 
+  // Home screen top bar
+  homeTopBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 48, paddingHorizontal: 20, zIndex: 20 },
+  homeTitle: { fontSize: 26, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text },
+  homeTopIconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright, alignItems: 'center', justifyContent: 'center' },
+
   // Filters UI
-  filterIconBtn: { position: 'absolute', top: 60, right: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+  filterIconBtn: { position: 'absolute', top: 108, right: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primaryDim, borderWidth: 1, borderColor: Colors.primary, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
   filterTray: { backgroundColor: '#1E1E1E', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
   section: { marginBottom: 24, width: '100%' },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
