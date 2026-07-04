@@ -10,6 +10,7 @@ export const useAgencyStore = create((set, get) => ({
   
   hosts: [],
   transactions: [],
+  payouts: [],
   announcements: [],
   
   activeHosts: 0,
@@ -59,7 +60,7 @@ export const useAgencyStore = create((set, get) => ({
     localStorage.removeItem('agencyName');
     localStorage.removeItem('managerName');
     localStorage.removeItem('inviteCode');
-    set({ token: null, hosts: [], transactions: [] });
+    set({ token: null, hosts: [], transactions: [], payouts: [] });
   },
 
   fetchDashboardStats: async () => {
@@ -118,13 +119,42 @@ export const useAgencyStore = create((set, get) => ({
     }
   },
 
-  // Mocked for now since backend doesn't have withdrawal/announcement APIs yet
-  requestWithdrawal: (amount) => set((state) => ({
-    transactions: [
-      { id: Date.now(), type: 'Withdrawal Pending', amount: -amount, host: 'Agency', date: new Date().toLocaleString() },
-      ...state.transactions
-    ]
-  })),
+  fetchPayouts: async () => {
+    const { token } = get();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/agency/payouts`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        set({ payouts: data });
+      }
+    } catch (err) {
+      console.error("Failed to fetch payouts", err);
+    }
+  },
+
+  requestWithdrawal: async (amount) => {
+    const { token } = get();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/agency/payouts`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: Number(amount) })
+      });
+      if (res.ok) {
+        const newPayout = await res.json();
+        set(state => ({ payouts: [newPayout, ...state.payouts] }));
+      } else {
+        alert("Failed to request payout");
+      }
+    } catch (err) {
+      console.error("Failed to request payout", err);
+      alert("Failed to request payout");
+    }
+  },
 
   sendAnnouncement: (message) => set((state) => ({
     announcements: [

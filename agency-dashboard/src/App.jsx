@@ -222,8 +222,12 @@ function HostsTab() {
 }
 
 function WalletTab() {
-  const { transactions, requestWithdrawal, totalEarnings } = useAgencyStore();
+  const { payouts, requestWithdrawal, totalEarnings, fetchPayouts } = useAgencyStore();
   const [withdrawAmount, setWithdrawAmount] = useState('');
+
+  useEffect(() => {
+    fetchPayouts();
+  }, []);
 
   const handleWithdraw = (e) => {
     e.preventDefault();
@@ -244,6 +248,38 @@ function WalletTab() {
              <input type="number" placeholder="Amount to withdraw" value={withdrawAmount} onChange={(e)=>setWithdrawAmount(e.target.value)} required min="100"/>
              <button type="submit" className="invite-btn"><ArrowUpRight size={18}/> Request Withdrawal</button>
            </form>
+        </section>
+
+        <section className="table-container" style={{gridColumn: '1 / -1'}}>
+          <h3>Payout Requests</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Requested At</th>
+                <th>Admin Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payouts.length === 0 ? (
+                <tr><td colSpan="5" style={{textAlign:'center', color:'var(--text-muted)'}}>No payout requests found.</td></tr>
+              ) : payouts.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.id.substring(0,8)}</td>
+                  <td className="coins">{p.amount.toLocaleString()}</td>
+                  <td>
+                    <span className={`status-badge status-${p.status}`}>
+                      <span className="status-indicator"></span>{p.status}
+                    </span>
+                  </td>
+                  <td>{new Date(p.createdAt).toLocaleDateString()}</td>
+                  <td>{p.adminNote || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       </div>
     </div>

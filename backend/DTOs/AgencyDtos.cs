@@ -38,3 +38,14 @@ public record AgencyTransactionDto(
 );
 
 public record SendAnnouncementRequest(string Message);
+
+public record PayoutRequestDto(
+    Guid Id,
+    decimal Amount,
+    string Status,
+    string? AdminNote,
+    DateTime CreatedAt,
+    DateTime? ProcessedAt
+);
+
+public record CreatePayoutRequest(decimal Amount);

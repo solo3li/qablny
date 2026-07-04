@@ -62,8 +62,8 @@ public class AgencyService(AppDbContext db, IConfiguration config)
         int totalEarnings = agency.TotalEarnings; // Can be aggregated from transactions
         int agencyCut = (int)(totalEarnings * (agency.AgencyCutPercentage / 100.0));
 
-        // Mock targets for now
-        int monthlyTarget = 100000;
+        // Read real target from DB
+        int monthlyTarget = agency.TargetCoins;
         int currentProgress = totalEarnings;
 
         return new AgencyDashboardDto(
@@ -102,5 +102,44 @@ public class AgencyService(AppDbContext db, IConfiguration config)
             host.AgencyId = null;
             await db.SaveChangesAsync();
         }
+    }
+
+    public async Task<List<PayoutRequestDto>> GetPayoutsAsync(Guid agencyId)
+    {
+        return await db.PayoutRequests
+            .Where(pr => pr.AgencyId == agencyId)
+            .OrderByDescending(pr => pr.CreatedAt)
+            .Select(pr => new PayoutRequestDto(
+                pr.Id,
+                pr.Amount,
+                pr.Status,
+                pr.AdminNote,
+                pr.CreatedAt,
+                pr.ProcessedAt
+            ))
+            .ToListAsync();
+    }
+
+    public async Task<PayoutRequestDto> RequestPayoutAsync(Guid agencyId, CreatePayoutRequest req)
+    {
+        // For simplicity, we just create it. Real app might check available balance
+        var pr = new Entities.PayoutRequest
+        {
+            AgencyId = agencyId,
+            Amount = req.Amount,
+            Status = "Pending"
+        };
+        
+        db.PayoutRequests.Add(pr);
+        await db.SaveChangesAsync();
+
+        return new PayoutRequestDto(
+            pr.Id,
+            pr.Amount,
+            pr.Status,
+            pr.AdminNote,
+            pr.CreatedAt,
+            pr.ProcessedAt
+        );
     }
 }

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Qablny</RootNamespace>
@@ -10,25 +10,25 @@
   <ItemGroup>
     <!-- Auth + Hashing -->
     <PackageReference Include="BCrypt.Net-Next"                               Version="4.0.3"  />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.6"  />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6"  />
 
     <!-- EF Core + PostgreSQL -->
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"         Version="9.0.4"  />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design"          Version="9.0.6"  >
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"         Version="8.0.4"  />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design"          Version="8.0.6"  >
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
 
     <!-- Redis (cache + SignalR backplane) -->
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="9.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="8.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.6" />
     <PackageReference Include="StackExchange.Redis"                             Version="2.8.16" />
 
     <!-- MinIO (object storage) -->
     <PackageReference Include="Minio"                                         Version="6.0.4"  />
 
     <!-- OpenAPI & Scalar -->
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi"                  Version="9.0.6"  />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi"                  Version="8.0.6"  />
     <PackageReference Include="Scalar.AspNetCore"                             Version="1.2.*"  />
 
     <!-- Logging -->

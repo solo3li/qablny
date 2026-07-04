@@ -16,7 +16,10 @@ public class User
     public string?  Location        { get; set; }
     public List<string> Interests   { get; set; } = [];
     public int      Coins           { get; set; } = 100;
+    public int      Level           { get; set; } = 1;
+    public int      XP              { get; set; } = 0;
     public bool     IsVip           { get; set; }
+    public int      VipLevel        { get; set; } = 0;
     public DateTime? VipExpiresAt   { get; set; }
     public bool     IsOnline        { get; set; }
     public DateTime LastSeen        { get; set; } = DateTime.UtcNow;
@@ -36,6 +39,7 @@ public class User
     public ICollection<Report>           FiledReports           { get; set; } = [];
     public ICollection<Report>           ReceivedReports        { get; set; } = [];
     public ICollection<RefreshToken>     RefreshTokens          { get; set; } = [];
+    public ICollection<LiveRoom>         HostedLiveRooms        { get; set; } = [];
     
     public Agency?                       Agency                 { get; set; }
 }
@@ -153,6 +157,22 @@ public class VipSubscription
 
     public User    User { get; set; } = default!;
     public VipPlan Plan { get; set; } = default!;
+}
+
+// ─── Live Streaming ───────────────────────────────────────────────────────────
+public class LiveRoom
+{
+    public Guid       Id               { get; set; } = Guid.NewGuid();
+    public Guid       HostId           { get; set; }
+    public string     LiveKitRoomName  { get; set; } = default!;
+    public string     Title            { get; set; } = default!;
+    public string?    CoverImageUrl    { get; set; }
+    public int        ViewersCount     { get; set; } = 0;
+    public bool       IsActive         { get; set; } = true;
+    public DateTime   StartedAt        { get; set; } = DateTime.UtcNow;
+    public DateTime?  EndedAt          { get; set; }
+
+    public User       Host             { get; set; } = default!;
 }
 
 // ─── Safety ───────────────────────────────────────────────────────────────────
@@ -279,12 +299,14 @@ public class Agency
     public string     Name                { get; set; } = default!;
     public string     InviteCode          { get; set; } = default!;
     public int        AgencyCutPercentage { get; set; } = 20;
+    public int        TargetCoins         { get; set; } = 100000;
     public int        TotalEarnings       { get; set; } = 0;
     public bool       IsActive            { get; set; } = true;
     public DateTime   CreatedAt           { get; set; } = DateTime.UtcNow;
 
-    public ICollection<User>          Hosts    { get; set; } = [];
-    public ICollection<AgencyManager> Managers { get; set; } = [];
+    public ICollection<User>          Hosts          { get; set; } = [];
+    public ICollection<AgencyManager> Managers       { get; set; } = [];
+    public ICollection<PayoutRequest> PayoutRequests { get; set; } = [];
 }
 
 public class AgencyManager
@@ -299,3 +321,17 @@ public class AgencyManager
 
     public Agency     Agency       { get; set; } = default!;
 }
+
+public class PayoutRequest
+{
+    public Guid       Id            { get; set; } = Guid.NewGuid();
+    public Guid       AgencyId      { get; set; }
+    public decimal    Amount        { get; set; }
+    public string     Status        { get; set; } = "Pending"; // Pending, Approved, Rejected, Paid
+    public string?    AdminNote     { get; set; }
+    public DateTime   CreatedAt     { get; set; } = DateTime.UtcNow;
+    public DateTime?  ProcessedAt   { get; set; }
+
+    public Agency     Agency        { get; set; } = default!;
+}
+

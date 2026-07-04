@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Qablny.Data;
@@ -11,9 +12,11 @@ using Qablny.Data;
 namespace Qablny.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260704133615_AddAgencyPayoutAndVipLevels")]
+    partial class AddAgencyPayoutAndVipLevels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -404,47 +407,6 @@ namespace Qablny.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("GiftTransactions");
-                });
-
-            modelBuilder.Entity("Qablny.Entities.LiveRoom", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CoverImageUrl")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("EndedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("HostId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LiveKitRoomName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("StartedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ViewersCount")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HostId");
-
-                    b.HasIndex("IsActive");
-
-                    b.ToTable("LiveRooms");
                 });
 
             modelBuilder.Entity("Qablny.Entities.MatchSession", b =>
@@ -1058,17 +1020,6 @@ namespace Qablny.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("Qablny.Entities.LiveRoom", b =>
-                {
-                    b.HasOne("Qablny.Entities.User", "Host")
-                        .WithMany("HostedLiveRooms")
-                        .HasForeignKey("HostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Host");
-                });
-
             modelBuilder.Entity("Qablny.Entities.MatchSession", b =>
                 {
                     b.HasOne("Qablny.Entities.User", "User1")
@@ -1246,8 +1197,6 @@ namespace Qablny.Migrations
                     b.Navigation("CoinTransactions");
 
                     b.Navigation("FiledReports");
-
-                    b.Navigation("HostedLiveRooms");
 
                     b.Navigation("ReceivedFriendRequests");
 

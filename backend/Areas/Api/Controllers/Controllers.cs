@@ -321,4 +321,40 @@ public class AgencyController(AgencyService agencyService) : ControllerBase
         await agencyService.RemoveHostAsync(AgencyId, hostId);
         return Ok();
     }
+
+    [HttpGet("payouts"), Authorize(Roles = "AgencyManager")]
+    public async Task<List<PayoutRequestDto>> GetPayouts() =>
+        await agencyService.GetPayoutsAsync(AgencyId);
+
+    [HttpPost("payouts"), Authorize(Roles = "AgencyManager")]
+    public async Task<PayoutRequestDto> RequestPayout(CreatePayoutRequest req) =>
+        await agencyService.RequestPayoutAsync(AgencyId, req);
+}
+
+// ─── Live Streaming ───────────────────────────────────────────────────────────
+[Route("api/live"), Authorize]
+public class LiveController(LiveService liveService, LiveKitService liveKit) : BaseController
+{
+    [HttpGet]
+    public async Task<List<LiveRoomDto>> GetActiveRooms() =>
+        await liveService.GetActiveRoomsAsync();
+
+    [HttpPost]
+    public async Task<LiveRoomDto> CreateRoom(CreateLiveRoomRequest req) =>
+        await liveService.CreateRoomAsync(UserId, req);
+
+    [HttpPost("{roomId:guid}/end")]
+    public async Task<IActionResult> EndRoom(Guid roomId)
+    {
+        await liveService.EndRoomAsync(UserId, roomId);
+        return Ok();
+    }
+
+    [HttpGet("token/{roomName}")]
+    public IActionResult GetToken(string roomName)
+    {
+        var name = User.FindFirstValue("name") ?? "Viewer";
+        var token = liveKit.GenerateToken(UserId, name, roomName);
+        return Ok(new LiveKitTokenDto(token, roomName, liveKit.ServerUrl));
+    }
 }

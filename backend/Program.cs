@@ -28,7 +28,6 @@ builder.Host.UseSerilog();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-    options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
 });
 
 // ── Redis ─────────────────────────────────────────────────────────────────────
@@ -105,6 +104,7 @@ builder.Services.AddScoped<VipService>();
 builder.Services.AddScoped<ModerationService>();
 builder.Services.AddScoped<PresenceService>();
 builder.Services.AddScoped<MatchService>();
+builder.Services.AddScoped<LiveService>();
 builder.Services.AddScoped<AgencyService>();
 builder.Services.AddSingleton<LiveKitService>();
 builder.Services.AddSingleton<MinioStorageService>();
@@ -117,7 +117,7 @@ builder.Services.AddHostedService<MatchingBackgroundService>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi();
+// builder.Services.AddOpenApi();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(opts => opts.AddPolicy("AllowAll", p =>
@@ -140,11 +140,11 @@ using (var scope = app.Services.CreateScope())
 // ── Middleware Pipeline ───────────────────────────────────────────────────────
 app.UseMiddleware<ExceptionMiddleware>();
 
-app.MapOpenApi();
-app.MapScalarApiReference(opts =>
-{
-    opts.WithTitle("Qablny API");
-});
+// app.MapOpenApi();
+// app.MapScalarApiReference(opts =>
+// {
+//     opts.WithTitle("Qablny API");
+// });
 
 app.UseStaticFiles();
 app.UseCors("AllowAll");
@@ -166,7 +166,7 @@ app.MapGet("/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
     return string.Join("\n", endpointSources.SelectMany(es => es.Endpoints).OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>().Select(e => e.RoutePattern.RawText));
 });
 
-Log.Information("Qablny API starting on .NET 10 🚀");
+Log.Information("Qablny API starting on .NET 8 🚀");
 app.Run();
 
 public class CustomUserIdProvider : IUserIdProvider

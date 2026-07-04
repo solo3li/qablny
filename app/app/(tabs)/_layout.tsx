@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Colors } from '../../constants/Colors';
-import { Home, Heart, MessageSquare, User, Plus, Wallet } from 'lucide-react-native';
+import { Home, Heart, MessageSquare, User, Plus, Wallet, Video } from 'lucide-react-native';
 import { StyleSheet, View, Text, Platform, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '../../store/useAppStore';
@@ -63,6 +63,15 @@ export default function TabLayout() {
           title: 'Matches',
           tabBarIcon: ({ color, focused }) => (
             <TabIcon focused={focused} icon={<Heart color={color} size={24} strokeWidth={focused ? 2.5 : 2} />} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="live"
+        options={{
+          title: 'Live',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon focused={focused} icon={<Video color={color} size={24} strokeWidth={focused ? 2.5 : 2} />} />
           ),
         }}
       />

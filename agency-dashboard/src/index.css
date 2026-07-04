@@ -391,6 +391,10 @@ tr:hover td {
 .status-InCall .status-indicator { background: var(--status-incall); box-shadow: 0 0 8px var(--status-incall); }
 .status-Offline { background: rgba(239, 68, 68, 0.1); color: var(--status-offline); }
 .status-Offline .status-indicator { background: var(--status-offline); box-shadow: 0 0 8px var(--status-offline); }
+.status-Pending { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+.status-Pending .status-indicator { background: #3B82F6; box-shadow: 0 0 8px #3B82F6; }
+.status-Paid { background: rgba(16, 185, 129, 0.1); color: var(--status-online); }
+.status-Paid .status-indicator { background: var(--status-online); box-shadow: 0 0 8px var(--status-online); }
 
 .host-name { font-weight: 600; }
 .coins { color: #FCD34D; font-weight: 600; }

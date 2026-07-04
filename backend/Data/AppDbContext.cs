@@ -17,6 +17,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<VipPlan>         VipPlans         => Set<VipPlan>();
     public DbSet<VipSubscription> VipSubscriptions => Set<VipSubscription>();
     public DbSet<MatchSession>    MatchSessions    => Set<MatchSession>();
+    public DbSet<LiveRoom>        LiveRooms        => Set<LiveRoom>();
     public DbSet<Report>          Reports          => Set<Report>();
     public DbSet<UserBlock>       UserBlocks       => Set<UserBlock>();
     public DbSet<RefreshToken>    RefreshTokens    => Set<RefreshToken>();
@@ -24,6 +25,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     // Agencies
     public DbSet<Agency>          Agencies         => Set<Agency>();
     public DbSet<AgencyManager>   AgencyManagers   => Set<AgencyManager>();
+    public DbSet<PayoutRequest>   PayoutRequests   => Set<PayoutRequest>();
 
     // Admin & System
     public DbSet<AdminUser>       AdminUsers       => Set<AdminUser>();
@@ -121,6 +123,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .HasForeignKey(m => m.User2Id).OnDelete(DeleteBehavior.Restrict);
         });
 
+        // LiveRoom
+        b.Entity<LiveRoom>(e =>
+        {
+            e.HasOne(lr => lr.Host).WithMany(u => u.HostedLiveRooms)
+             .HasForeignKey(lr => lr.HostId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(lr => lr.IsActive);
+        });
+
         // Report
         b.Entity<Report>(e =>
         {
@@ -178,6 +188,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(am => am.Username).IsUnique();
             e.HasOne(am => am.Agency).WithMany(a => a.Managers)
              .HasForeignKey(am => am.AgencyId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        b.Entity<PayoutRequest>(e =>
+        {
+            e.HasOne(pr => pr.Agency).WithMany(a => a.PayoutRequests)
+             .HasForeignKey(pr => pr.AgencyId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // User to Agency Relationship
