@@ -468,7 +468,7 @@ spec:
           image: {{ .Values.images.agency }}
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 80
+            - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
@@ -477,5 +477,6 @@ metadata:
 spec:
   ports:
     - port: 80
+      targetPort: 8080
   selector:
     app: agency

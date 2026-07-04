@@ -2,23 +2,38 @@
 @model Qablny.Areas.Admin.Pages.Users.BalancesModel
 @{
     ViewData["Title"] = "التحكم بالأرصدة";
+    var success = TempData["SuccessMessage"] as string;
+    var error = TempData["ErrorMessage"] as string;
 }
 
 <div class="bx--row">
     <div class="bx--col-lg-12">
         <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">التحكم بأرصدة المستخدمين</h1>
         <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">شحن رصيد مستخدم مجاناً كتعويض، أو خصم عملات في حالات الاحتيال.</p>
+        @if (!string.IsNullOrEmpty(success))
+        {
+            <div class="bx--inline-notification bx--inline-notification--success" style="margin-bottom:1rem;">
+                <p><strong>@success</strong></p>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="bx--inline-notification bx--inline-notification--error" style="margin-bottom:1rem;">
+                <p><strong>@error</strong></p>
+            </div>
+        }
     </div>
 </div>
 
 <div class="bx--row">
-    <div class="bx--col-md-6">
-        <form hx-post="/Admin/Users/Balances?handler=Update" hx-target="#main-content" hx-swap="innerHTML">
+    <div class="bx--col-md-5">
+        <form method="post" asp-page-handler="Update">
             <div class="bx--form-item" style="margin-bottom: 1rem;">
                 <label for="userId" class="bx--label">معرف المستخدم (User ID)</label>
-                <input id="userId" type="text" class="bx--text-input" name="UserId" required>
+                <input id="userId" type="text" class="bx--text-input" name="UserId" required
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
             </div>
-            
+
             <div class="bx--form-item" style="margin-bottom: 1rem;">
                 <label for="action" class="bx--label">نوع العملية</label>
                 <div class="bx--select">
@@ -37,10 +52,42 @@
 
             <div class="bx--form-item" style="margin-bottom: 2rem;">
                 <label for="reason" class="bx--label">السبب (للتدقيق)</label>
-                <input id="reason" type="text" class="bx--text-input" name="Reason" placeholder="مثال: تعويض عن انقطاع مكالمة..." required>
+                <input id="reason" type="text" class="bx--text-input" name="Reason"
+                    placeholder="مثال: تعويض عن انقطاع مكالمة..." required>
             </div>
 
             <button class="bx--btn bx--btn--primary" type="submit">تطبيق العملية</button>
         </form>
+    </div>
+
+    <div class="bx--col-md-7">
+        <h3 style="margin-bottom:1rem;">آخر التعديلات الإدارية على الأرصدة</h3>
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">التاريخ</span></th>
+                    <th><span class="bx--table-header-label">المستخدم</span></th>
+                    <th><span class="bx--table-header-label">المبلغ</span></th>
+                    <th><span class="bx--table-header-label">السبب</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.RecentTransactions.Any())
+                {
+                    <tr><td colspan="4" style="text-align:center;">لا يوجد تعديلات سابقة.</td></tr>
+                }
+                @foreach (var tx in Model.RecentTransactions)
+                {
+                    <tr>
+                        <td>@tx.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td><strong>@tx.User?.Name</strong></td>
+                        <td style="color: @(tx.Amount > 0 ? "#24a148" : "#da1e28"); font-weight:bold;">
+                            @(tx.Amount > 0 ? "+" : "")@tx.Amount
+                        </td>
+                        <td>@tx.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>

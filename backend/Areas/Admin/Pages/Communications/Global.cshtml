@@ -2,30 +2,82 @@
 @model Qablny.Areas.Admin.Pages.Communications.GlobalModel
 @{
     ViewData["Title"] = "إشعارات عامة";
+    var success = TempData["SuccessMessage"] as string;
+    var error = TempData["ErrorMessage"] as string;
 }
 
 <div class="bx--row">
     <div class="bx--col-lg-12">
         <h1 class="bx--type-productive-heading-05" style="margin-bottom: 2rem;">إرسال إشعارات للجميع (Global Push)</h1>
-        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إرسال إشعار (Push Notification) لجميع المستخدمين المسجلين في التطبيق عبر Firebase.</p>
+        <p class="bx--type-body-short-01" style="margin-bottom: 2rem;">إرسال إشعار (Push Notification) للمستخدمين عبر Expo Push Notifications.</p>
+        @if (!string.IsNullOrEmpty(success))
+        {
+            <div class="bx--inline-notification bx--inline-notification--success" style="margin-bottom:1rem;">
+                <p><strong>@success</strong></p>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="bx--inline-notification bx--inline-notification--error" style="margin-bottom:1rem;">
+                <p><strong>@error</strong></p>
+            </div>
+        }
     </div>
 </div>
 
 <div class="bx--row">
     <div class="bx--col-md-6">
-        <form hx-post="/Admin/Communications/Global?handler=Send" hx-target="#main-content" hx-swap="innerHTML">
+        <form method="post" asp-page-handler="Send">
             
             <div class="bx--form-item" style="margin-bottom: 1rem;">
+                <label class="bx--label">الجمهور المستهدف</label>
+                <select class="bx--select-input" name="audience">
+                    <option value="Global">الجميع</option>
+                    <option value="VIP">مشتركو VIP فقط</option>
+                    <option value="NonVIP">غير المشتركين فقط</option>
+                </select>
+            </div>
+
+            <div class="bx--form-item" style="margin-bottom: 1rem;">
                 <label class="bx--label">عنوان الإشعار (Title)</label>
-                <input type="text" class="bx--text-input" name="Title" placeholder="مثال: تحديث جديد متوفر!" required>
+                <input type="text" class="bx--text-input" name="title" placeholder="مثال: تحديث جديد متوفر!" required>
             </div>
 
             <div class="bx--form-item" style="margin-bottom: 2rem;">
                 <label class="bx--label">نص الإشعار (Body)</label>
-                <textarea class="bx--text-area" name="Body" rows="4" placeholder="اكتب تفاصيل الإشعار هنا..." required></textarea>
+                <textarea class="bx--text-area" name="body" rows="4" placeholder="اكتب تفاصيل الإشعار هنا..." required></textarea>
             </div>
 
-            <button class="bx--btn bx--btn--primary" type="submit">إرسال الإشعار الآن</button>
+            <button class="bx--btn bx--btn--primary" type="submit">إرسال الإشعار الآن 🔔</button>
         </form>
+    </div>
+
+    <div class="bx--col-md-6">
+        <h3 style="margin-bottom:1rem;">آخر الإشعارات المُرسَلة</h3>
+        <table class="bx--data-table">
+            <thead>
+                <tr>
+                    <th><span class="bx--table-header-label">التاريخ</span></th>
+                    <th><span class="bx--table-header-label">العنوان</span></th>
+                    <th><span class="bx--table-header-label">الجمهور</span></th>
+                    <th><span class="bx--table-header-label">عدد المُرسَل</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.RecentLogs.Any())
+                {
+                    <tr><td colspan="4" style="text-align:center;">لا توجد إشعارات مُرسَلة بعد.</td></tr>
+                }
+                @foreach (var log in Model.RecentLogs)
+                {
+                    <tr>
+                        <td>@log.SentAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td style="font-weight:bold;">@log.Title</td>
+                        <td>@log.TargetAudience</td>
+                        <td><span style="color:#0f62fe; font-weight:bold;">@log.SentCount</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>

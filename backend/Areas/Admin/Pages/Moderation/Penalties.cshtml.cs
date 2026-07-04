@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Qablny.Data;
@@ -15,5 +16,17 @@ public class PenaltiesModel(AppDbContext db) : PageModel
             .Where(u => u.IsBlocked)
             .OrderByDescending(u => u.JoinedAt)
             .ToListAsync();
+    }
+
+    public async Task<IActionResult> OnPostUnbanAsync(Guid userId)
+    {
+        var user = await db.Users.FindAsync(userId);
+        if (user != null)
+        {
+            user.IsBlocked = false;
+            await db.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"تم إلغاء حظر المستخدم {user.Name} بنجاح.";
+        }
+        return RedirectToPage();
     }
 }
