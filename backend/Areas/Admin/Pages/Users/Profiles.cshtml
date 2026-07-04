@@ -30,8 +30,18 @@
                 <p><strong>الجنس:</strong> @Model.AppUser.Gender</p>
                 <p><strong>الرصيد:</strong> @Model.AppUser.Coins عملة</p>
                 <p><strong>حالة VIP:</strong> @(Model.AppUser.IsVip ? "نشط" : "لا")</p>
+                <p><strong>حالة الحساب:</strong> @(Model.AppUser.IsBlocked ? "محظور" : "نشط")</p>
                 <br />
-                <button class="bx--btn bx--btn--danger">حظر المستخدم</button>
+                <form method="post" asp-page-handler="ToggleBlock" asp-route-userId="@Model.AppUser.Id">
+                    @if (Model.AppUser.IsBlocked)
+                    {
+                        <button type="submit" class="bx--btn bx--btn--primary">فك حظر المستخدم</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="bx--btn bx--btn--danger">حظر المستخدم</button>
+                    }
+                </form>
             </div>
         </div>
     </div>

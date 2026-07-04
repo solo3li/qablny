@@ -21,4 +21,16 @@ public class ProfilesModel(AppDbContext db) : PageModel
         }
         return Page();
     }
+
+    public async Task<IActionResult> OnPostToggleBlockAsync(Guid userId)
+    {
+        var user = await db.Users.FindAsync(userId);
+        if (user != null)
+        {
+            user.IsBlocked = !user.IsBlocked;
+            await db.SaveChangesAsync();
+        }
+        
+        return RedirectToPage(new { Id = userId });
+    }
 }

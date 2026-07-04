@@ -34,6 +34,19 @@ public class GiftService(AppDbContext db, CoinService coins)
 
         // give coins to receiver as reward
         await coins.AddAsync(req.ReceiverId, gift.CoinCost / 2, CoinTransactionType.GiftReceived, $"استلام هدية: {gift.Name}", ct);
+
+        // Update Agency Earnings if receiver is a host
+        var receiver = await db.Users.FindAsync([req.ReceiverId], ct);
+        if (receiver != null && receiver.AgencyId.HasValue)
+        {
+            var agency = await db.Agencies.FindAsync([receiver.AgencyId.Value], ct);
+            if (agency != null)
+            {
+                // Increment agency total earnings by the gift cost (or host cut)
+                agency.TotalEarnings += gift.CoinCost; 
+            }
+        }
+
         await db.SaveChangesAsync(ct);
 
         return new GiftDto(gift.Id, gift.Name, gift.Emoji, gift.CoinCost);
