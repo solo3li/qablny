@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const API_BASE_URL = 'http://localhost:5000/api'; // Or the actual IP of the backend
+const API_BASE_URL = 'https://api.qablny.online/api';
 
 export const useAgencyStore = create((set, get) => ({
   token: localStorage.getItem('agencyToken') || null,
