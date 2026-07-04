@@ -34,7 +34,7 @@ export default function ProfileScreen() {
   const handleJoinAgency = async () => {
     if (!inviteCode.trim()) return alert('الرجاء إدخال كود الدعوة');
     try {
-      await axiosClient.post('/agency/join', { inviteCode });
+      await axiosClient.post('/users/me/agency/join', { inviteCode });
       alert('تم الانضمام للوكالة بنجاح!');
       setShowAgencyModal(false);
       setInviteCode('');
