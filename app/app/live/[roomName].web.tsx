@@ -76,7 +76,7 @@ function RoomView({ isHost, roomName, roomId }: { isHost: boolean, roomName: str
     <View style={styles.container}>
       {/* Video Background */}
       {hostTrack ? (
-        <VideoTrack trackRef={hostTrack} style={styles.video} />
+        <VideoTrack trackRef={hostTrack} style={{ ...(styles.video as any), transform: isHost ? 'scaleX(-1)' : 'none' }} />
       ) : (
         <View style={styles.waitingContainer}>
           <Text style={styles.waitingText}>Waiting for host...</Text>

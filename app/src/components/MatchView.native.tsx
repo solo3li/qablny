@@ -45,7 +45,8 @@ function LocalVideo({ isCameraOn }: { isCameraOn: boolean }) {
     return (
       <VideoTrack 
         trackRef={localTrack} 
-        style={{ width: '100%', height: '100%' }} 
+        style={{ width: '100%', height: '100%', transform: [{ scaleX: -1 }] }} 
+        mirror={true}
       />
     );
   }

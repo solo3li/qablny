@@ -45,7 +45,7 @@ function LocalVideo({ isCameraOn }: { isCameraOn: boolean }) {
     return (
       <VideoTrack 
         trackRef={localTrack} 
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+        style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} 
       />
     );
   }
