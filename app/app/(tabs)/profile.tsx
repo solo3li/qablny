@@ -6,7 +6,7 @@ import { axiosClient } from '../../src/api/axiosClient';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { router, Link } from 'expo-router';
-import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle, Wallet } from 'lucide-react-native';
+import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle, Wallet, Edit2 } from 'lucide-react-native';
 
 export default function ProfileScreen() {
   const { user, logout, checkAuth } = useAuthStore();
@@ -74,6 +74,9 @@ export default function ProfileScreen() {
             </TouchableOpacity>
             <TouchableOpacity style={styles.profileTopIconBtn} onPress={() => router.push('/(tabs)/wallet' as any)}>
               <Wallet color={Colors.primary} size={22} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.profileTopIconBtn} onPress={() => router.push('/edit-profile' as any)}>
+              <Edit2 color={Colors.secondary} size={22} />
             </TouchableOpacity>
           </View>
           <View style={styles.avatarWrap}>
