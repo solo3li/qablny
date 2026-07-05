@@ -1,0 +1,71 @@
+@page
+@model Qablny.Areas.Admin.Pages.Support.IndexModel
+@{
+    ViewData["Title"] = "تذاكر الدعم الفني";
+}
+
+<div class="bx--row mb-4">
+    <div class="bx--col">
+        <h1 class="bx--type-productive-heading-04">تذاكر الدعم الفني</h1>
+        <p class="bx--type-body-short-01 text-muted">إدارة تذاكر الدعم وطلبات المساعدة من المستخدمين.</p>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col">
+        <div class="bx--data-table-container">
+            <div class="bx--data-table-header">
+                <h4 class="bx--data-table-header__title">قائمة التذاكر</h4>
+            </div>
+            <table class="bx--data-table">
+                <thead>
+                    <tr>
+                        <th>رقم التذكرة</th>
+                        <th>المستخدم</th>
+                        <th>الموضوع</th>
+                        <th>الحالة</th>
+                        <th>آخر تحديث</th>
+                        <th>إجراء</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ticket in Model.Tickets)
+                    {
+                        <tr>
+                            <td><span style="font-family: monospace; color: #525252;">@ticket.Id.ToString().Substring(0, 8)</span></td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <img src="@(ticket.User.ProfileImageUrl ?? "https://i.pravatar.cc/150")" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" />
+                                    <span>@ticket.User.Name</span>
+                                </div>
+                            </td>
+                            <td>@ticket.Subject</td>
+                            <td>
+                                @if (ticket.Status == "Open")
+                                {
+                                    <span class="bx--tag bx--tag--green">مفتوح</span>
+                                }
+                                else
+                                {
+                                    <span class="bx--tag bx--tag--gray">مغلق</span>
+                                }
+                            </td>
+                            <td>@ticket.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <a href="/Admin/Support/Ticket?id=@ticket.Id" class="bx--btn bx--btn--primary bx--btn--sm" hx-boost="true" hx-target="#main-content" hx-swap="innerHTML">
+                                    فتح التذكرة
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Tickets.Any())
+                    {
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem;">لا توجد تذاكر حالياً.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

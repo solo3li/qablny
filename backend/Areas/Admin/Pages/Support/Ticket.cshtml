@@ -1,0 +1,231 @@
+@page
+@model Qablny.Areas.Admin.Pages.Support.TicketModel
+@{
+    ViewData["Title"] = "تفاصيل التذكرة";
+}
+
+<style>
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 60vh;
+        border: 1px solid #e0e0e0;
+        background: #f4f4f4;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .msg-bubble {
+        max-width: 70%;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        position: relative;
+    }
+    .msg-user {
+        background: #ffffff;
+        align-self: flex-start;
+        border-bottom-left-radius: 2px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .msg-admin {
+        background: #0f62fe;
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 2px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .msg-time {
+        font-size: 0.7rem;
+        color: inherit;
+        opacity: 0.7;
+        margin-top: 4px;
+        text-align: right;
+    }
+    .chat-input-area {
+        display: flex;
+        padding: 1rem;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .chat-input {
+        flex: 1;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        outline: none;
+    }
+    .chat-btn {
+        background: #0f62fe;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .msg-img {
+        max-width: 100%;
+        border-radius: 8px;
+        margin-top: 5px;
+    }
+</style>
+
+<div class="bx--row mb-4">
+    <div class="bx--col" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 class="bx--type-productive-heading-04">تذكرة #@Model.Ticket.Id.ToString().Substring(0,8)</h1>
+            <p class="bx--type-body-short-01 text-muted">
+                موضوع: <strong>@Model.Ticket.Subject</strong> | المستخدم: <strong>@Model.Ticket.User.Name</strong>
+                | الحالة: 
+                @if (Model.Ticket.Status == "Open") { <span class="bx--tag bx--tag--green">مفتوح</span> }
+                else { <span class="bx--tag bx--tag--gray">مغلق</span> }
+            </p>
+        </div>
+        <div>
+            @if (Model.Ticket.Status == "Open")
+            {
+                <form method="post" asp-page-handler="Close" asp-route-id="@Model.Ticket.Id" style="display: inline;">
+                    <button type="submit" class="bx--btn bx--btn--danger">إغلاق التذكرة</button>
+                </form>
+            }
+            <a href="/Admin/Support" class="bx--btn bx--btn--secondary" hx-boost="true" hx-target="#main-content" hx-swap="innerHTML">عودة للقائمة</a>
+        </div>
+    </div>
+</div>
+
+<div class="bx--row">
+    <div class="bx--col">
+        <div class="chat-container">
+            <div class="chat-messages" id="messagesList">
+                @foreach(var msg in Model.Messages)
+                {
+                    <div class="msg-bubble @(msg.IsAdmin ? "msg-admin" : "msg-user")">
+                        @if (msg.Type == Qablny.Enums.MessageType.Text)
+                        {
+                            <div>@msg.Content</div>
+                        }
+                        else if (msg.Type == Qablny.Enums.MessageType.Image)
+                        {
+                            <div>@msg.Content</div>
+                            @if (!string.IsNullOrEmpty(msg.MediaUrl)) {
+                                <img src="@msg.MediaUrl" class="msg-img" />
+                            }
+                        }
+                        else if (msg.Type == Qablny.Enums.MessageType.Voice)
+                        {
+                            <div>🎤 تسجيل صوتي (@msg.DurationSeconds ثانية)</div>
+                            @if (!string.IsNullOrEmpty(msg.MediaUrl)) {
+                                <audio controls src="@msg.MediaUrl" style="max-width: 200px; margin-top: 5px;"></audio>
+                            }
+                        }
+                        else if (msg.Type == Qablny.Enums.MessageType.Video)
+                        {
+                            <div>📹 فيديو مرفق</div>
+                            @if (!string.IsNullOrEmpty(msg.MediaUrl)) {
+                                <video controls src="@msg.MediaUrl" style="max-width: 100%; max-height: 200px; margin-top: 5px;"></video>
+                            }
+                        }
+                        <div class="msg-time">@msg.CreatedAt.ToString("HH:mm")</div>
+                    </div>
+                }
+            </div>
+            
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" class="chat-input" placeholder="اكتب ردك هنا..." @(Model.Ticket.Status == "Closed" ? "disabled" : "") />
+                <button class="chat-btn" id="sendBtn" @(Model.Ticket.Status == "Closed" ? "disabled" : "")>
+                    <svg focusable="false" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path d="M27.71,4.29a1,1,0,0,0-1.05-.23l-22,8a1,1,0,0,0,0,1.87l8.59,3.43L19.59,11l-6.41,6.41,3.43,8.59a1,1,0,0,0,.92.62,1,1,0,0,0,.94-.66l8-22A1,1,0,0,0,27.71,4.29Z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Load SignalR -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+<script>
+    (function() {
+        const ticketId = '@Model.Ticket.Id';
+        const isAdmin = true;
+        // The senderId for Admin can be an empty guid or the admin's user ID. We use empty guid for generic admin.
+        const senderId = '00000000-0000-0000-0000-000000000000'; 
+        
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveSupportMessage", function (msg) {
+            console.log("Received msg:", msg);
+            const messagesList = document.getElementById("messagesList");
+            const div = document.createElement("div");
+            div.className = "msg-bubble " + (msg.isAdmin ? "msg-admin" : "msg-user");
+            
+            let contentHtml = "";
+            if (msg.type === 0) { // Text
+                contentHtml = `<div>${msg.content}</div>`;
+            } else if (msg.type === 1) { // Voice
+                contentHtml = `<div>🎤 تسجيل صوتي (${msg.durationSeconds || 0} ثانية)</div>`;
+                if(msg.mediaUrl) contentHtml += `<audio controls src="${msg.mediaUrl}" style="max-width: 200px; margin-top: 5px;"></audio>`;
+            } else if (msg.type === 2) { // Image
+                contentHtml = `<div>${msg.content}</div>`;
+                if(msg.mediaUrl) contentHtml += `<img src="${msg.mediaUrl}" class="msg-img" />`;
+            } else if (msg.type === 3) { // Video
+                contentHtml = `<div>📹 فيديو مرفق</div>`;
+                if(msg.mediaUrl) contentHtml += `<video controls src="${msg.mediaUrl}" style="max-width: 100%; max-height: 200px; margin-top: 5px;"></video>`;
+            }
+            
+            const timeStr = new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            contentHtml += `<div class="msg-time">${timeStr}</div>`;
+            
+            div.innerHTML = contentHtml;
+            messagesList.appendChild(div);
+            messagesList.scrollTop = messagesList.scrollHeight;
+        });
+
+        connection.start().then(function () {
+            console.log("Connected to ChatHub");
+            connection.invoke("JoinTicketGroup", ticketId).catch(err => console.error(err));
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        const sendBtn = document.getElementById("sendBtn");
+        const chatInput = document.getElementById("chatInput");
+        
+        const messagesList = document.getElementById("messagesList");
+        messagesList.scrollTop = messagesList.scrollHeight; // initial scroll
+
+        if (sendBtn) {
+            sendBtn.addEventListener("click", function (event) {
+                const content = chatInput.value.trim();
+                if (!content) return;
+                
+                chatInput.value = "";
+                
+                // (Guid ticketId, Guid senderId, bool isAdmin, MessageType type, string? content, int? duration, string? mediaUrl)
+                connection.invoke("SendSupportMessage", ticketId, senderId, isAdmin, 0, content, null, null).catch(function (err) {
+                    return console.error(err.toString());
+                });
+                event.preventDefault();
+            });
+
+            chatInput.addEventListener("keypress", function (e) {
+                if (e.key === 'Enter') {
+                    sendBtn.click();
+                }
+            });
+        }
+    })();
+</script>

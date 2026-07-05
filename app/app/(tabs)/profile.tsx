@@ -163,28 +163,28 @@ export default function ProfileScreen() {
         {/* Settings menu */}
         <GlassCard style={styles.menuCard} tint="light">
           {menuItems.map((item, i) => {
-            const content = (
-              <TouchableOpacity style={styles.menuItem} onPress={item.onPress}>
-                <View style={styles.menuLeft}>
-                  <View style={[styles.menuIcon, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
-                    {item.icon}
-                  </View>
-                  <View>
-                    <Text style={styles.menuLabel}>{item.label}</Text>
-                    <Text style={styles.menuSub}>{item.sub}</Text>
-                  </View>
-                </View>
-                <ChevronRight color={Colors.textMuted} size={18} />
-              </TouchableOpacity>
-            );
+            const handlePress = () => {
+              if (item.href) {
+                router.push(item.href as any);
+              } else if (item.onPress) {
+                item.onPress();
+              }
+            };
 
             return (
               <React.Fragment key={item.label}>
-                {item.href ? (
-                  <Link href={item.href as any} asChild>
-                    {content}
-                  </Link>
-                ) : content}
+                <TouchableOpacity style={styles.menuItem} onPress={handlePress}>
+                  <View style={styles.menuLeft}>
+                    <View style={[styles.menuIcon, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
+                      {item.icon}
+                    </View>
+                    <View>
+                      <Text style={styles.menuLabel}>{item.label}</Text>
+                      <Text style={styles.menuSub}>{item.sub}</Text>
+                    </View>
+                  </View>
+                  <ChevronRight color={Colors.textMuted} size={18} />
+                </TouchableOpacity>
                 {i < menuItems.length - 1 && <View style={styles.menuDiv} />}
               </React.Fragment>
             );
