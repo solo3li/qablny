@@ -15,6 +15,9 @@ import { axiosClient as api } from '../../src/api/axiosClient';
 import { X, Send, Heart, Gift, Users } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Audio } from 'expo-av';
+import { AudioSession, registerGlobals } from '@livekit/react-native';
+
+registerGlobals();
 
 const { width, height } = Dimensions.get('window');
 
@@ -188,12 +191,25 @@ export default function LiveRoomScreen() {
   const [serverUrl, setServerUrl] = useState('');
 
   useEffect(() => {
+    const initAudio = async () => {
+      try {
+        await AudioSession.startAudioSession();
+      } catch (e) {
+        console.error('Failed to start AudioSession:', e);
+      }
+    };
+    initAudio();
+
     if (roomName) {
       api.get(`/live/token/${roomName}`).then(res => {
         setToken(res.data.token);
         setServerUrl(res.data.serverUrl);
       }).catch(console.error);
     }
+
+    return () => {
+      AudioSession.stopAudioSession();
+    };
   }, [roomName]);
 
   if (!token || !serverUrl) {

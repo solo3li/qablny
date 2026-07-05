@@ -11,8 +11,10 @@ import { router, useNavigation } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
 import { useAuthStore } from '../../src/store/authStore';
 import { useAppStore } from '../../store/useAppStore';
-import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks, TrackReference, useLocalParticipant } from '@livekit/react-native';
+import { LiveKitRoom, VideoTrack, useTracks, TrackReference, useLocalParticipant, AudioSession, registerGlobals } from '@livekit/react-native';
 import { Track } from 'livekit-client';
+
+registerGlobals();
 
 const LIVEKIT_URL = 'wss://livekit.qablny.online';
 
@@ -120,7 +122,6 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
           {micEnabled ? <Mic color="#fff" size={14} /> : <MicOff color={Colors.danger} size={14} />}
         </View>
       </Animated.View>
-      <RoomAudioRenderer />
 
       {/* Gradient Overlay */}
       <LinearGradient
@@ -228,6 +229,21 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
 }
 
 export default function MatchScreen() {
+  useEffect(() => {
+    const initAudio = async () => {
+      try {
+        await AudioSession.startAudioSession();
+      } catch (e) {
+        console.error('Failed to start AudioSession:', e);
+      }
+    };
+    initAudio();
+
+    return () => {
+      AudioSession.stopAudioSession();
+    };
+  }, []);
+
   const navigation = useNavigation();
   const { user } = useAuthStore();
   const { filterGender, filterRegion, setFilterGender, setFilterRegion } = useAppStore();
