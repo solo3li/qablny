@@ -23,7 +23,7 @@ export default function EditProfileScreen() {
   
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -40,15 +40,21 @@ export default function EditProfileScreen() {
       setLoading(true);
       const formData = new FormData();
       
-      const filename = uri.split('/').pop() || 'avatar.jpg';
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : `image/jpeg`;
+      if (Platform.OS === 'web') {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        formData.append('file', blob, 'avatar.jpg');
+      } else {
+        const filename = uri.split('/').pop() || 'avatar.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image/jpeg`;
 
-      formData.append('file', {
-        uri: Platform.OS === 'web' ? uri : uri.replace('file://', ''),
-        name: filename,
-        type,
-      } as any);
+        formData.append('file', {
+          uri: uri.replace('file://', ''),
+          name: filename,
+          type,
+        } as any);
+      }
 
       await axiosClient.put('/users/me/image', formData, {
         headers: {
@@ -67,7 +73,7 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     try {
       setLoading(true);
-      const interestsArray = interests.split('،').map(i => i.trim()).filter(i => i);
+      const interestsArray = interests.split('،').map((i: string) => i.trim()).filter((i: string) => i);
       
       await axiosClient.put('/users/me', {
         name,
