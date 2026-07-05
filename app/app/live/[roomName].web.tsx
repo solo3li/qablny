@@ -196,7 +196,7 @@ export default function LiveRoomScreen() {
         serverUrl={serverUrl}
         token={token}
         connect={true}
-        audio={true}
+        audio={isHost === 'true'}
         video={isHost === 'true'}
         style={{ flex: 1, width: '100%', height: '100%', display: 'flex' }}
       >

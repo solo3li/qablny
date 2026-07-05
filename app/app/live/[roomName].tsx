@@ -226,7 +226,7 @@ export default function LiveRoomScreen() {
         serverUrl={serverUrl}
         token={token}
         connect={true}
-        audio={true}
+        audio={isHost === 'true'}
         video={isHost === 'true'}
       >
         <RoomView 
