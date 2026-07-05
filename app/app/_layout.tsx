@@ -38,7 +38,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (isLoading || !rootNavigationState?.key) return;
 
-    const inProtectedGroup = segments[0] === '(tabs)' || segments[0] === 'chat';
+    const inProtectedGroup = segments[0] === '(tabs)' || segments[0] === 'chat' || segments[0] === 'support' || segments[0] === 'privacy';
     const inAuthGroup = segments[0] === 'auth';
 
     if (!token && inProtectedGroup) {
@@ -66,6 +66,10 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="auth/login" />
         <Stack.Screen name="notifications" options={{ headerShown: false, animation: 'slide_from_left' }} />
+        <Stack.Screen name="privacy" options={{ headerShown: false, animation: 'slide_from_left' }} />
+        <Stack.Screen name="support/index" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="support/create" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="support/[id]" options={{ headerShown: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
       </Stack>

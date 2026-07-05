@@ -57,7 +57,7 @@ export default function ProfileScreen() {
 
   const menuItems = [
     { icon: <Users color={Colors.primary} size={20} />, label: 'الوكالات', sub: 'الانضمام لوكالة', onPress: () => setShowAgencyModal(true) },
-    { icon: <Bell color={Colors.secondary} size={20} />, label: 'الإشعارات', sub: 'مفعّلة' },
+    { icon: <Bell color={Colors.secondary} size={20} />, label: 'الإشعارات', sub: 'مفعّلة', onPress: () => router.push('/notifications' as any) },
     { icon: <Shield color={Colors.cyan} size={20} />, label: 'الخصوصية والأمان', sub: 'إعدادات الحماية', onPress: () => router.push('/privacy' as any) },
     { icon: <HelpCircle color={Colors.textMuted} size={20} />, label: 'مركز المساعدة', sub: 'نظام التذاكر', onPress: () => router.push('/support' as any) },
   ];
@@ -85,17 +85,17 @@ export default function ProfileScreen() {
             )}
           </View>
           <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.bio}>{user.bio}</Text>
+          <Text style={styles.bio}>{(user as any).bio}</Text>
           <View style={styles.locationRow}>
-            <Text style={styles.locationText}>📍 {user.location}</Text>
+            <Text style={styles.locationText}>📍 {(user as any).location}</Text>
             <Text style={styles.dot}>·</Text>
-            <Text style={styles.locationText}>{user.age} سنة</Text>
+            <Text style={styles.locationText}>{(user as any).age} سنة</Text>
           </View>
 
           {/* Interests */}
-          {user.interests && user.interests.length > 0 && (
+          {(user as any).interests && (user as any).interests.length > 0 && (
             <View style={styles.interests}>
-              {user.interests.map(i => (
+              {(user as any).interests.map((i: string) => (
                 <View key={i} style={[styles.interestTag, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
                   <Text style={styles.interestText}>{i}</Text>
                 </View>
@@ -149,7 +149,7 @@ export default function ProfileScreen() {
                 <Text style={styles.planPrice}>{plan.price} ر.س</Text>
                 <Text style={styles.planPeriod}>/ {plan.period}</Text>
                 <View style={styles.planFeatures}>
-                  {plan.features.map(f => <Text key={f} style={styles.planFeature}>✓ {f}</Text>)}
+                  {plan.features.map((f: string) => <Text key={f} style={styles.planFeature}>✓ {f}</Text>)}
                 </View>
                 <GlassButton title="اشترك" variant={plan.isBest ? 'primary' : 'outline'} style={{ marginTop: 12, height: 40, width: '100%' }} onPress={() => handleSubscribe(plan.id)} />
               </GlassCard>
@@ -191,7 +191,7 @@ export default function ProfileScreen() {
       {/* Agency Modal */}
       <Modal visible={showAgencyModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <GlassCard style={styles.modalContent} tint="dark">
+          <GlassCard style={styles.modalContent} tint="secondary">
             <Text style={styles.modalTitle}>الانضمام إلى وكالة</Text>
             <Text style={styles.modalSub}>أدخل كود الدعوة الذي حصلت عليه من مدير الوكالة الخاصة بك.</Text>
             <TextInput
