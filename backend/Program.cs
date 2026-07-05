@@ -199,6 +199,54 @@ app.MapPost("/api/support/tickets/{ticketId}/close", async (Guid ticketId, Suppo
     return Results.Ok(await support.CloseTicketAsync(ticketId));
 });
 
+// ── Notification Endpoints ───────────────────────────────────────────────
+app.MapGet("/api/notifications", async (AppDbContext db, System.Security.Claims.ClaimsPrincipal user) =>
+{
+    var idStr = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (string.IsNullOrEmpty(idStr)) return Results.Unauthorized();
+    var id = Guid.Parse(idStr);
+    var list = await db.Notifications
+        .Where(n => n.UserId == id)
+        .OrderByDescending(n => n.CreatedAt)
+        .Take(50)
+        .Select(n => new {
+            id = n.Id,
+            type = n.Type,
+            title = n.Title,
+            body = n.Body,
+            isRead = n.IsRead,
+            imageUrl = n.ImageUrl,
+            actionId = n.ActionId,
+            createdAt = n.CreatedAt
+        })
+        .ToListAsync();
+    return Results.Ok(list);
+}).RequireAuthorization();
+
+app.MapPost("/api/notifications/mark-all-read", async (AppDbContext db, System.Security.Claims.ClaimsPrincipal user) =>
+{
+    var idStr = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (string.IsNullOrEmpty(idStr)) return Results.Unauthorized();
+    var id = Guid.Parse(idStr);
+    
+    await db.Notifications.Where(n => n.UserId == id && !n.IsRead)
+        .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
+        
+    return Results.Ok();
+}).RequireAuthorization();
+
+app.MapPost("/api/notifications/{id}/read", async (Guid id, AppDbContext db, System.Security.Claims.ClaimsPrincipal user) =>
+{
+    var userIdStr = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (string.IsNullOrEmpty(userIdStr)) return Results.Unauthorized();
+    var userId = Guid.Parse(userIdStr);
+    
+    await db.Notifications.Where(n => n.Id == id && n.UserId == userId)
+        .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
+        
+    return Results.Ok();
+}).RequireAuthorization();
+
 Log.Information("Qablny API starting on .NET 8 🚀");
 app.Run();
 

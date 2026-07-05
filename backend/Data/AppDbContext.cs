@@ -39,6 +39,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     // Support
     public DbSet<SupportTicket>   SupportTickets   => Set<SupportTicket>();
     public DbSet<SupportMessage>  SupportMessages  => Set<SupportMessage>();
+    public DbSet<Notification>    Notifications    => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -223,6 +224,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(m => new { m.TicketId, m.CreatedAt });
             e.HasOne(m => m.Ticket).WithMany(t => t.Messages)
              .HasForeignKey(m => m.TicketId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Notification
+        b.Entity<Notification>(e =>
+        {
+            e.HasKey(n => n.Id);
+            e.HasIndex(n => new { n.UserId, n.CreatedAt });
+            e.HasOne(n => n.User).WithMany(u => u.Notifications)
+             .HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── Seed Data ──────────────────────────────────────────────────────

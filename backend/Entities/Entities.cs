@@ -42,6 +42,7 @@ public class User
     public ICollection<RefreshToken>     RefreshTokens          { get; set; } = [];
     public ICollection<LiveRoom>         HostedLiveRooms        { get; set; } = [];
     public ICollection<SupportTicket>    SupportTickets         { get; set; } = [];
+    public ICollection<Notification>     Notifications          { get; set; } = [];
     
     public Agency?                       Agency                 { get; set; }
 }
@@ -302,6 +303,21 @@ public class PushNotificationLog
     public string     TargetAudience { get; set; } = "All"; 
     public int        SentCount      { get; set; }
     public DateTime   SentAt         { get; set; } = DateTime.UtcNow;
+}
+
+public class Notification
+{
+    public Guid       Id        { get; set; } = Guid.NewGuid();
+    public Guid       UserId    { get; set; }
+    public string     Type      { get; set; } = default!; // like, message, gift, match, system, vip, friend
+    public string     Title     { get; set; } = default!;
+    public string     Body      { get; set; } = default!;
+    public bool       IsRead    { get; set; } = false;
+    public string?    ImageUrl  { get; set; }
+    public string?    ActionId  { get; set; }
+    public DateTime   CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public User       User      { get; set; } = default!;
 }
 
 // ─── Agencies ─────────────────────────────────────────────────────────────────
