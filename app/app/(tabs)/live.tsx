@@ -6,9 +6,6 @@ import { Video, Users, Sparkles, Play } from 'lucide-react-native';
 import { axiosClient as api } from '../../src/api/axiosClient';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
-const cardWidth = (width - 48) / 2;
-
 export default function LiveRoomsScreen() {
   const router = useRouter();
   const [rooms, setRooms] = useState<any[]>([]);
@@ -140,10 +137,11 @@ const styles = StyleSheet.create({
   createButtonText: { color: '#FFF', fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14 },
   listContainer: { paddingHorizontal: 16, paddingBottom: 100 },
   roomCard: {
-    width: cardWidth, height: cardWidth * 1.4, margin: 8,
+    flex: 1, margin: 8, aspectRatio: 0.75,
     borderRadius: 24, overflow: 'hidden',
     backgroundColor: Colors.surfaceHover,
-    borderWidth: 1, borderColor: Colors.glassBorder
+    borderWidth: 1, borderColor: Colors.glassBorder,
+    minWidth: '45%' // Ensure it doesn't get too small if numColumns changes
   },
   coverImage: { width: '100%', height: '100%' },
   gradient: {
