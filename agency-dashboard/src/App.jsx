@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAgencyStore } from './store/useAgencyStore';
-import { Users, Coins, Activity, UserPlus, Clock, LayoutDashboard, Settings, LogOut, Wallet, Target, Bell, Trash2, ArrowUpRight, ChevronLeft, Eye, KeyRound } from 'lucide-react';
+import { Users, Coins, Activity, UserPlus, Clock, LayoutDashboard, Settings, LogOut, Wallet, Target, Bell, Trash2, ArrowUpRight, ChevronLeft, Eye, KeyRound, Headphones } from 'lucide-react';
 import './index.css';
 
 function LoginView() {
@@ -323,6 +323,70 @@ function WalletTab() {
   );
 }
 
+function SupportTab() {
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // In a real app we'd fetch this from the API and use a store
+    // For now we mock it to show the UI
+    setTimeout(() => {
+      setTickets([
+        { id: '1', subject: 'مشكلة في سحب الرصيد', status: 'Open', updatedAt: new Date().toISOString(), user: 'Ahmed' },
+        { id: '2', subject: 'كيف أضيف وكالة؟', status: 'Closed', updatedAt: new Date().toISOString(), user: 'Sara' }
+      ]);
+      setLoading(false);
+    }, 1000);
+  }, []);
+
+  return (
+    <section className="table-container">
+      <div style={{display:'flex', justifyContent:'space-between', marginBottom:'1.5rem', alignItems:'center'}}>
+        <h2>Support Tickets</h2>
+        <button className="invite-btn">
+           View All
+        </button>
+      </div>
+      {loading ? <p style={{textAlign:'center'}}>Loading tickets...</p> : (
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>User</th>
+              <th>Subject</th>
+              <th>Status</th>
+              <th>Last Update</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tickets.length === 0 ? (
+              <tr><td colSpan="6" style={{textAlign:'center', color:'var(--text-muted)'}}>No support tickets found.</td></tr>
+            ) : tickets.map((t) => (
+              <tr key={t.id}>
+                <td>#{t.id}</td>
+                <td>{t.user}</td>
+                <td>{t.subject}</td>
+                <td>
+                  <span className={`status-badge status-${t.status === 'Open' ? 'Active' : 'Offline'}`}>
+                    <span className="status-indicator"></span>{t.status === 'Open' ? 'مفتوح' : 'مغلق'}
+                  </span>
+                </td>
+                <td>{new Date(t.updatedAt).toLocaleDateString()}</td>
+                <td>
+                  <button className="action-btn btn-view" onClick={() => alert('View ticket ' + t.id)}>
+                    <Eye size={16} /> Open
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  );
+}
+
 function SettingsTab() {
   const { agencyName, managerName, sendAnnouncement, announcements, inviteCode } = useAgencyStore();
   const [msg, setMsg] = useState('');
@@ -402,6 +466,7 @@ function App() {
       case 'dashboard': return <DashboardTab />;
       case 'hosts': return <HostsTab />;
       case 'wallet': return <WalletTab />;
+      case 'support': return <SupportTab />;
       case 'settings': return <SettingsTab />;
       default: return <DashboardTab />;
     }
@@ -424,6 +489,9 @@ function App() {
           </button>
           <button className={`nav-item ${activeTab === 'wallet' ? 'active' : ''}`} onClick={() => setActiveTab('wallet')}>
             <Wallet size={20} /> Wallet & Earnings
+          </button>
+          <button className={`nav-item ${activeTab === 'support' ? 'active' : ''}`} onClick={() => setActiveTab('support')}>
+            <Headphones size={20} /> Support Center
           </button>
           <button className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
             <Settings size={20} /> Settings

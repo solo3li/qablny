@@ -16,6 +16,7 @@ class ChatSignalRService {
   private onRecordingStartedCallback: ((userId: string) => void) | null = null;
   private onRecordingStoppedCallback: ((userId: string) => void) | null = null;
   private onReceiveGiftCallback: ((payload: any) => void) | null = null;
+  private onReceiveSupportMessageCallback: ((msg: any) => void) | null = null;
   
   // Call Callbacks
   private onIncomingCallCallback: ((payload: any) => void) | null = null;
@@ -53,6 +54,10 @@ class ChatSignalRService {
     this.connection.on("RecordingStarted", (userId: string) => this.onRecordingStartedCallback?.(userId));
     this.connection.on("RecordingStopped", (userId: string) => this.onRecordingStoppedCallback?.(userId));
     this.connection.on("ReceiveGift", (payload: any) => this.onReceiveGiftCallback?.(payload));
+    this.connection.on("ReceiveSupportMessage", (msg: any) => {
+      console.log("🔥 SignalR ReceiveSupportMessage:", msg);
+      this.onReceiveSupportMessageCallback?.(msg);
+    });
 
     // Call Events
     this.connection.on("IncomingCall", (payload: any) => this.onIncomingCallCallback?.(payload));
@@ -75,6 +80,7 @@ class ChatSignalRService {
   public setOnRecordingStarted(cb: (userId: string) => void) { this.onRecordingStartedCallback = cb; }
   public setOnRecordingStopped(cb: (userId: string) => void) { this.onRecordingStoppedCallback = cb; }
   public setOnReceiveGift(cb: (payload: any) => void) { this.onReceiveGiftCallback = cb; }
+  public setOnReceiveSupportMessage(cb: (msg: any) => void) { this.onReceiveSupportMessageCallback = cb; }
 
   // Call Callbacks Setters
   public setOnIncomingCall(cb: (payload: any) => void) { this.onIncomingCallCallback = cb; }
@@ -119,6 +125,22 @@ class ChatSignalRService {
       await this.connection.stop();
       this.connection = null;
     }
+  }
+
+  // Support Actions
+  public async joinTicketGroup(ticketId: string) {
+    if (!this.connection) await this.connect();
+    await this.connection?.invoke("JoinTicketGroup", ticketId);
+  }
+
+  public async leaveTicketGroup(ticketId: string) {
+    if (!this.connection) return;
+    await this.connection.invoke("LeaveTicketGroup", ticketId);
+  }
+
+  public async sendSupportMessage(ticketId: string, isAdmin: boolean, type: number, content: string | null, duration: number | null, mediaUrl: string | null) {
+    if (!this.connection) await this.connect();
+    await this.connection?.invoke("SendSupportMessage", ticketId, isAdmin, type, content, duration, mediaUrl);
   }
 
   // Debounced typing - call this whenever user types

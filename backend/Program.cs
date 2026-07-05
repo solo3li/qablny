@@ -108,6 +108,7 @@ builder.Services.AddScoped<LiveService>();
 builder.Services.AddScoped<AgencyService>();
 builder.Services.AddSingleton<LiveKitService>();
 builder.Services.AddSingleton<MinioStorageService>();
+builder.Services.AddScoped<SupportService>();
 builder.Services.AddHttpClient<PushNotificationService>();
 
 // Background matching service
@@ -164,6 +165,38 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", time = DateTime
 app.MapGet("/routes", (IEnumerable<EndpointDataSource> endpointSources) => 
 {
     return string.Join("\n", endpointSources.SelectMany(es => es.Endpoints).OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>().Select(e => e.RoutePattern.RawText));
+});
+
+// ── Support Ticketing Endpoints ───────────────────────────────────────────────
+app.MapPost("/api/support/tickets", async (CreateTicketRequest req, SupportService support, System.Security.Claims.ClaimsPrincipal user) =>
+{
+    var id = Guid.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+    if (id == Guid.Empty) return Results.Unauthorized();
+    return Results.Ok(await support.CreateTicketAsync(id, req));
+}).RequireAuthorization();
+
+app.MapGet("/api/support/tickets", async (SupportService support, System.Security.Claims.ClaimsPrincipal user) =>
+{
+    var idStr = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (string.IsNullOrEmpty(idStr)) return Results.Unauthorized();
+    var id = Guid.Parse(idStr);
+    return Results.Ok(await support.GetUserTicketsAsync(id));
+}).RequireAuthorization();
+
+app.MapGet("/api/support/tickets/all", async (SupportService support) =>
+{
+    // Endpoint for Admin/Dashboard
+    return Results.Ok(await support.GetAllTicketsAsync());
+});
+
+app.MapGet("/api/support/tickets/{ticketId}/messages", async (Guid ticketId, SupportService support) =>
+{
+    return Results.Ok(await support.GetTicketMessagesAsync(ticketId));
+});
+
+app.MapPost("/api/support/tickets/{ticketId}/close", async (Guid ticketId, SupportService support) =>
+{
+    return Results.Ok(await support.CloseTicketAsync(ticketId));
 });
 
 Log.Information("Qablny API starting on .NET 8 🚀");

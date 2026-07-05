@@ -41,6 +41,7 @@ public class User
     public ICollection<Report>           ReceivedReports        { get; set; } = [];
     public ICollection<RefreshToken>     RefreshTokens          { get; set; } = [];
     public ICollection<LiveRoom>         HostedLiveRooms        { get; set; } = [];
+    public ICollection<SupportTicket>    SupportTickets         { get; set; } = [];
     
     public Agency?                       Agency                 { get; set; }
 }
@@ -346,3 +347,31 @@ public class PayoutRequest
     public Agency     Agency        { get; set; } = default!;
 }
 
+// ─── Support Ticketing ────────────────────────────────────────────────────────
+public class SupportTicket
+{
+    public Guid       Id            { get; set; } = Guid.NewGuid();
+    public Guid       UserId        { get; set; }
+    public string     Subject       { get; set; } = default!;
+    public string     Status        { get; set; } = "Open"; // Open, Closed
+    public DateTime   CreatedAt     { get; set; } = DateTime.UtcNow;
+    public DateTime   UpdatedAt     { get; set; } = DateTime.UtcNow;
+
+    public User       User          { get; set; } = default!;
+    public ICollection<SupportMessage> Messages { get; set; } = [];
+}
+
+public class SupportMessage
+{
+    public Guid         Id              { get; set; } = Guid.NewGuid();
+    public Guid         TicketId        { get; set; }
+    public Guid         SenderId        { get; set; }
+    public bool         IsAdmin         { get; set; }
+    public MessageType  Type            { get; set; } = MessageType.Text;
+    public string?      Content         { get; set; }
+    public int?         DurationSeconds { get; set; }
+    public string?      MediaUrl        { get; set; }
+    public DateTime     CreatedAt       { get; set; } = DateTime.UtcNow;
+
+    public SupportTicket Ticket         { get; set; } = default!;
+}

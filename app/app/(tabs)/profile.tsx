@@ -58,8 +58,8 @@ export default function ProfileScreen() {
   const menuItems = [
     { icon: <Users color={Colors.primary} size={20} />, label: 'الوكالات', sub: 'الانضمام لوكالة', onPress: () => setShowAgencyModal(true) },
     { icon: <Bell color={Colors.secondary} size={20} />, label: 'الإشعارات', sub: 'مفعّلة' },
-    { icon: <Shield color={Colors.cyan} size={20} />, label: 'الخصوصية والأمان', sub: 'إعدادات الحماية' },
-    { icon: <HelpCircle color={Colors.textMuted} size={20} />, label: 'مركز المساعدة', sub: 'أسئلة وإجابات' },
+    { icon: <Shield color={Colors.cyan} size={20} />, label: 'الخصوصية والأمان', sub: 'إعدادات الحماية', onPress: () => router.push('/privacy' as any) },
+    { icon: <HelpCircle color={Colors.textMuted} size={20} />, label: 'مركز المساعدة', sub: 'نظام التذاكر', onPress: () => router.push('/support' as any) },
   ];
 
   return (

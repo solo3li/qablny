@@ -12,7 +12,7 @@ namespace Qablny.Hubs;
 
 /// <summary>Real-time chat: send messages, typing indicator, read receipts</summary>
 [Authorize]
-public class ChatHub(MessageService messages, PresenceService presence, AppDbContext db, PushNotificationService pushNotification) : Hub
+public class ChatHub(MessageService messages, PresenceService presence, AppDbContext db, PushNotificationService pushNotification, SupportService support) : Hub
 {
     private static readonly ConcurrentDictionary<string, DateTime> _activeCalls = new();
     public override async Task OnConnectedAsync()
@@ -134,6 +134,26 @@ public class ChatHub(MessageService messages, PresenceService presence, AppDbCon
         // Broadcast Call Log to both users so it appears in Chat instantly
         await Clients.User(friendId.ToString()).SendAsync("ReceiveMessage", msg);
         await Clients.Caller.SendAsync("ReceiveMessage", msg);
+    }
+
+    // ─── Support Ticketing ────────────────────────────────────────────────────
+
+    public async Task JoinTicketGroup(Guid ticketId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"ticket_{ticketId}");
+    }
+
+    public async Task LeaveTicketGroup(Guid ticketId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"ticket_{ticketId}");
+    }
+
+    public async Task SendSupportMessage(Guid ticketId, bool isAdmin, MessageType type, string? content, int? duration, string? mediaUrl)
+    {
+        var senderId = CurrentUserId();
+        var msg = await support.SaveMessageAsync(ticketId, senderId, isAdmin, type, content, duration, mediaUrl);
+
+        await Clients.Group($"ticket_{ticketId}").SendAsync("ReceiveSupportMessage", msg);
     }
 
     private Guid CurrentUserId() =>

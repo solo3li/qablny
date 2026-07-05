@@ -36,6 +36,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Banner>          Banners          => Set<Banner>();
     public DbSet<PushNotificationLog> PushNotificationLogs => Set<PushNotificationLog>();
 
+    // Support
+    public DbSet<SupportTicket>   SupportTickets   => Set<SupportTicket>();
+    public DbSet<SupportMessage>  SupportMessages  => Set<SupportMessage>();
+
     protected override void OnModelCreating(ModelBuilder b)
     {
         var jsonOpts = JsonSerializerOptions.Default;
@@ -202,6 +206,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.HasOne(u => u.Agency).WithMany(a => a.Hosts)
              .HasForeignKey(u => u.AgencyId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // SupportTicket
+        b.Entity<SupportTicket>(e =>
+        {
+            e.HasKey(t => t.Id);
+            e.HasOne(t => t.User).WithMany(u => u.SupportTickets)
+             .HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // SupportMessage
+        b.Entity<SupportMessage>(e =>
+        {
+            e.HasKey(m => m.Id);
+            e.HasIndex(m => new { m.TicketId, m.CreatedAt });
+            e.HasOne(m => m.Ticket).WithMany(t => t.Messages)
+             .HasForeignKey(m => m.TicketId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── Seed Data ──────────────────────────────────────────────────────
