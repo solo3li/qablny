@@ -5,7 +5,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { axiosClient } from '../../src/api/axiosClient';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
-import { router } from 'expo-router';
+import { router, Link } from 'expo-router';
 import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle, Wallet } from 'lucide-react-native';
 
 export default function ProfileScreen() {
@@ -57,9 +57,9 @@ export default function ProfileScreen() {
 
   const menuItems = [
     { icon: <Users color={Colors.primary} size={20} />, label: 'الوكالات', sub: 'الانضمام لوكالة', onPress: () => setShowAgencyModal(true) },
-    { icon: <Bell color={Colors.secondary} size={20} />, label: 'الإشعارات', sub: 'مفعّلة', onPress: () => router.push('/notifications' as any) },
-    { icon: <Shield color={Colors.cyan} size={20} />, label: 'الخصوصية والأمان', sub: 'إعدادات الحماية', onPress: () => router.push('/privacy' as any) },
-    { icon: <HelpCircle color={Colors.textMuted} size={20} />, label: 'مركز المساعدة', sub: 'نظام التذاكر', onPress: () => router.push('/support' as any) },
+    { icon: <Bell color={Colors.secondary} size={20} />, label: 'الإشعارات', sub: 'مفعّلة', href: '/notifications' },
+    { icon: <Shield color={Colors.cyan} size={20} />, label: 'الخصوصية والأمان', sub: 'إعدادات الحماية', href: '/privacy' },
+    { icon: <HelpCircle color={Colors.textMuted} size={20} />, label: 'مركز المساعدة', sub: 'نظام التذاكر', href: '/support' },
   ];
 
   return (
@@ -159,8 +159,8 @@ export default function ProfileScreen() {
 
         {/* Settings menu */}
         <GlassCard style={styles.menuCard} tint="light">
-          {menuItems.map((item, i) => (
-            <React.Fragment key={item.label}>
+          {menuItems.map((item, i) => {
+            const content = (
               <TouchableOpacity style={styles.menuItem} onPress={item.onPress}>
                 <View style={styles.menuLeft}>
                   <View style={[styles.menuIcon, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
@@ -173,9 +173,19 @@ export default function ProfileScreen() {
                 </View>
                 <ChevronRight color={Colors.textMuted} size={18} />
               </TouchableOpacity>
-              {i < menuItems.length - 1 && <View style={styles.menuDiv} />}
-            </React.Fragment>
-          ))}
+            );
+
+            return (
+              <React.Fragment key={item.label}>
+                {item.href ? (
+                  <Link href={item.href as any} asChild>
+                    {content}
+                  </Link>
+                ) : content}
+                {i < menuItems.length - 1 && <View style={styles.menuDiv} />}
+              </React.Fragment>
+            );
+          })}
         </GlassCard>
 
         {/* Logout */}

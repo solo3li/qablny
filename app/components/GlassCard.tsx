@@ -18,30 +18,34 @@ export function GlassCard({ children, style, glowColor, tint = 'light', intensit
   const CardComponent = Platform.OS === 'web' ? View : BlurView;
 
   return (
-    <CardComponent 
-      intensity={intensity}
-      tint={tint === 'light' ? 'light' : 'default'}
-      style={[
-        styles.card, 
-        { backgroundColor: bgColor },
-        Platform.OS === 'web' ? { 
-          backdropFilter: `blur(${intensity}px)`,
-          boxShadow: glowColor ? `0px 10px 24px ${glowColor}50` : Colors.shadowLight 
-        } as any : null,
-        style
-      ]} {...props}>
-      {children}
-    </CardComponent>
+    <View style={[styles.cardWrapper, style]} {...props}>
+      <CardComponent 
+        pointerEvents="none"
+        intensity={intensity}
+        tint={tint === 'light' ? 'light' : 'default'}
+        style={[
+          StyleSheet.absoluteFill,
+          styles.blurBackground,
+          { backgroundColor: bgColor },
+          Platform.OS === 'web' ? { 
+            backdropFilter: `blur(${intensity}px)`,
+            boxShadow: glowColor ? `0px 10px 24px ${glowColor}50` : Colors.shadowLight 
+          } as any : null,
+        ]}
+      />
+      <View style={styles.cardContent}>
+        {children}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  cardWrapper: {
     borderRadius: 24,
     borderWidth: 1,
     borderColor: Colors.glassBorderBright,
     overflow: 'hidden',
-    padding: 16,
     ...Platform.select({
       default: {
         shadowColor: '#000',
@@ -52,4 +56,10 @@ const styles = StyleSheet.create({
       }
     }),
   },
+  blurBackground: {
+    borderRadius: 24,
+  },
+  cardContent: {
+    padding: 16,
+  }
 });
