@@ -39,7 +39,7 @@ export default function MatchRoomScreen() {
 
   const handleSendGift = async (gift: any) => {
     try {
-      await axiosClient.post('/monetization/gifts/send', {
+      await axiosClient.post('/gifts/send', {
         giftId: gift.id,
         receiverId: partnerId
       });
@@ -52,7 +52,7 @@ export default function MatchRoomScreen() {
 
   const handleAddFriend = async () => {
     try {
-      await axiosClient.post(`/users/${partnerId}/friend-requests`);
+      await axiosClient.post(`/friends/request/${partnerId}`);
       Alert.alert('تم', 'تم إرسال طلب الصداقة بنجاح');
     } catch (err: any) {
       Alert.alert('خطأ', 'تعذر إرسال طلب الصداقة');
