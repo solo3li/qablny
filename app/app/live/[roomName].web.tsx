@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { 
   LiveKitRoom, 
@@ -12,8 +12,10 @@ import {
 import { Track } from 'livekit-client';
 import { Colors } from '../../constants/Colors';
 import { axiosClient as api } from '../../src/api/axiosClient';
-import { X, Send, Heart, Gift } from 'lucide-react-native';
-import { useAppStore } from '../../store/useAppStore';
+import { X, Send, Heart, Gift, Users } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width, height } = Dimensions.get('window');
 
 function RoomView({ isHost, roomName, roomId }: { isHost: boolean, roomName: string, roomId?: string }) {
   const router = useRouter();
@@ -22,10 +24,7 @@ function RoomView({ isHost, roomName, roomId }: { isHost: boolean, roomName: str
   const [messages, setMessages] = useState<any[]>([]);
   const [chatText, setChatText] = useState('');
   
-  // Viewers will see the host's camera
   const tracks = useTracks([Track.Source.Camera, Track.Source.Microphone], { onlySubscribed: true });
-  // Wait, if it's host, they should see their own local track, and viewers see remote.
-  // Actually, useTracks(Track.Source.Camera) returns all camera tracks.
   const allCameraTracks = useTracks([Track.Source.Camera]);
   const hostTrack = allCameraTracks[0];
 
@@ -61,16 +60,13 @@ function RoomView({ isHost, roomName, roomId }: { isHost: boolean, roomName: str
     if (isHost && roomId) {
       try {
         await api.post(`/live/${roomId}/end`);
-      } catch (e) {
-        console.log(e);
-      }
+      } catch (e) {}
     }
     room.disconnect();
     router.back();
   };
 
   const handleSendGift = () => {
-    // Send a fun heart animation via data channel as a "gift" for now
     const msg = { id: Date.now().toString(), type: 'gift', sender: localParticipant?.identity || 'Me' };
     setMessages(prev => [...prev, msg]);
     send(new TextEncoder().encode(JSON.stringify(msg)), { reliable: true });
@@ -82,10 +78,13 @@ function RoomView({ isHost, roomName, roomId }: { isHost: boolean, roomName: str
       {hostTrack ? (
         <VideoTrack trackRef={hostTrack} style={styles.video} />
       ) : (
-        <View style={[styles.video, { backgroundColor: '#111', justifyContent: 'center', alignItems: 'center' }]}>
-          <Text style={{color: '#FFF'}}>Waiting for host...</Text>
+        <View style={styles.waitingContainer}>
+          <Text style={styles.waitingText}>Waiting for host...</Text>
         </View>
       )}
+
+      {/* Top Gradient for Header Readability */}
+      <LinearGradient colors={['rgba(0,0,0,0.7)', 'transparent']} style={styles.topGradient} />
 
       {/* Overlays */}
       <View style={styles.overlay}>
@@ -93,29 +92,46 @@ function RoomView({ isHost, roomName, roomId }: { isHost: boolean, roomName: str
         <View style={styles.topBar}>
           <View style={styles.hostInfo}>
             <View style={styles.liveBadge}><Text style={styles.liveText}>LIVE</Text></View>
-            <Text style={styles.roomTitle}>{roomName}</Text>
+            <View style={styles.hostTextWrap}>
+              <Text style={styles.roomTitle} numberOfLines={1}>{isHost ? 'My Stream' : 'Live Stream'}</Text>
+              <Text style={styles.hostSubtitle} numberOfLines={1}>Room: {roomName.substring(0,8)}...</Text>
+            </View>
           </View>
-          <TouchableOpacity style={styles.closeButton} onPress={handleEndStream}>
-            <X color="#FFF" size={24} />
-          </TouchableOpacity>
+          
+          <View style={styles.rightActions}>
+            <View style={styles.viewersBadge}>
+              <Users color="#FFF" size={14} />
+              <Text style={styles.viewersText}>1</Text>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={handleEndStream}>
+              <X color="#FFF" size={20} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Chat Area */}
+        {/* Chat Area with Bottom Gradient */}
         <KeyboardAvoidingView 
           style={styles.bottomArea} 
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
         >
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.9)']} style={styles.bottomGradient} pointerEvents="none" />
+          
           <FlatList
             data={messages}
             keyExtractor={item => item.id}
             style={styles.chatList}
+            contentContainerStyle={styles.chatListContent}
+            showsVerticalScrollIndicator={false}
             inverted={false}
             renderItem={({ item }) => (
               <View style={styles.chatMessage}>
-                <Text style={styles.chatSender}>{item.sender}: </Text>
+                <Text style={styles.chatSender}>{item.sender.substring(0,10)}</Text>
                 {item.type === 'gift' ? (
-                  <Text style={{color: '#FCD34D', fontWeight: 'bold'}}>Sent a gift! 🎁</Text>
+                  <View style={styles.giftMessageWrap}>
+                    <Gift color="#FCD34D" size={16} />
+                    <Text style={styles.giftMessageText}>Sent a gift!</Text>
+                  </View>
                 ) : (
                   <Text style={styles.chatText}>{item.text}</Text>
                 )}
@@ -124,23 +140,27 @@ function RoomView({ isHost, roomName, roomId }: { isHost: boolean, roomName: str
             onContentSizeChange={(w, h) => { /* scroll to bottom logic */ }}
           />
 
-          <View style={styles.inputRow}>
-            <TextInput
-              style={styles.input}
-              placeholder="Say something..."
-              placeholderTextColor="rgba(255,255,255,0.6)"
-              value={chatText}
-              onChangeText={setChatText}
-              onSubmitEditing={handleSend}
-            />
+          <View style={styles.inputContainer}>
+            <View style={styles.inputWrap}>
+              <TextInput
+                style={styles.input}
+                placeholder="Say something..."
+                placeholderTextColor="rgba(255,255,255,0.7)"
+                value={chatText}
+                onChangeText={setChatText}
+                onSubmitEditing={handleSend}
+              />
+              <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+                <Send color={Colors.primary} size={18} />
+              </TouchableOpacity>
+            </View>
             {!isHost && (
               <TouchableOpacity style={styles.giftButton} onPress={handleSendGift}>
-                <Gift color="#FFF" size={20} />
+                <LinearGradient colors={['#F59E0B', '#EF4444']} style={styles.giftButtonGrad}>
+                  <Gift color="#FFF" size={20} />
+                </LinearGradient>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-              <Send color="#FFF" size={20} />
-            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -165,45 +185,69 @@ export default function LiveRoomScreen() {
   if (!token || !serverUrl) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{color: '#FFF'}}>Connecting...</Text>
+        <Text style={{color: '#FFF', fontFamily: 'PlusJakartaSans_500Medium'}}>Connecting to stream...</Text>
       </View>
     );
   }
 
   return (
-    <LiveKitRoom
-      serverUrl={serverUrl}
-      token={token}
-      connect={true}
-      audio={true}
-      video={isHost === 'true'} // Host publishes video automatically
-    >
-      <RoomView 
-        isHost={isHost === 'true'} 
-        roomName={roomName as string} 
-        roomId={roomId as string} 
-      />
-    </LiveKitRoom>
+    <View style={styles.wrapper}>
+      <LiveKitRoom
+        serverUrl={serverUrl}
+        token={token}
+        connect={true}
+        audio={true}
+        video={isHost === 'true'}
+        style={{ flex: 1, width: '100%', height: '100%', display: 'flex' }}
+      >
+        <RoomView 
+          isHost={isHost === 'true'} 
+          roomName={roomName as string} 
+          roomId={roomId as string} 
+        />
+      </LiveKitRoom>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  video: { ...StyleSheet.absoluteFillObject },
-  overlay: { flex: 1, justifyContent: 'space-between', padding: 16, paddingTop: 60 },
-  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  hostInfo: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(0,0,0,0.4)', padding: 8, borderRadius: 20 },
-  liveBadge: { backgroundColor: Colors.danger, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  liveText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
-  roomTitle: { color: '#FFF', fontWeight: 'bold', fontSize: 14, marginRight: 8 },
-  closeButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
-  bottomArea: { flex: 0.5, justifyContent: 'flex-end', gap: 16 },
-  chatList: { flex: 1, marginBottom: 16 },
-  chatMessage: { flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.3)', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, marginBottom: 4 },
-  chatSender: { color: 'rgba(255,255,255,0.7)', fontWeight: 'bold' },
-  chatText: { color: '#FFF' },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  input: { flex: 1, height: 44, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 22, paddingHorizontal: 16, color: '#FFF' },
-  giftButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.secondary, justifyContent: 'center', alignItems: 'center' },
-  sendButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }
+  wrapper: { flex: 1, backgroundColor: '#000', width: '100%', height: Platform.OS === 'web' ? '100vh' : '100%' },
+  container: { flex: 1, width: '100%', height: '100%', position: 'relative' },
+  video: { width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, objectFit: 'cover' as any },
+  waitingContainer: { ...StyleSheet.absoluteFillObject, backgroundColor: '#111', justifyContent: 'center', alignItems: 'center' },
+  waitingText: { color: '#FFF', fontFamily: 'PlusJakartaSans_500Medium', fontSize: 16 },
+  
+  topGradient: { position: 'absolute', top: 0, left: 0, right: 0, height: 120 },
+  overlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'space-between', zIndex: 10 },
+  
+  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 60 : 40 },
+  hostInfo: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(0,0,0,0.3)', padding: 6, paddingRight: 16, borderRadius: 100, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  liveBadge: { backgroundColor: Colors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 },
+  liveText: { color: '#FFF', fontSize: 11, fontFamily: 'PlusJakartaSans_800ExtraBold' },
+  hostTextWrap: { justifyContent: 'center' },
+  roomTitle: { color: '#FFF', fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13 },
+  hostSubtitle: { color: 'rgba(255,255,255,0.7)', fontFamily: 'PlusJakartaSans_500Medium', fontSize: 10 },
+  
+  rightActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  viewersBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 100, gap: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  viewersText: { color: '#FFF', fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold' },
+  closeButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  
+  bottomArea: { flex: 0.6, justifyContent: 'flex-end', position: 'relative' },
+  bottomGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, top: 0 },
+  
+  chatList: { flex: 1, paddingHorizontal: 16, marginBottom: 16, zIndex: 2 },
+  chatListContent: { justifyContent: 'flex-end', flexGrow: 1, paddingBottom: 10 },
+  chatMessage: { backgroundColor: 'rgba(0,0,0,0.4)', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, marginBottom: 8, maxWidth: '85%', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  chatSender: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold', marginBottom: 2 },
+  chatText: { color: '#FFF', fontSize: 14, fontFamily: 'PlusJakartaSans_500Medium' },
+  giftMessageWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  giftMessageText: { color: '#FCD34D', fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' },
+  
+  inputContainer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 24 : 16, zIndex: 2, gap: 12 },
+  inputWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 100, paddingLeft: 20, paddingRight: 6, height: 48, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  input: { flex: 1, color: '#FFF', fontSize: 15, fontFamily: 'PlusJakartaSans_500Medium', outlineStyle: 'none' as any, height: '100%' },
+  sendButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
+  giftButton: { width: 48, height: 48, borderRadius: 24, overflow: 'hidden', elevation: 5, shadowColor: '#F59E0B', shadowOpacity: 0.5, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
+  giftButtonGrad: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
 });
