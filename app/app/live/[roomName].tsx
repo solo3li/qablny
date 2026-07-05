@@ -14,6 +14,7 @@ import { Colors } from '../../constants/Colors';
 import { axiosClient as api } from '../../src/api/axiosClient';
 import { X, Send, Heart, Gift, Users } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Audio } from 'expo-av';
 
 const { width, height } = Dimensions.get('window');
 
@@ -38,8 +39,21 @@ function RoomView({ isHost, roomName, roomId }: { isHost: boolean, roomName: str
 
   useEffect(() => {
     if (isHost && localParticipant) {
-      localParticipant.setCameraEnabled(true);
-      localParticipant.setMicrophoneEnabled(true);
+      (async () => {
+        try {
+          const perm = await Audio.requestPermissionsAsync();
+          if (perm.status === 'granted') {
+            await Audio.setAudioModeAsync({
+              allowsRecordingIOS: true,
+              playsInSilentModeIOS: true,
+            });
+          }
+          await localParticipant.setCameraEnabled(true);
+          await localParticipant.setMicrophoneEnabled(true);
+        } catch (e) {
+          console.error('Permission error:', e);
+        }
+      })();
     }
     return () => {
       if (isHost && roomId) {
@@ -198,7 +212,6 @@ export default function LiveRoomScreen() {
         connect={true}
         audio={true}
         video={isHost === 'true'}
-        style={{ flex: 1, width: '100%', height: '100%', display: 'flex' }}
       >
         <RoomView 
           isHost={isHost === 'true'} 
