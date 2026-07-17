@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const API_BASE_URL = 'https://api.qablny.online/api';
+const API_BASE_URL = 'https://api.46.101.172.175.nip.io/api';
 
 let pollInterval = null;
 

@@ -14,7 +14,7 @@ import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks, useLocalParticip
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
 
-const LIVEKIT_URL = 'wss://livekit.qablny.online';
+const LIVEKIT_URL = 'wss://livekit.46.101.172.175.nip.io';
 
 function RemoteVideo() {
   const tracks = useTracks([Track.Source.Camera]);

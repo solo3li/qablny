@@ -16,7 +16,7 @@ import { Track } from 'livekit-client';
 
 registerGlobals();
 
-const LIVEKIT_URL = 'wss://livekit.qablny.online';
+const LIVEKIT_URL = 'wss://livekit.46.101.172.175.nip.io';
 
 function RemoteVideo() {
   const tracks = useTracks([Track.Source.Camera]);
