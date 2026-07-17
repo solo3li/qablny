@@ -1,4 +1,4 @@
-domain: qablny.online
+domain: 46.101.172.175.nip.io
 
 secrets:
   postgresPassword: "supersecurepassword"
