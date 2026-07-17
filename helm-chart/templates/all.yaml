@@ -184,7 +184,7 @@ spec:
         - name: livekit
           image: {{ .Values.images.livekit }}
           command: ["/livekit-server"]
-          args: ["--bind", "0.0.0.0", "--port", "7880"]
+          args: ["--bind", "0.0.0.0", "--port", "7880", "--node-ip", "46.101.172.175"]
           env:
             - name: LIVEKIT_KEYS
               value: "{{ .Values.secrets.livekitApiKey }}: {{ .Values.secrets.livekitApiSecret }}"
