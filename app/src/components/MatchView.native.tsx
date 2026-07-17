@@ -281,6 +281,13 @@ export default function MatchScreen() {
       setMessages(prev => [...prev, { sender: data.matchedUser?.name || 'مستخدم', text: 'انضم للمكالمة', type: 'system' }]);
     });
 
+    matchSignalR.setOnMatchSkipped(() => {
+      setLivekitToken(null);
+      setRemotePeer(null);
+      setIsSearching(true);
+      matchSignalR.leaveQueue().then(() => matchSignalR.joinQueue({}));
+    });
+
     return () => {
       matchSignalR.leaveQueue();
     };

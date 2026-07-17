@@ -16,6 +16,7 @@ class MatchSignalRService {
   private onQueueJoinedCallback: (() => void) | null = null;
   private onQueueLeftCallback: (() => void) | null = null;
   private onMatchFoundCallback: ((payload: { RoomName: string, LiveKitToken: string, PartnerId: string, PartnerName: string, PartnerImage: string }) => void) | null = null;
+  private onMatchSkippedCallback: (() => void) | null = null;
 
   public getConnection() { return this.connection; }
 
@@ -49,6 +50,11 @@ class MatchSignalRService {
       this.onMatchFoundCallback?.(payload);
     });
 
+    this.connection.on("MatchSkipped", () => {
+      console.log("Match Skipped by Partner");
+      this.onMatchSkippedCallback?.();
+    });
+
     await this.connection.start();
     console.log("SignalR Connected to Match Hub");
   }
@@ -57,6 +63,7 @@ class MatchSignalRService {
   public setOnQueueJoined(cb: () => void) { this.onQueueJoinedCallback = cb; }
   public setOnQueueLeft(cb: () => void) { this.onQueueLeftCallback = cb; }
   public setOnMatchFound(cb: (payload: any) => void) { this.onMatchFoundCallback = cb; }
+  public setOnMatchSkipped(cb: () => void) { this.onMatchSkippedCallback = cb; }
 
   // Actions
   public async joinQueue(filters: JoinQueueRequest) {

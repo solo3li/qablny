@@ -50,6 +50,14 @@ public class MatchService(
     public async Task LeaveQueueAsync(Guid userId)
     {
         var rd = redis.GetDatabase();
+
+        // Notify the other user in the active match if they disconnect
+        var roomName = await rd.StringGetAsync(ActiveKey(userId));
+        if (!roomName.IsNullOrEmpty)
+        {
+            await matchHub.Clients.Group(roomName!).SendAsync("MatchSkipped");
+        }
+
         await RemoveFromAllQueues(rd, userId.ToString());
         await rd.KeyDeleteAsync([FiltersKey(userId), ConnKey(userId), ActiveKey(userId)]);
     }
