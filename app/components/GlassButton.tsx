@@ -43,7 +43,7 @@ export function GlassButton({ title, loading, variant = 'primary', icon, style, 
       style={[
         styles.button, 
         { backgroundColor: getBgColor() },
-        variant === 'outline' && { borderWidth: 2, borderColor: Colors.glassBorderBright },
+        variant === 'outline' && { borderWidth: 1.5, borderColor: Colors.glassBorder },
         Platform.OS === 'web' && variant !== 'outline' && !disabled ? { boxShadow: getShadow() } as any : null,
         style
       ]} 

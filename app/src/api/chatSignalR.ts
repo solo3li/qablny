@@ -1,10 +1,7 @@
-import * as signalR from '@microsoft/signalr';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from './axiosClient';
+import { axiosClient } from './axiosClient';
+import { centrifugoManager } from './centrifugoClient';
 
 class ChatSignalRService {
-  private connection: signalR.HubConnection | null = null;
-  
   // Callbacks
   private onReceiveMessageCallback: ((msg: any) => void) | null = null;
   private onMessageSentCallback: ((msg: any) => void) | null = null;
@@ -17,6 +14,9 @@ class ChatSignalRService {
   private onRecordingStoppedCallback: ((userId: string) => void) | null = null;
   private onReceiveGiftCallback: ((payload: any) => void) | null = null;
   private onReceiveSupportMessageCallback: ((msg: any) => void) | null = null;
+  private onStreakUpdatedCallback: ((payload: any) => void) | null = null;
+  private onStreakRestoredCallback: ((payload: any) => void) | null = null;
+  private onSnapOpenedCallback: ((payload: any) => void) | null = null;
   
   // Call Callbacks
   private onIncomingCallCallback: ((payload: any) => void) | null = null;
@@ -24,49 +24,93 @@ class ChatSignalRService {
   private onCallDeclinedCallback: ((friendId: string) => void) | null = null;
   private onCallEndedCallback: ((friendId: string) => void) | null = null;
 
-  public getConnection() { return this.connection; }
+  private isConnected = false;
+  private ticketUnsubs: Map<string, () => void> = new Map();
+
+  // Synthetic connection wrapper for backwards-compatibility with callStore and other components
+  public getConnection() {
+    return {
+      state: this.isConnected ? 'Connected' : 'Disconnected',
+      invoke: async (methodName: string, ...args: any[]) => {
+        switch (methodName) {
+          case 'InitiateCall':
+            return await this.initiateCall(args[0], args[1]);
+          case 'AcceptCall':
+            return await this.acceptCall(args[0], args[1]);
+          case 'DeclineCall':
+            return await this.declineCall(args[0]);
+          case 'EndCall':
+            return await this.endCall(args[0], args[1], args[2]);
+          case 'SendMessage':
+            return await this.sendMessage(args[0], args[1]?.content || args[1]);
+          case 'StartTyping':
+            return await this.startTyping(args[0]);
+          case 'StopTyping':
+            return await this.stopTyping(args[0]);
+          case 'MarkRead':
+            return await this.markRead(args[0]);
+          case 'JoinTicketGroup':
+            return await this.joinTicketGroup(args[0]);
+          case 'LeaveTicketGroup':
+            return await this.leaveTicketGroup(args[0]);
+          case 'SendSupportMessage':
+            return await this.sendSupportMessage(args[0], args[1], args[2], args[3], args[4], args[5]);
+          default:
+            console.warn(`[Centrifugo] Unknown invoke method: ${methodName}`);
+        }
+      }
+    };
+  }
 
   public async connect() {
-    if (this.connection) return;
+    if (this.isConnected) return;
 
-    const token = await AsyncStorage.getItem('accessToken');
-    if (!token) throw new Error("No access token found");
+    await centrifugoManager.connect();
+    this.isConnected = true;
 
-    const hubUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) + '/hubs/chat' : API_BASE_URL + '/hubs/chat';
-
-    this.connection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl, {
-        accessTokenFactory: () => token
-      })
-      .withAutomaticReconnect()
-      .build();
-
-    this.connection.on("ReceiveMessage", (msg: any) => {
-      console.log("🔥 SignalR ReceiveMessage:", msg);
+    // Register event listeners from personal Centrifugo channel
+    centrifugoManager.on('ReceiveMessage', (msg: any) => {
+      console.log('🔥 Centrifugo ReceiveMessage:', msg);
       this.onReceiveMessageCallback?.(msg);
     });
-    this.connection.on("MessageSent", (msg: any) => this.onMessageSentCallback?.(msg));
-    this.connection.on("TypingStarted", (userId: string) => this.onTypingStartedCallback?.(userId));
-    this.connection.on("TypingStopped", (userId: string) => this.onTypingStoppedCallback?.(userId));
-    this.connection.on("MessagesRead", (userId: string) => this.onMessagesReadCallback?.(userId));
-    this.connection.on("UserOnline", (userId: string) => this.onUserOnlineCallback?.(userId));
-    this.connection.on("UserOffline", (userId: string) => this.onUserOfflineCallback?.(userId));
-    this.connection.on("RecordingStarted", (userId: string) => this.onRecordingStartedCallback?.(userId));
-    this.connection.on("RecordingStopped", (userId: string) => this.onRecordingStoppedCallback?.(userId));
-    this.connection.on("ReceiveGift", (payload: any) => this.onReceiveGiftCallback?.(payload));
-    this.connection.on("ReceiveSupportMessage", (msg: any) => {
-      console.log("🔥 SignalR ReceiveSupportMessage:", msg);
+
+    centrifugoManager.on('MessageSent', (msg: any) => this.onMessageSentCallback?.(msg));
+    centrifugoManager.on('TypingStarted', (data: any) => this.onTypingStartedCallback?.(data?.userId || data));
+    centrifugoManager.on('TypingStopped', (data: any) => this.onTypingStoppedCallback?.(data?.userId || data));
+    centrifugoManager.on('MessagesRead', (data: any) => this.onMessagesReadCallback?.(data?.userId || data));
+    centrifugoManager.on('UserOnline', (data: any) => this.onUserOnlineCallback?.(data?.userId || data));
+    centrifugoManager.on('UserOffline', (data: any) => this.onUserOfflineCallback?.(data?.userId || data));
+    centrifugoManager.on('RecordingStarted', (data: any) => this.onRecordingStartedCallback?.(data?.userId || data));
+    centrifugoManager.on('RecordingStopped', (data: any) => this.onRecordingStoppedCallback?.(data?.userId || data));
+    centrifugoManager.on('ReceiveGift', (payload: any) => this.onReceiveGiftCallback?.(payload));
+
+    centrifugoManager.on('ReceiveSupportMessage', (msg: any) => {
+      console.log('🔥 Centrifugo ReceiveSupportMessage:', msg);
       this.onReceiveSupportMessageCallback?.(msg);
     });
 
-    // Call Events
-    this.connection.on("IncomingCall", (payload: any) => this.onIncomingCallCallback?.(payload));
-    this.connection.on("CallAccepted", (payload: any) => this.onCallAcceptedCallback?.(payload));
-    this.connection.on("CallDeclined", (friendId: string) => this.onCallDeclinedCallback?.(friendId));
-    this.connection.on("CallEnded", (friendId: string) => this.onCallEndedCallback?.(friendId));
+    centrifugoManager.on('StreakUpdated', (payload: any) => {
+      console.log('🔥 Centrifugo StreakUpdated:', payload);
+      this.onStreakUpdatedCallback?.(payload);
+    });
 
-    await this.connection.start();
-    console.log("SignalR Connected to Chat Hub");
+    centrifugoManager.on('StreakRestored', (payload: any) => {
+      console.log('🔥 Centrifugo StreakRestored:', payload);
+      this.onStreakRestoredCallback?.(payload);
+    });
+
+    centrifugoManager.on('SnapOpened', (payload: any) => {
+      console.log('🔥 Centrifugo SnapOpened:', payload);
+      this.onSnapOpenedCallback?.(payload);
+    });
+
+    // Call Events
+    centrifugoManager.on('IncomingCall', (payload: any) => this.onIncomingCallCallback?.(payload));
+    centrifugoManager.on('CallAccepted', (payload: any) => this.onCallAcceptedCallback?.(payload));
+    centrifugoManager.on('CallDeclined', (data: any) => this.onCallDeclinedCallback?.(data?.friendId || data));
+    centrifugoManager.on('CallEnded', (data: any) => this.onCallEndedCallback?.(data?.friendId || data));
+
+    console.log('Centrifugo Connected to Chat Realtime Channel');
   }
 
   // Setters for callbacks
@@ -81,6 +125,9 @@ class ChatSignalRService {
   public setOnRecordingStopped(cb: (userId: string) => void) { this.onRecordingStoppedCallback = cb; }
   public setOnReceiveGift(cb: (payload: any) => void) { this.onReceiveGiftCallback = cb; }
   public setOnReceiveSupportMessage(cb: (msg: any) => void) { this.onReceiveSupportMessageCallback = cb; }
+  public setOnStreakUpdated(cb: (payload: any) => void) { this.onStreakUpdatedCallback = cb; }
+  public setOnStreakRestored(cb: (payload: any) => void) { this.onStreakRestoredCallback = cb; }
+  public setOnSnapOpened(cb: (payload: any) => void) { this.onSnapOpenedCallback = cb; }
 
   // Call Callbacks Setters
   public setOnIncomingCall(cb: (payload: any) => void) { this.onIncomingCallCallback = cb; }
@@ -90,69 +137,118 @@ class ChatSignalRService {
 
   // Actions
   public async sendMessage(friendId: string, text: string) {
-    if (!this.connection) await this.connect();
-    // Assuming type 0 = Text
-    await this.connection?.invoke("SendMessage", friendId, { type: 0, content: text });
+    if (!this.isConnected) await this.connect();
+    const res = await axiosClient.post(`/conversations/${friendId}/messages`, {
+      type: 0,
+      content: text
+    });
+    this.onMessageSentCallback?.(res.data);
+    return res.data;
   }
 
   public async startTyping(friendId: string) {
-    if (!this.connection) return;
-    await this.connection.invoke("StartTyping", friendId);
+    try {
+      await axiosClient.post('/realtime/typing/start', { friendId });
+    } catch (e) {}
   }
 
   public async stopTyping(friendId: string) {
-    if (!this.connection) return;
-    await this.connection.invoke("StopTyping", friendId);
+    try {
+      await axiosClient.post('/realtime/typing/stop', { friendId });
+    } catch (e) {}
   }
 
   public async startRecording(friendId: string) {
-    if (!this.connection) return;
-    try { await this.connection.invoke("StartRecording", friendId); } catch(e) {}
+    try {
+      await axiosClient.post('/realtime/recording/start', { friendId });
+    } catch (e) {}
   }
 
   public async stopRecording(friendId: string) {
-    if (!this.connection) return;
-    try { await this.connection.invoke("StopRecording", friendId); } catch(e) {}
+    try {
+      await axiosClient.post('/realtime/recording/stop', { friendId });
+    } catch (e) {}
   }
 
   public async markRead(friendId: string) {
-    if (!this.connection) return;
-    await this.connection.invoke("MarkRead", friendId);
+    try {
+      await axiosClient.put(`/conversations/${friendId}/read`);
+    } catch (e) {}
+  }
+
+  // Call Actions
+  public async initiateCall(friendId: string, callType: string = 'video') {
+    const res = await axiosClient.post('/realtime/call/initiate', {
+      friendId,
+      callType
+    });
+    return res.data;
+  }
+
+  public async acceptCall(callerId: string, roomName: string) {
+    const res = await axiosClient.post('/realtime/call/accept', {
+      callerId,
+      roomName
+    });
+    return res.data;
+  }
+
+  public async declineCall(callerId: string) {
+    const res = await axiosClient.post('/realtime/call/decline', {
+      callerId
+    });
+    return res.data;
+  }
+
+  public async endCall(friendId: string, roomName: string, callType: string = 'video') {
+    const res = await axiosClient.post('/realtime/call/end', {
+      friendId,
+      roomName,
+      callType
+    });
+    return res.data;
   }
 
   public async disconnect() {
-    if (this.connection) {
-      await this.connection.stop();
-      this.connection = null;
-    }
+    this.isConnected = false;
+    centrifugoManager.disconnect();
   }
 
   // Support Actions
   public async joinTicketGroup(ticketId: string) {
-    if (!this.connection) await this.connect();
-    await this.connection?.invoke("JoinTicketGroup", ticketId);
+    if (!this.isConnected) await this.connect();
+    const channel = `tickets:${ticketId}`;
+    const unsub = centrifugoManager.subscribeChannel(channel, (msg: any) => {
+      this.onReceiveSupportMessageCallback?.(msg);
+    });
+    this.ticketUnsubs.set(ticketId, unsub);
   }
 
   public async leaveTicketGroup(ticketId: string) {
-    if (!this.connection) return;
-    await this.connection.invoke("LeaveTicketGroup", ticketId);
+    const unsub = this.ticketUnsubs.get(ticketId);
+    if (unsub) {
+      unsub();
+      this.ticketUnsubs.delete(ticketId);
+    }
   }
 
   public async sendSupportMessage(ticketId: string, isAdmin: boolean, type: number, content: string | null, duration: number | null, mediaUrl: string | null) {
-    if (!this.connection) await this.connect();
-    await this.connection?.invoke("SendSupportMessage", ticketId, isAdmin, type, content, duration, mediaUrl);
+    const res = await axiosClient.post(`/support/tickets/${ticketId}/messages`, {
+      message: content,
+      type,
+      durationSeconds: duration,
+      mediaUrl
+    });
+    return res.data;
   }
 
-  // Debounced typing - call this whenever user types
+  // Debounced typing
   private typingDebounceTimers: Record<string, any> = {};
   public notifyTyping(friendId: string) {
-    // Send startTyping immediately on first call
     if (!this.typingDebounceTimers[friendId]) {
       this.startTyping(friendId).catch(() => {});
     }
-    // Clear existing debounce timer
     clearTimeout(this.typingDebounceTimers[friendId]);
-    // After 2 seconds of no typing, send stopTyping
     this.typingDebounceTimers[friendId] = setTimeout(() => {
       this.stopTyping(friendId).catch(() => {});
       delete this.typingDebounceTimers[friendId];

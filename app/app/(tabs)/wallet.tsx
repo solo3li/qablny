@@ -4,7 +4,7 @@ import { Colors } from '../../constants/Colors';
 import { useAppStore } from '../../store/useAppStore';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
-import { Wallet, Gift, Star, ArrowUpRight, Zap } from 'lucide-react-native';
+import { Wallet, Gift, Flame, Crown, ArrowUpRight, Coins, Zap } from 'lucide-react-native';
 
 const packages = [
   { id: 1, coins: 100, price: '0.99', popular: false },
@@ -48,7 +48,7 @@ export default function WalletScreen() {
             </View>
             <TouchableOpacity style={styles.historyBtn}>
               <Text style={styles.historyText}>سجل العمليات</Text>
-              <ArrowUpRight color={Colors.cyan} size={16} />
+              <ArrowUpRight color={Colors.primary} size={16} />
             </TouchableOpacity>
           </GlassCard>
         </View>
@@ -70,12 +70,12 @@ export default function WalletScreen() {
                 >
                   {pkg.popular && (
                     <View style={styles.popularBadge}>
-                      <Star color="#FFF" size={12} fill="#FFF" />
+                      <Flame color="#FFF" size={12} fill="#FFF" />
                       <Text style={styles.popularText}>الأكثر مبيعاً</Text>
                     </View>
                   )}
                   <View style={styles.coinsRow}>
-                    <Zap color={pkg.popular ? '#FFF' : Colors.primary} size={24} fill={pkg.popular ? '#FFF' : Colors.primary} />
+                    <Coins color={pkg.popular ? '#FFF' : '#F59E0B'} size={24} />
                     <Text style={[styles.coinsText, pkg.popular && { color: '#FFF' }]}>{pkg.coins}</Text>
                   </View>
                   <Text style={[styles.priceText, pkg.popular && { color: '#FFF' }]}>${pkg.price}</Text>
@@ -95,7 +95,7 @@ export default function WalletScreen() {
           <GlassCard style={styles.vipCard} tint="light">
             <View style={styles.vipContent}>
               <View style={styles.vipHeader}>
-                <Star color={Colors.primary} size={24} fill={Colors.primary} />
+                <Crown color={Colors.primary} size={24} />
                 <Text style={styles.vipTitle}>باقة الـ VIP</Text>
               </View>
               <Text style={styles.vipDesc}>احصل على مميزات حصرية، علامة توثيق، وتخفيض 20% على كل الهدايا.</Text>
@@ -121,9 +121,9 @@ const styles = StyleSheet.create({
   balanceTitle: { fontSize: 16, color: '#FFF', fontFamily: 'PlusJakartaSans_600SemiBold' },
   balanceAmountRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 20 },
   balanceAmount: { fontSize: 48, color: '#FFF', fontFamily: 'PlusJakartaSans_800ExtraBold' },
-  balanceCurrency: { fontSize: 16, color: Colors.cyan, fontFamily: 'PlusJakartaSans_700Bold' },
+  balanceCurrency: { fontSize: 16, color: Colors.primary, fontFamily: 'PlusJakartaSans_700Bold' },
   historyBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
-  historyText: { fontSize: 14, color: Colors.cyan, fontFamily: 'PlusJakartaSans_600SemiBold' },
+  historyText: { fontSize: 14, color: Colors.primary, fontFamily: 'PlusJakartaSans_600SemiBold' },
 
   section: { paddingHorizontal: 24, marginBottom: 30 },
   sectionTitle: { fontSize: 20, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text, marginBottom: 16 },

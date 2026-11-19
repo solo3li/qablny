@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
 import { router } from 'expo-router';
+import { Heart } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 import { useAuthStore } from '../src/store/authStore';
 
@@ -10,10 +11,11 @@ export default function SplashScreen() {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    const useNativeDriver = Platform.OS !== 'web';
     Animated.sequence([
       Animated.parallel([
-        Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 50, friction: 6 }),
-        Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.spring(scale, { toValue: 1, useNativeDriver, tension: 50, friction: 6 }),
+        Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver }),
       ])
     ]).start();
 
@@ -49,7 +51,7 @@ export default function SplashScreen() {
 
       <Animated.View style={[styles.logoWrap, { transform: [{ scale }], opacity }]}>
         <View style={styles.iconCircle}>
-          <Text style={styles.iconEmoji}>💖</Text>
+          <Heart size={44} color={Colors.primary} fill={Colors.primary} />
         </View>
 
         <Text style={styles.appName}>Qablny</Text>

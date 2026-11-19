@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Animated,
+  View, Text, StyleSheet, TouchableOpacity, Animated, Platform,
 } from 'react-native';
 import { Audio } from 'expo-av';
 import { Play, Pause } from 'lucide-react-native';
@@ -61,8 +61,8 @@ export function WaveformPlayer({ uri, durationSeconds, isMe = false }: WaveformP
   const handlePlayPause = async () => {
     // Button pulse animation
     Animated.sequence([
-      Animated.timing(playAnim, { toValue: 0.85, duration: 80, useNativeDriver: true }),
-      Animated.timing(playAnim, { toValue: 1, duration: 80, useNativeDriver: true }),
+      Animated.timing(playAnim, { toValue: 0.85, duration: 80, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(playAnim, { toValue: 1, duration: 80, useNativeDriver: Platform.OS !== 'web' }),
     ]).start();
 
     if (!sound) {

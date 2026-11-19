@@ -1,0 +1,12 @@
+port: 7880
+bind_addresses:
+  - ""
+rtc:
+  udp_port: 7882
+  tcp_port: 7891
+  use_external_ip: true
+  node_ip: "169.58.32.179"
+keys:
+  devkey: "devsecret1234567890"
+logging:
+  level: info

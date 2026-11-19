@@ -7,7 +7,7 @@ import { Colors } from '../constants/Colors';
 import { router } from 'expo-router';
 import { axiosClient } from '../src/api/axiosClient';
 import { 
-  ArrowRight, Bell, Heart, MessageCircle, Gift, Star, 
+  ArrowRight, Bell, Heart, MessageCircle, Gift, Crown, 
   Users, Shield, CheckCheck 
 } from 'lucide-react-native';
 
@@ -25,13 +25,13 @@ interface Notification {
 }
 
 const typeConfig: Record<NotificationType, { icon: React.ReactNode; color: string; bg: string }> = {
-  like:    { icon: <Heart size={20} color="#FF6B8A" fill="#FF6B8A" />, color: '#FF6B8A', bg: 'rgba(255,107,138,0.12)' },
-  message: { icon: <MessageCircle size={20} color={Colors.secondary} />, color: Colors.secondary, bg: 'rgba(120,80,255,0.12)' },
-  gift:    { icon: <Gift size={20} color="#FFB830" />, color: '#FFB830', bg: 'rgba(255,184,48,0.12)' },
+  like:    { icon: <Heart size={20} color={Colors.primary} fill={Colors.primary} />, color: Colors.primary, bg: Colors.primaryDim },
+  message: { icon: <MessageCircle size={20} color={Colors.primary} />, color: Colors.primary, bg: Colors.primaryDim },
+  gift:    { icon: <Gift size={20} color="#F59E0B" />, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
   match:   { icon: <Heart size={20} color={Colors.primary} fill={Colors.primary} />, color: Colors.primary, bg: Colors.primaryDim },
-  system:  { icon: <Shield size={20} color={Colors.textMuted} />, color: Colors.textMuted, bg: Colors.surface },
-  vip:     { icon: <Star size={20} color="#FFB830" fill="#FFB830" />, color: '#FFB830', bg: 'rgba(255,184,48,0.12)' },
-  friend:  { icon: <Users size={20} color={Colors.cyan} />, color: Colors.cyan, bg: Colors.cyanDim },
+  system:  { icon: <Shield size={20} color={Colors.textSecondary} />, color: Colors.textSecondary, bg: '#F1F3F5' },
+  vip:     { icon: <Crown size={20} color="#F59E0B" />, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
+  friend:  { icon: <Users size={20} color={Colors.primary} />, color: Colors.primary, bg: Colors.primaryDim },
 };
 
 // Fallback demo notifications when there's no API
@@ -47,8 +47,8 @@ const demoNotifications: Notification[] = [
   {
     id: '2',
     type: 'gift',
-    title: 'استلمت هدية 🎁',
-    body: 'أرسل لك أحمد هدية "ماسة 💎" - 500 عملة',
+    title: 'استلمت هدية',
+    body: 'أرسل لك أحمد هدية "ماسة" - 500 عملة',
     isRead: false,
     createdAt: new Date(Date.now() - 30 * 60000).toISOString(),
   },
@@ -71,7 +71,7 @@ const demoNotifications: Notification[] = [
   {
     id: '5',
     type: 'vip',
-    title: 'مكافأة VIP أسبوعية 👑',
+    title: 'مكافأة VIP أسبوعية',
     body: 'تم إضافة 100 عملة مكافأة على اشتراكك الأسبوعي',
     isRead: true,
     createdAt: new Date(Date.now() - 24 * 3600000).toISOString(),

@@ -1,6 +1,5 @@
-import * as signalR from '@microsoft/signalr';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from './axiosClient';
+import { axiosClient } from './axiosClient';
+import { centrifugoManager } from './centrifugoClient';
 
 export interface JoinQueueRequest {
   GenderPref?: number;
@@ -10,53 +9,80 @@ export interface JoinQueueRequest {
 }
 
 class MatchSignalRService {
-  private connection: signalR.HubConnection | null = null;
-  
   // Callbacks
   private onQueueJoinedCallback: (() => void) | null = null;
   private onQueueLeftCallback: (() => void) | null = null;
-  private onMatchFoundCallback: ((payload: { RoomName: string, LiveKitToken: string, PartnerId: string, PartnerName: string, PartnerImage: string }) => void) | null = null;
+  private onMatchFoundCallback: ((payload: {
+    RoomName: string;
+    LiveKitToken: string;
+    PartnerId: string;
+    PartnerName: string;
+    PartnerImage: string;
+  }) => void) | null = null;
   private onMatchSkippedCallback: (() => void) | null = null;
+  private onBoostActivatedCallback: ((payload: any) => void) | null = null;
+  private onQueueTimeoutCallback: ((payload: any) => void) | null = null;
 
-  public getConnection() { return this.connection; }
+  private isConnected = false;
+
+  public getConnection() {
+    return {
+      state: this.isConnected ? 'Connected' : 'Disconnected',
+      invoke: async (methodName: string, ...args: any[]) => {
+        switch (methodName) {
+          case 'JoinQueue':
+            return await this.joinQueue(args[0]);
+          case 'LeaveQueue':
+            return await this.leaveQueue();
+          case 'Skip':
+            return await this.skip();
+          case 'Boost':
+            return await this.boost();
+          default:
+            console.warn(`[Centrifugo Match] Unknown invoke method: ${methodName}`);
+        }
+      }
+    };
+  }
 
   public async connect() {
-    if (this.connection) return;
+    if (this.isConnected) return;
 
-    const token = await AsyncStorage.getItem('accessToken');
-    if (!token) throw new Error("No access token found");
+    await centrifugoManager.connect();
+    this.isConnected = true;
 
-    const hubUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) + '/hubs/match' : API_BASE_URL + '/hubs/match';
-
-    this.connection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl, {
-        accessTokenFactory: () => token
-      })
-      .withAutomaticReconnect()
-      .build();
-
-    this.connection.on("QueueJoined", () => {
-      console.log("Match Queue Joined");
-      this.onQueueJoinedCallback?.();
+    // Listen to personal channel match events
+    centrifugoManager.on('MatchFound', (payload: any) => {
+      console.log('Centrifugo Match Found!', payload);
+      const matchObj = payload.match || payload;
+      const normalized = {
+        RoomName: matchObj.roomName || matchObj.RoomName || payload.roomName || payload.RoomName,
+        LiveKitToken: matchObj.liveKitToken || matchObj.LiveKitToken || payload.liveKitToken || payload.LiveKitToken,
+        PartnerId: matchObj.matchedUser?.id || payload.matchedUser?.id || payload.partnerId || payload.PartnerId,
+        PartnerName: matchObj.matchedUser?.name || payload.matchedUser?.name || payload.partnerName || payload.PartnerName || 'مستخدم',
+        PartnerImage: matchObj.matchedUser?.profileImageUrl || payload.matchedUser?.profileImageUrl || payload.partnerImage || payload.PartnerImage || '',
+        ...payload,
+        ...matchObj
+      };
+      this.onMatchFoundCallback?.(normalized);
     });
 
-    this.connection.on("QueueLeft", () => {
-      console.log("Match Queue Left");
-      this.onQueueLeftCallback?.();
-    });
-
-    this.connection.on("MatchFound", (payload: any) => {
-      console.log("Match Found!", payload);
-      this.onMatchFoundCallback?.(payload);
-    });
-
-    this.connection.on("MatchSkipped", () => {
-      console.log("Match Skipped by Partner");
+    centrifugoManager.on('MatchSkipped', () => {
+      console.log('Centrifugo Match Skipped by Partner');
       this.onMatchSkippedCallback?.();
     });
 
-    await this.connection.start();
-    console.log("SignalR Connected to Match Hub");
+    centrifugoManager.on('BoostActivated', (payload: any) => {
+      console.log('Centrifugo Boost Activated!', payload);
+      this.onBoostActivatedCallback?.(payload);
+    });
+
+    centrifugoManager.on('QueueTimeout', (payload: any) => {
+      console.log('Centrifugo Queue Timeout:', payload);
+      this.onQueueTimeoutCallback?.(payload);
+    });
+
+    console.log('Centrifugo Connected to Match Channel');
   }
 
   // Setters for callbacks
@@ -64,28 +90,86 @@ class MatchSignalRService {
   public setOnQueueLeft(cb: () => void) { this.onQueueLeftCallback = cb; }
   public setOnMatchFound(cb: (payload: any) => void) { this.onMatchFoundCallback = cb; }
   public setOnMatchSkipped(cb: () => void) { this.onMatchSkippedCallback = cb; }
+  public setOnBoostActivated(cb: (payload: any) => void) { this.onBoostActivatedCallback = cb; }
+  public setOnQueueTimeout(cb: (payload: any) => void) { this.onQueueTimeoutCallback = cb; }
 
   // Actions
   public async joinQueue(filters: JoinQueueRequest) {
-    if (!this.connection) await this.connect();
-    await this.connection?.invoke("JoinQueue", filters);
+    if (!this.isConnected) await this.connect();
+
+    try {
+      const res = await axiosClient.post('/match/queue/join', {
+        preferredGender: filters.GenderPref,
+        minAge: filters.MinAge,
+        maxAge: filters.MaxAge,
+        callType: filters.CallType
+      });
+
+      const data = res.data;
+      const matchObj = data.match || data;
+      if (data.status === 'queued') {
+        this.onQueueJoinedCallback?.();
+      } else if (matchObj.roomName) {
+        // Instant match from Redis Lua
+        const normalized = {
+          RoomName: matchObj.roomName,
+          LiveKitToken: matchObj.liveKitToken,
+          PartnerId: matchObj.matchedUser?.id,
+          PartnerName: matchObj.matchedUser?.name || 'مستخدم',
+          PartnerImage: matchObj.matchedUser?.profileImageUrl || '',
+          ...data,
+          ...matchObj
+        };
+        this.onMatchFoundCallback?.(normalized);
+      }
+      return data;
+    } catch (e) {
+      console.error('joinQueue failed:', e);
+      throw e;
+    }
   }
 
   public async leaveQueue() {
-    if (!this.connection) return;
-    await this.connection.invoke("LeaveQueue");
+    try {
+      await axiosClient.post('/match/queue/leave');
+      this.onQueueLeftCallback?.();
+    } catch (e) {
+      console.error('leaveQueue failed:', e);
+    }
   }
 
   public async skip() {
-    if (!this.connection) return;
-    await this.connection.invoke("Skip");
+    try {
+      const res = await axiosClient.post('/match/skip');
+      return res.data;
+    } catch (e) {
+      console.error('skip failed:', e);
+    }
+  }
+
+  public async boost() {
+    if (!this.isConnected) await this.connect();
+    try {
+      const res = await axiosClient.post('/match/boost');
+      return res.data;
+    } catch (e) {
+      console.error('boost failed:', e);
+      throw e;
+    }
+  }
+
+  public async getBoostStatus() {
+    try {
+      const res = await axiosClient.get('/match/boost/status');
+      return res.data;
+    } catch (e) {
+      console.error('getBoostStatus failed:', e);
+      throw e;
+    }
   }
 
   public async disconnect() {
-    if (this.connection) {
-      await this.connection.stop();
-      this.connection = null;
-    }
+    this.isConnected = false;
   }
 }
 

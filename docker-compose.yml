@@ -1,0 +1,248 @@
+services:
+
+  # ── Python Django & Django Ninja API ────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: qablny-api
+    command: uvicorn qablny.asgi:application --host 0.0.0.0 --port 8080 --workers 2 --proxy-headers --forwarded-allow-ips=*
+    ports:
+      - "${API_PORT:-5050}:8080"
+    volumes:
+      - ./backend:/app
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-qablny}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: qablny-api
+      JWT_AUDIENCE: qablny-app
+      JWT_EXPIRY_MINUTES: "60"
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+      LIVEKIT_SERVER_URL: http://livekit:7880
+      LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-wss://livekit-qablny.169.58.32.179.nip.io}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-https://minio-qablny.169.58.32.179.nip.io}
+      LIBRETRANSLATE_BASE_URL: http://libretranslate:5000
+      CENTRIFUGO_HTTP_API_URL: http://centrifugo:8000/api
+      CENTRIFUGO_API_KEY: ${CENTRIFUGO_API_KEY}
+      CENTRIFUGO_SECRET_KEY: ${CENTRIFUGO_SECRET_KEY}
+      CENTRIFUGO_PUBLIC_URL: ${CENTRIFUGO_PUBLIC_URL:-wss://centrifugo-qablny.169.58.32.179.nip.io/connection/websocket}
+      INNGEST_BASE_URL: http://inngest:8288
+      INNGEST_PUBLIC_URL: ${INNGEST_PUBLIC_URL:-https://inngest-qablny.169.58.32.179.nip.io}
+      ALLOWED_HOSTS: "*"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      livekit:
+        condition: service_started
+    networks:
+      - qablny
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Centrifugo v5 (Real-time WebSocket Gateway) ─────────────────────────────
+  centrifugo:
+    image: centrifugal/centrifugo:v5
+    container_name: qablny-centrifugo
+    ports:
+      - "${CENTRIFUGO_PORT:-8089}:8000"
+    volumes:
+      - ./centrifugo/config.json:/centrifugo/config.json:ro
+    command: ["centrifugo", "-c", "config.json"]
+    networks:
+      - qablny
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Inngest Dev Server (Background Workflows & Event Engine) ────────────────
+  inngest:
+    image: inngest/inngest:latest
+    container_name: qablny-inngest
+    ports:
+      - "${INNGEST_PORT:-8488}:8288"
+    command: ["inngest", "dev", "-u", "http://api:8080/api/inngest", "--no-discovery", "--host", "0.0.0.0"]
+    depends_on:
+      - api
+    networks:
+      - qablny
+    restart: unless-stopped
+
+  # ── Agency Dashboard ────────────────────────────────────────────────────────
+  agency:
+    build:
+      context: ./agency-dashboard
+      dockerfile: Dockerfile
+    container_name: qablny-agency
+    ports:
+      - "${AGENCY_PORT:-8088}:8080"
+    environment:
+      VITE_API_URL: "${API_PUBLIC_URL:-https://api-qablny.169.58.32.179.nip.io/api}"
+    depends_on:
+      - api
+    networks:
+      - qablny
+    restart: unless-stopped
+
+  # ── Web Application (Expo Web) ──────────────────────────────────────────────
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: qablny-app
+    ports:
+      - "${APP_PORT:-8081}:80"
+    environment:
+      EXPO_PUBLIC_API_URL: "${API_PUBLIC_URL:-https://api-qablny.169.58.32.179.nip.io/api}"
+      EXPO_PUBLIC_LIVEKIT_URL: "${LIVEKIT_PUBLIC_URL:-wss://livekit-qablny.169.58.32.179.nip.io}"
+      EXPO_PUBLIC_CENTRIFUGO_URL: "${CENTRIFUGO_PUBLIC_URL:-wss://centrifugo-qablny.169.58.32.179.nip.io/connection/websocket}"
+    depends_on:
+      - api
+      - centrifugo
+    networks:
+      - qablny
+    restart: unless-stopped
+
+  # ── PostgreSQL 16 ───────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: qablny-postgres
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-qablny}
+      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - qablny
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis 7 ─────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: qablny-redis
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6389}:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    networks:
+      - qablny
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── LiveKit Server ──────────────────────────────────────────────────────────
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: qablny-livekit
+    ports:
+      - "${LIVEKIT_PORT:-7890}:7880"   # HTTP/WS API
+      - "${LIVEKIT_TURN_PORT:-7891}:7891"   # WebRTC ICE/TCP
+      - "${LIVEKIT_UDP_PORT:-7882}:7882/udp" # WebRTC ICE/UDP
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    command: ["--config", "/etc/livekit.yaml"]
+    networks:
+      - qablny
+    restart: unless-stopped
+
+  # ── MinIO (Object Storage) ──────────────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: qablny-minio
+    ports:
+      - "${MINIO_PORT:-9010}:9000"   # S3 API
+      - "${MINIO_CONSOLE_PORT:-9011}:9001"   # Web Console
+    environment:
+      MINIO_ROOT_USER:     ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - qablny
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── LibreTranslate ──────────────────────────────────────────────────────────
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: qablny-translate
+    ports:
+      - "127.0.0.1:${LIBRETRANSLATE_PORT:-5005}:5000"
+    environment:
+      LT_LOAD_ONLY: "ar,en,fr,tr"
+      LT_UPDATE_MODELS: "false"
+    networks:
+      - qablny
+    restart: unless-stopped
+
+  # ── PgAdmin (Dev Tool) ──────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: qablny-pgadmin
+    ports:
+      - "8082:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL:    admin@qablny.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    networks:
+      - qablny
+    profiles:
+      - dev
+
+  # ── RedisInsight (Dev Tool) ─────────────────────────────────────────────────
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: qablny-redis-insight
+    ports:
+      - "8002:5540"
+    networks:
+      - qablny
+    profiles:
+      - dev
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  qablny:
+    driver: bridge

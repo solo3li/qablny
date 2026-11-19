@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
 import { Colors } from '../constants/Colors';
 
 interface TypingIndicatorProps {
@@ -16,8 +16,8 @@ export function TypingIndicator({ name }: TypingIndicatorProps) {
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(dot, { toValue: -6, duration: 300, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: -6, duration: 300, useNativeDriver: Platform.OS !== 'web' }),
+          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: Platform.OS !== 'web' }),
           Animated.delay(600),
         ])
       );

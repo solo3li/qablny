@@ -19,6 +19,7 @@
     "@microsoft/signalr": "^10.0.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "axios": "^1.18.0",
+    "centrifuge": "^5.8.0",
     "expo": "~54.0.35",
     "expo-av": "~16.0.8",
     "expo-blur": "~15.0.8",

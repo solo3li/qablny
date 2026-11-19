@@ -19,8 +19,10 @@ import {
   Send, Languages, ChevronLeft, Phone, Video,
   Mic, Image as ImageIcon, Film, MapPin, X, Play,
   Plus, Check, CornerUpLeft, Pencil, Trash2,
+  Flame, Hourglass, Eye, Sparkles,
 } from 'lucide-react-native';
-import { uploadMedia } from '../../src/api/axiosClient';
+import { EphemeralSnapModal } from '../../components/EphemeralSnapModal';
+import { axiosClient, uploadMedia } from '../../src/api/axiosClient';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -48,10 +50,10 @@ function ReplyQuote({ replyTo }: { replyTo: ChatMessage['replyTo'] }) {
   if (!replyTo) return null;
   const preview =
     replyTo.type === 'text' ? replyTo.text :
-    replyTo.type === 'voice' ? '🎵 رسالة صوتية' :
-    replyTo.type === 'image' ? '📷 صورة' :
-    replyTo.type === 'video' ? '🎬 فيديو' :
-    replyTo.type === 'location' ? '📍 موقع' : 'رسالة';
+    replyTo.type === 'voice' ? 'رسالة صوتية' :
+    replyTo.type === 'image' ? 'صورة' :
+    replyTo.type === 'video' ? 'فيديو' :
+    replyTo.type === 'location' ? 'موقع' : 'رسالة';
 
   return (
     <View style={styles.replyQuote}>
@@ -213,6 +215,75 @@ function CallBubble({ msg }: { msg: ChatMessage }) {
   );
 }
 
+// ─── Ephemeral Snap / Streak Message Bubble ──────────────────────────────────
+
+function SnapBubble({ msg, onOpen }: { msg: ChatMessage; onOpen: () => void }) {
+  const isMe = msg.isMe;
+  const isRead = msg.isRead || msg.readStatus === 'read';
+
+  if (isMe) {
+    return (
+      <View style={[styles.snapBubble, styles.snapBubbleMe]}>
+        <View style={styles.snapBadgeMe}>
+          <Flame size={18} color="#FFFFFF" fill="#FFFFFF" />
+        </View>
+        <View style={styles.snapInfoMe}>
+          <Text style={styles.snapTitleMe}>ستريك مؤقت 🔥</Text>
+          <Text style={styles.snapSubtitleMe}>
+            {isRead ? 'تمت المشاهدة ✓✓' : 'تم الإرسال · بانتظار المشاهدة'}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Receiver Bubble
+  return (
+    <TouchableOpacity
+      style={[
+        styles.snapBubble,
+        styles.snapBubbleThem,
+        !isRead && styles.snapBubbleUnread,
+      ]}
+      onPress={isRead ? undefined : onOpen}
+      activeOpacity={isRead ? 1 : 0.8}
+    >
+      <LinearGradient
+        colors={
+          !isRead
+            ? ['rgba(254, 60, 114, 0.16)', 'rgba(255, 101, 132, 0.10)']
+            : ['rgba(241, 245, 249, 0.8)', 'rgba(241, 245, 249, 0.6)']
+        }
+        style={styles.snapGradient}
+      >
+        <View style={[styles.snapIconWrap, !isRead && styles.snapIconWrapUnread]}>
+          <Flame
+            size={22}
+            color={!isRead ? '#FE3C72' : '#94A3B8'}
+            fill={!isRead ? '#FE3C72' : 'none'}
+          />
+        </View>
+
+        <View style={styles.snapInfoThem}>
+          <View style={styles.snapHeaderRow}>
+            <Text style={[styles.snapTitleThem, !isRead && styles.snapTitleUnread]}>
+              {!isRead ? 'سناب مؤقت جديد 🔥' : 'تمت المشاهدة (Opened)'}
+            </Text>
+            {!isRead && (
+              <View style={styles.newSnapBadge}>
+                <Text style={styles.newSnapBadgeText}>جديد</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.snapSubtitleThem}>
+            {!isRead ? 'اضغط للمشاهدة · لمرة واحدة فقط ⏱️' : 'انتهت مدة العرض'}
+          </Text>
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+}
+
 // ─── Context Menu ─────────────────────────────────────────────────────────────
 
 function MessageContextMenu({
@@ -223,12 +294,12 @@ function MessageContextMenu({
 }) {
   const previewText =
     msg.type === 'text' ? msg.text :
-    msg.type === 'voice' ? '🎵 رسالة صوتية' :
-    msg.type === 'image' ? '📷 صورة' :
-    msg.type === 'video' ? '🎬 فيديو' :
-    msg.type === 'location' ? '📍 موقع' :
-    msg.type === 'missedCall' ? '📞 مكالمة لم يرد عليها' :
-    msg.type === 'videoCall' ? '📞 مكالمة فيديو' : '📞 مكالمة صوتية';
+    msg.type === 'voice' ? 'رسالة صوتية' :
+    msg.type === 'image' ? 'صورة' :
+    msg.type === 'video' ? 'فيديو' :
+    msg.type === 'location' ? 'موقع' :
+    msg.type === 'missedCall' ? 'مكالمة لم يرد عليها' :
+    msg.type === 'videoCall' ? 'مكالمة فيديو' : 'مكالمة صوتية';
 
   return (
     <Pressable style={styles.contextOverlay} onPress={onClose}>
@@ -318,6 +389,22 @@ export default function ChatScreen() {
   const [replyTo, setReplyTo] = useState<ReplyData | null>(null);
   const [contextMsg, setContextMsg] = useState<ChatMessage | null>(null);
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [activeSnapModal, setActiveSnapModal] = useState<ChatMessage | null>(null);
+  const [isRestoringStreak, setIsRestoringStreak] = useState(false);
+
+  const handleRestoreStreak = async () => {
+    if (!storeFriend?.streakId) return;
+    try {
+      setIsRestoringStreak(true);
+      await axiosClient.post(`/streaks/${storeFriend.streakId}/restore`);
+      await fetchFriends();
+      Alert.alert('تمت الاستعادة بنجاح 🔥', 'تمت استعادة الستريك المكسور وحفظ تقدمكما!');
+    } catch (e: any) {
+      Alert.alert('خطأ', e.response?.data?.message || 'فشلت استعادة الستريك. تأكد من رصيد الكوينز.');
+    } finally {
+      setIsRestoringStreak(false);
+    }
+  };
 
   const recordInterval = useRef<any>(null);
   const listRef = useRef<FlatList>(null);
@@ -408,7 +495,7 @@ export default function ChatScreen() {
           // 3. Send to API (this fires SignalR to the other user)
           const finalMsg: ChatMessage = {
             id: uid(), type: type as any, mediaUrl: uploadedUrl,
-            text: type === 'video' ? '🎬 فيديو' : '',
+            text: type === 'video' ? 'فيديو' : '',
             isMe: true, time: now(), readStatus: 'sending',
             replyTo: replyTo
               ? { id: replyTo.id, text: replyTo.text, type: replyTo.type, isMe: replyTo.isMe, senderName: (storeFriend?.name || name) ?? '' }
@@ -567,7 +654,23 @@ export default function ChatScreen() {
           {isOnline && <View style={styles.headerOnlineDot} />}
         </View>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerName}>{friendName}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.headerName}>{friendName}</Text>
+            {(storeFriend?.streakCount ?? 0) > 0 && !storeFriend?.isStreakBroken && (
+              <View
+                style={[
+                  styles.headerStreakBadge,
+                  storeFriend?.isStreakExpiringSoon && styles.headerStreakBadgeExpiring,
+                ]}
+              >
+                <Flame size={12} color="#FFFFFF" fill="#FFFFFF" />
+                <Text style={styles.headerStreakText}>{storeFriend.streakCount}</Text>
+                {storeFriend?.isStreakExpiringSoon && (
+                  <Hourglass size={11} color="#FFFFFF" strokeWidth={2.4} />
+                )}
+              </View>
+            )}
+          </View>
           <Text style={[styles.headerStatus, { color: statusColor }]}>{headerStatus}</Text>
         </View>
         <View style={styles.headerActions}>
@@ -580,11 +683,32 @@ export default function ChatScreen() {
         </View>
       </GlassCard>
 
+      {/* Broken Streak Restore Banner */}
+      {storeFriend?.isStreakBroken && (storeFriend?.streakCount ?? 0) > 0 && (
+        <View style={styles.restoreBanner}>
+          <View style={styles.restoreBannerLeft}>
+            <Flame size={16} color="#EF4444" />
+            <Text style={styles.restoreBannerText}>
+              انكسر الستريك 🔥 ({storeFriend.streakCount} يوم)!
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.restoreBannerBtn}
+            onPress={handleRestoreStreak}
+            disabled={isRestoringStreak}
+          >
+            <Text style={styles.restoreBannerBtnText}>
+              {isRestoringStreak ? 'جاري الاستعادة...' : 'استعادة (50 🪙)'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Translation toggle */}
       <TouchableOpacity style={styles.translateToggle} onPress={() => setShowTranslation(!showTranslation)}>
         <Languages color={showTranslation ? Colors.primary : Colors.textMuted} size={14} />
         <Text style={[styles.translateText, { color: showTranslation ? Colors.primary : Colors.textMuted }]}>
-          الترجمة {showTranslation ? 'مفعّلة ✓' : 'معطّلة'}
+          الترجمة {showTranslation ? 'مفعّلة' : 'معطّلة'}
         </Text>
       </TouchableOpacity>
 
@@ -606,6 +730,7 @@ export default function ChatScreen() {
                 {msg.type === 'video' && <VideoBubble msg={msg} />}
                 {msg.type === 'location' && <LocationBubble msg={msg} />}
                 {(msg.type === 'voiceCall' || msg.type === 'videoCall' || msg.type === 'missedCall') && <CallBubble msg={msg} />}
+                {msg.type === 'snap' && <SnapBubble msg={msg} onOpen={() => setActiveSnapModal(msg)} />}
 
                 {/* Time + receipt */}
                 {!msg.isUploading && (
@@ -714,6 +839,19 @@ export default function ChatScreen() {
           )}
         </View>
       </View>
+
+      {/* ── Ephemeral Snap Modal Viewer ── */}
+      <EphemeralSnapModal
+        visible={!!activeSnapModal}
+        mediaUrl={activeSnapModal?.mediaUrl || null}
+        caption={activeSnapModal?.text}
+        senderName={friendName}
+        senderAvatar={avatarUri}
+        durationSeconds={activeSnapModal?.duration || 10}
+        messageId={activeSnapModal?.id || ''}
+        friendId={id as string}
+        onClose={() => setActiveSnapModal(null)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -723,16 +861,16 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
 
-  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 52, paddingBottom: 14, paddingHorizontal: 12, gap: 10, borderBottomWidth: 2, borderBottomColor: Colors.glassBorder },
+  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 52, paddingBottom: 14, paddingHorizontal: 12, gap: 10, borderBottomWidth: 1, borderBottomColor: '#EAECEF' },
   backBtn: { padding: 4 },
   avatarWrapHeader: { position: 'relative' },
   headerAvatar: { width: 42, height: 42, borderRadius: 21 },
-  headerOnlineDot: { position: 'absolute', bottom: 0, right: 0, width: 11, height: 11, borderRadius: 6, backgroundColor: Colors.online, borderWidth: 2, borderColor: '#070B14' },
+  headerOnlineDot: { position: 'absolute', bottom: 0, right: 0, width: 11, height: 11, borderRadius: 6, backgroundColor: Colors.online, borderWidth: 2, borderColor: '#FFFFFF' },
   headerInfo: { flex: 1 },
   headerName: { fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text },
   headerStatus: { fontSize: 12, marginTop: 1 },
   headerActions: { flexDirection: 'row', gap: 8 },
-  headerBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.cyanDim, borderWidth: 1, borderColor: Colors.glassBorderBright, alignItems: 'center', justifyContent: 'center' },
+  headerBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#F8F9FA', borderWidth: 1, borderColor: '#EAECEF', alignItems: 'center', justifyContent: 'center' },
 
   translateToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginVertical: 8, backgroundColor: Colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1, borderColor: Colors.glassBorder },
   translateText: { fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold' },
@@ -845,4 +983,37 @@ const styles = StyleSheet.create({
   recDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.danger },
   recTime: { fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text },
   recLabel: { fontSize: 13, color: Colors.textMuted },
+
+  // Header Streak Badge
+  headerStreakBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#F97316', paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 10 },
+  headerStreakBadgeExpiring: { backgroundColor: '#E11D48' },
+  headerStreakText: { color: '#FFFFFF', fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold' },
+
+  // Restore Banner
+  restoreBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FEF2F2', paddingHorizontal: 16, paddingVertical: 10, marginHorizontal: 12, marginBottom: 8, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.25)' },
+  restoreBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  restoreBannerText: { fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', color: '#B91C1C' },
+  restoreBannerBtn: { backgroundColor: '#FE3C72', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
+  restoreBannerBtnText: { color: '#FFFFFF', fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold' },
+
+  // Snap / Streak Bubble
+  snapBubble: { borderRadius: 20, overflow: 'hidden', minWidth: 210, maxWidth: 260 },
+  snapBubbleMe: { backgroundColor: 'rgba(254, 60, 114, 0.85)', padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomRightRadius: 4 },
+  snapBadgeMe: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255, 255, 255, 0.25)', justifyContent: 'center', alignItems: 'center' },
+  snapInfoMe: { flex: 1 },
+  snapTitleMe: { color: '#FFFFFF', fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' },
+  snapSubtitleMe: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 11, fontFamily: 'PlusJakartaSans_500Medium', marginTop: 2 },
+
+  snapBubbleThem: { borderWidth: 1, borderColor: Colors.glassBorder, borderBottomLeftRadius: 4, backgroundColor: Colors.surface },
+  snapBubbleUnread: { borderColor: 'rgba(254, 60, 114, 0.45)', shadowColor: '#FE3C72', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10 },
+  snapGradient: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12 },
+  snapIconWrap: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center' },
+  snapIconWrapUnread: { backgroundColor: 'rgba(254, 60, 114, 0.15)' },
+  snapInfoThem: { flex: 1 },
+  snapHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  snapTitleThem: { fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', color: Colors.textSecondary },
+  snapTitleUnread: { fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', color: '#0F172A' },
+  newSnapBadge: { backgroundColor: '#FE3C72', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 },
+  newSnapBadgeText: { color: '#FFFFFF', fontSize: 10, fontFamily: 'PlusJakartaSans_700Bold' },
+  snapSubtitleThem: { fontSize: 11, fontFamily: 'PlusJakartaSans_500Medium', color: Colors.textMuted, marginTop: 2 },
 });

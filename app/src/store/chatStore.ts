@@ -8,15 +8,21 @@ export interface Friend {
   name: string;
   profileImageUrl: string;
   lastMessage: string;
-  lastSeen: string;
+  lastSeen?: string;
   isOnline: boolean;
   unread: number;
+  streakCount?: number;
+  streakHoursLeft?: number;
+  isStreakExpiringSoon?: boolean;
+  hasSentStreakToday?: boolean;
+  isStreakBroken?: boolean;
+  streakId?: string;
 }
 
 // Backend format
 export interface BackendChatMessage {
   id: string;
-  type: number; // 0: Text, 1: Image, 2: Audio, 3: Video, 4: System
+  type: number; // 0: Text, 1: Image, 2: Audio, 3: Video, 4: System, 8: Snap
   content: string;
   translation?: string;
   mediaUrl?: string;
@@ -38,7 +44,7 @@ export interface ReplyPreview {
 }
 
 // UI format
-export type MessageType = 'text' | 'voice' | 'image' | 'video' | 'location' | 'voiceCall' | 'videoCall' | 'missedCall';
+export type MessageType = 'text' | 'voice' | 'image' | 'video' | 'location' | 'voiceCall' | 'videoCall' | 'missedCall' | 'snap';
 export type ReadStatus = 'sending' | 'sent' | 'delivered' | 'read';
 
 export interface UIChatMessage {
@@ -57,6 +63,7 @@ export interface UIChatMessage {
   replyTo?: ReplyPreview;
   isEdited?: boolean;
   isUploading?: boolean;
+  isRead?: boolean;
 }
 
 interface ChatState {
@@ -73,6 +80,8 @@ interface ChatState {
   addLocalMessage: (friendId: string, msg: UIChatMessage) => void;  // local only, no API
   addIncomingMessage: (msg: BackendChatMessage, myUserId: string) => void;
   updateFriendOnlineStatus: (friendId: string, isOnline: boolean, lastSeen?: string) => void;
+  updateFriendStreak: (payload: any) => void;
+  markSnapOpened: (messageId: string, friendId: string) => Promise<void>;
   setTyping: (friendId: string, isTyping: boolean) => void;
   setVoiceRecording: (friendId: string, isRecording: boolean) => void;
   markMessagesRead: (friendId: string) => void;
@@ -94,16 +103,18 @@ const mapBackendToUI = (msg: BackendChatMessage, myUserId: string): UIChatMessag
   if (msg.type === 5) type = 'voiceCall';
   if (msg.type === 6) type = 'videoCall';
   if (msg.type === 7) type = 'missedCall';
+  if (msg.type === 8) type = 'snap';
   
   return {
     id: msg.id,
     type,
-    text: type === 'text' ? msg.content : undefined,
+    text: (type === 'text' || type === 'snap') ? msg.content : undefined,
     translation: msg.translation,
     mediaUrl: msg.mediaUrl,
     duration: msg.durationSeconds,
     isMe,
     time,
+    isRead: msg.isRead,
     readStatus: msg.isRead ? 'read' : isMe ? 'delivered' : undefined,
   };
 };
@@ -124,10 +135,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         id: c.friend.id,
         name: c.friend.name,
         profileImageUrl: c.friend.profileImageUrl,
-        lastMessage: c.lastMessage?.content || c.lastMessage?.translation || 'رسالة',
+        lastMessage: c.lastMessage?.type === 8 ? '🔥 ستريك مؤقت' : (c.lastMessage?.content || c.lastMessage?.translation || 'رسالة'),
         lastSeen: c.friend.lastSeen,
         isOnline: c.friend.isOnline,
-        unread: c.unreadCount
+        unread: c.unreadCount,
+        streakCount: c.friend.streakCount || 0,
+        streakHoursLeft: c.friend.streakHoursLeft,
+        isStreakExpiringSoon: !!c.friend.isStreakExpiringSoon,
+        hasSentStreakToday: !!c.friend.hasSentStreakToday,
+        isStreakBroken: !!c.friend.isStreakBroken,
+        streakId: c.friend.streakId,
       }));
       
       const newOnlineUsers = { ...get().onlineUsers };
@@ -139,6 +156,47 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch (e) {
       console.error('Failed to fetch conversations', e);
       set({ isLoadingFriends: false });
+    }
+  },
+
+  updateFriendStreak: (payload: any) => {
+    if (!payload) return;
+    set((state) => {
+      const updatedFriends = state.friends.map((f) => {
+        if (f.id === payload.friendId) {
+          return {
+            ...f,
+            streakCount: payload.streakCount ?? f.streakCount,
+            streakHoursLeft: payload.hoursLeft ?? f.streakHoursLeft,
+            isStreakExpiringSoon: payload.isExpiringSoon ?? f.isStreakExpiringSoon,
+            hasSentStreakToday: payload.hasSentToday ?? f.hasSentStreakToday,
+            isStreakBroken: payload.isBroken ?? f.isStreakBroken,
+            streakId: payload.id ?? f.streakId,
+          };
+        }
+        return f;
+      });
+      return { friends: updatedFriends };
+    });
+  },
+
+  markSnapOpened: async (messageId: string, friendId: string) => {
+    try {
+      await axiosClient.post(`/streaks/messages/${messageId}/open`);
+      set((state) => {
+        const msgs = state.chatMessages[friendId] || [];
+        const updated = msgs.map((m) =>
+          m.id === messageId ? { ...m, isRead: true, readStatus: 'read' as ReadStatus } : m
+        );
+        return {
+          chatMessages: {
+            ...state.chatMessages,
+            [friendId]: updated,
+          },
+        };
+      });
+    } catch (e) {
+      console.error('Failed to mark snap as opened', e);
     }
   },
 
@@ -390,6 +448,28 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     chatSignalR.setOnUserOnline((userId: string) => get().updateFriendOnlineStatus(userId, true));
     chatSignalR.setOnUserOffline((userId: string) => get().updateFriendOnlineStatus(userId, false));
+
+    // Streaks & Snaps Realtime Events
+    chatSignalR.setOnStreakUpdated((payload: any) => {
+      get().updateFriendStreak(payload);
+    });
+
+    chatSignalR.setOnStreakRestored((payload: any) => {
+      get().updateFriendStreak(payload);
+    });
+
+    chatSignalR.setOnSnapOpened((payload: any) => {
+      if (!payload?.messageId) return;
+      set((state) => {
+        const allConvs = { ...state.chatMessages };
+        for (const fid of Object.keys(allConvs)) {
+          allConvs[fid] = allConvs[fid].map((m) =>
+            m.id === payload.messageId ? { ...m, isRead: true, readStatus: 'read' as ReadStatus } : m
+          );
+        }
+        return { chatMessages: allConvs };
+      });
+    });
 
     // Call Events Setup
     chatSignalR.setOnIncomingCall((payload) => {

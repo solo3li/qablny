@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const API_BASE_URL = 'https://api.46.101.172.175.nip.io/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname.includes('nip.io') ? `${window.location.protocol}//api-qablny.169.58.32.179.nip.io/api` : 'https://api-qablny.169.58.32.179.nip.io/api');
 
 let pollInterval = null;
 

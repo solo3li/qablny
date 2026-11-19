@@ -1,10 +1,53 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, Platform, PanResponder, Animated } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator,
+  Platform,
+  PanResponder,
+  Animated,
+  Dimensions,
+} from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MessageCircle, Gift, PhoneOff, Mic, MicOff, Video, VideoOff, RefreshCcw, MoreVertical, Search, Heart, SkipForward, UserPlus, Settings, SlidersHorizontal, Users, Globe, X, Wallet, Bell } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SwitchCamera,
+  SlidersHorizontal,
+  Zap,
+  Coins,
+  Search,
+  X,
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  PhoneOff,
+  Gift,
+  UserPlus,
+  SkipForward,
+  Sparkles,
+  Camera,
+  Heart,
+  Crown,
+  Rocket,
+  Gem,
+  Check,
+  Users,
+  Globe,
+  MessageCircle,
+  UserCheck,
+  User,
+  Flame,
+  Compass,
+} from 'lucide-react-native';
+import Svg, { Circle } from 'react-native-svg';
+import { SnapPreviewModal } from '../../components/SnapPreviewModal';
+import { SendStreakSheet } from '../../components/SendStreakSheet';
 import { matchSignalR } from '../../src/api/matchSignalR';
 import { router, useNavigation } from 'expo-router';
 import { axiosClient } from '../../src/api/axiosClient';
@@ -14,7 +57,11 @@ import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks, useLocalParticip
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
 
-const LIVEKIT_URL = 'wss://livekit.46.101.172.175.nip.io';
+const LIVEKIT_URL =
+  process.env.EXPO_PUBLIC_LIVEKIT_URL ||
+  (typeof window !== 'undefined' && window.location.hostname.includes('nip.io')
+    ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//livekit-qablny.169.58.32.179.nip.io`
+    : 'wss://livekit-qablny.169.58.32.179.nip.io');
 
 function RemoteVideo() {
   const tracks = useTracks([Track.Source.Camera]);
@@ -22,53 +69,70 @@ function RemoteVideo() {
 
   if (remoteTrack && remoteTrack.publication?.track) {
     return (
-      <VideoTrack 
-        trackRef={remoteTrack} 
-        style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} 
+      <VideoTrack
+        trackRef={remoteTrack}
+        style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
       />
     );
   }
 
   return (
-    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#111', justifyContent: 'center', alignItems: 'center' }]}>
+    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#07090e', justifyContent: 'center', alignItems: 'center' }]}>
       <ActivityIndicator size="large" color={Colors.primary} />
-      <Text style={{ color: Colors.textMuted, marginTop: 10, fontFamily: 'PlusJakartaSans_500Medium' }}>جاري الاتصال بالكاميرا...</Text>
+      <Text style={{ color: '#E2E8F0', marginTop: 14, fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 15 }}>
+        جاري الاتصال بالكاميرا...
+      </Text>
     </View>
   );
 }
 
-function LocalVideo({ isCameraOn }: { isCameraOn: boolean }) {
+function LocalVideo({ isCameraOn, facingMode }: { isCameraOn: boolean; facingMode?: 'user' | 'environment' }) {
   const tracks = useTracks([Track.Source.Camera]);
   const localTrack = tracks.find((t: any) => t.participant.isLocal === true);
 
   if (isCameraOn && localTrack && localTrack.publication?.track) {
     return (
-      <VideoTrack 
-        trackRef={localTrack} 
-        style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} 
+      <VideoTrack
+        trackRef={localTrack}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          transform: facingMode === 'environment' ? 'none' : 'scaleX(-1)',
+        }}
       />
     );
   }
 
   return (
-    <View style={{ width: '100%', height: '100%', backgroundColor: '#222', justifyContent: 'center', alignItems: 'center' }}>
+    <View style={{ width: '100%', height: '100%', backgroundColor: '#161922', justifyContent: 'center', alignItems: 'center' }}>
       {!isCameraOn ? (
-        <VideoOff color={Colors.textMuted} size={24} />
+        <VideoOff color="#94A3B8" size={24} />
       ) : (
-        <ActivityIndicator size="small" color={Colors.text} />
+        <ActivityIndicator size="small" color="#FFFFFF" />
       )}
     </View>
   );
 }
 
-// Separate component to access LiveKit hooks
-function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend, handleSendMessage, setGiftsOpen, sentGift, messages }: any) {
+// Azar-style Video Call Layout (Full Screen Remote + Rounded PiP Local + Action Dock)
+function CallInterface({
+  remotePeer,
+  handleEndCall,
+  handleSkip,
+  handleAddFriend,
+  handleSendMessage,
+  setGiftsOpen,
+  sentGift,
+  messages,
+}: any) {
   const { localParticipant } = useLocalParticipant();
   const [micEnabled, setMicEnabled] = useState(true);
   const [camEnabled, setCamEnabled] = useState(true);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [duration, setDuration] = useState(0);
   const [isLocalMain, setIsLocalMain] = useState(false);
-  const [controlsExpanded, setControlsExpanded] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const pan = useRef(new Animated.ValueXY()).current;
   const panResponder = useRef(
@@ -76,10 +140,25 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
       onStartShouldSetPanResponder: () => true,
       onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
       onPanResponderRelease: (e, gestureState) => {
-        if (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5) {
+        if (Math.abs(gestureState.dx) < 6 && Math.abs(gestureState.dy) < 6) {
           setIsLocalMain(prev => !prev);
         }
         pan.extractOffset();
+      },
+    })
+  ).current;
+
+  // Swipe Left gesture to Skip during active call
+  const callSwipePan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 30 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -40 || gestureState.vx < -0.3) {
+          handleSkip();
+        }
       },
     })
   ).current;
@@ -103,161 +182,541 @@ function CallInterface({ remotePeer, handleEndCall, handleSkip, handleAddFriend,
     }
   };
 
-  const formattedTime = `${Math.floor(duration / 60).toString().padStart(2, '0')}:${(duration % 60).toString().padStart(2, '0')}`;
+  const toggleFlipCamera = async () => {
+    if (localParticipant) {
+      try {
+        const camPub = localParticipant.getTrackPublication(Track.Source.Camera);
+        const nextFacing = facingMode === 'user' ? 'environment' : 'user';
+        if (camPub && camPub.videoTrack) {
+          await (camPub.videoTrack as any).restartTrack({ facingMode: nextFacing });
+        }
+        setFacingMode(nextFacing);
+      } catch (e) {
+        console.warn('Failed to switch camera during call:', e);
+      }
+    }
+  };
+
+  const formattedTime = `${Math.floor(duration / 60)
+    .toString()
+    .padStart(2, '0')}:${(duration % 60).toString().padStart(2, '0')}`;
 
   return (
-    <>
-      {isLocalMain ? <LocalVideo isCameraOn={camEnabled} /> : <RemoteVideo />}
-      
-      {/* Draggable PIP Video */}
-      <Animated.View 
-        style={[styles.pipContainer, { transform: [{ translateX: pan.x }, { translateY: pan.y }] }]}
+    <View style={styles.callRoot} {...callSwipePan.panHandlers}>
+      {/* 100% Full-Screen Main Video Viewport */}
+      {isLocalMain ? <LocalVideo isCameraOn={camEnabled} facingMode={facingMode} /> : <RemoteVideo />}
+
+      {/* Rounded Picture-in-Picture (PiP) Window in the corner */}
+      <Animated.View
+        style={[
+          styles.pipContainer,
+          { transform: [{ translateX: pan.x }, { translateY: pan.y }] },
+        ]}
         {...panResponder.panHandlers}
       >
-        {isLocalMain ? <RemoteVideo /> : <LocalVideo isCameraOn={camEnabled} />}
+        {isLocalMain ? <RemoteVideo /> : <LocalVideo isCameraOn={camEnabled} facingMode={facingMode} />}
         <View style={styles.pipMicIcon}>
-          {micEnabled ? <Mic color="#fff" size={14} /> : <MicOff color={Colors.danger} size={14} />}
+          {micEnabled ? <Mic color="#FFFFFF" size={12} /> : <MicOff color={Colors.danger} size={12} />}
         </View>
       </Animated.View>
+
       <RoomAudioRenderer />
 
-      {/* Gradient Overlay */}
+      {/* Soft Top/Bottom Vignette Gradients */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.4)', 'transparent', 'rgba(0,0,0,0.8)']}
+        colors={['rgba(0,0,0,0.5)', 'transparent', 'rgba(0,0,0,0.75)']}
         style={[StyleSheet.absoluteFillObject, { pointerEvents: 'none' }]}
       />
 
-      {/* Top Navigation / Status Area */}
-      <View style={styles.topNav}>
-        <TouchableOpacity style={styles.navIconBtn} onPress={handleEndCall}>
-          <Text style={{color: '#fff', fontSize: 20}}>←</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.liveBadge}>
-          <View style={styles.liveDot} />
-          <Text style={styles.timeText}>{formattedTime}</Text>
+      {/* Top Floating HUD: Peer Info & Duration */}
+      <View style={[styles.callTopBar, { paddingTop: Math.max(insets.top, 24) }]}>
+        <View style={styles.peerInfoCapsule}>
+          <View style={styles.peerAvatarCircle}>
+            <Text style={styles.peerAvatarInitial}>
+              {remotePeer?.name ? remotePeer.name.charAt(0) : 'ص'}
+            </Text>
+          </View>
+          <View>
+            <Text style={styles.peerNameText} numberOfLines={1}>
+              {remotePeer?.name || 'صديق جديد'}
+            </Text>
+            <Text style={styles.peerLocationText} numberOfLines={1}>
+              {remotePeer?.location || 'المطابقة الحية'}
+            </Text>
+          </View>
         </View>
-        
-        <TouchableOpacity style={styles.navIconBtn}>
-          <MoreVertical color="#fff" size={20} />
-        </TouchableOpacity>
+
+        <View style={styles.callDurationBadge}>
+          <View style={styles.callLiveDot} />
+          <Text style={styles.callDurationText}>{formattedTime}</Text>
+        </View>
       </View>
 
-      {/* Floating Gift Animation */}
-      {sentGift && (
-        <View style={styles.giftFloat}>
-          <Text style={styles.giftFloatEmoji}>{sentGift}</Text>
-        </View>
-      )}
-
-      {/* Side Controls (Right) */}
-      <View style={styles.sideControls}>
-        <TouchableOpacity style={styles.glassBtn} onPress={() => setControlsExpanded(!controlsExpanded)}>
-          <Settings color="#fff" size={20} />
-        </TouchableOpacity>
-
-        {controlsExpanded && (
-          <>
-            <TouchableOpacity style={styles.glassBtn} onPress={toggleMic}>
-              {micEnabled ? <Mic color="#fff" size={20} /> : <MicOff color={Colors.danger} size={20} />}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.glassBtn} onPress={toggleCam}>
-              {camEnabled ? <Video color="#fff" size={20} /> : <VideoOff color={Colors.danger} size={20} />}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
-              <SkipForward color={Colors.cyan} size={24} />
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-
-      {/* Interactive Overlay Area (Bottom) */}
-      <View style={styles.bottomOverlay}>
-        
-        {/* Chat Stream (Mock) */}
-        <View style={styles.chatStream}>
-          {messages.map((m: any, i: number) => (
-            <View key={i} style={styles.chatMessageRow}>
-              {m.type === 'system' ? (
-                 <View style={styles.systemMessageBadge}>
-                   <Heart color={Colors.secondary} size={12} fill={Colors.secondary} />
-                   <Text style={styles.systemMessageText}>{m.sender} {m.text}</Text>
-                 </View>
-              ) : (
-                <>
-                  <View style={styles.chatAvatarPlaceholder} />
-                  <Text style={styles.chatSender}>{m.sender}:</Text>
-                  <Text style={styles.chatText}>{m.text}</Text>
-                </>
-              )}
+      {/* Floating Gift Display */}
+      {sentGift && (() => {
+        const GiftIcon = sentGift.icon || Gift;
+        return (
+          <View style={styles.giftFloat}>
+            <View style={styles.giftFloatBadge}>
+              <GiftIcon size={60} color={sentGift.iconColor || Colors.primary} />
+              <Text style={styles.giftFloatTitle}>{sentGift.name || sentGift}</Text>
             </View>
-          ))}
+          </View>
+        );
+      })()}
+
+      {/* Floating Call Action Dock */}
+      <View style={[styles.callDockContainer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+        {/* Swipe hint chip */}
+        <View style={styles.callSwipeHint}>
+          <Text style={styles.callSwipeHintText}>اسحب للشمال للتخطي ←</Text>
         </View>
 
-        {/* Controls Row */}
-        <View style={styles.controlsRow}>
-          <View style={styles.leftControls}>
-            <TouchableOpacity style={styles.glassBtn} onPress={handleSendMessage}>
-              <MessageCircle color="#fff" size={20} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.glassBtn} onPress={handleAddFriend}>
-              <UserPlus color="#fff" size={20} />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.callDockRow}>
+          {/* Mic Toggle */}
+          <TouchableOpacity
+            style={[styles.callActionBtn, !micEnabled && styles.callActionBtnDisabled]}
+            onPress={toggleMic}
+            activeOpacity={0.8}
+            accessibilityLabel="كتم الميكروفون"
+          >
+            {micEnabled ? <Mic color="#FFFFFF" size={20} /> : <MicOff color="#FFFFFF" size={20} />}
+          </TouchableOpacity>
 
-          <View style={styles.primaryActions}>
-            <TouchableOpacity style={styles.giftBtn} onPress={() => setGiftsOpen(true)}>
-              <LinearGradient colors={[Colors.secondary, Colors.primary]} style={styles.giftBtnGradient}>
-                <Gift color="#fff" size={24} />
-              </LinearGradient>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.endCallBtn} onPress={handleEndCall}>
-              <PhoneOff color="#fff" size={24} />
-            </TouchableOpacity>
-          </View>
+          {/* Flip Camera */}
+          <TouchableOpacity
+            style={styles.callActionBtn}
+            onPress={toggleFlipCamera}
+            activeOpacity={0.8}
+            accessibilityLabel="قلب الكاميرا"
+          >
+            <SwitchCamera color="#FFFFFF" size={20} />
+          </TouchableOpacity>
+
+          {/* Gift Tray Trigger */}
+          <TouchableOpacity
+            style={styles.callGiftActionBtn}
+            onPress={() => setGiftsOpen(true)}
+            activeOpacity={0.85}
+            accessibilityLabel="إرسال هدية"
+          >
+            <LinearGradient colors={Colors.gradPrimary} style={styles.callGiftGradient}>
+              <Gift color="#FFFFFF" size={22} />
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Friend Request */}
+          <TouchableOpacity
+            style={styles.callActionBtn}
+            onPress={handleAddFriend}
+            activeOpacity={0.8}
+            accessibilityLabel="إضافة صديق"
+          >
+            <UserPlus color="#FFFFFF" size={20} />
+          </TouchableOpacity>
+
+          {/* Skip to Next */}
+          <TouchableOpacity
+            style={[styles.callActionBtn, styles.callSkipBtn]}
+            onPress={handleSkip}
+            activeOpacity={0.8}
+            accessibilityLabel="التالي"
+          >
+            <SkipForward color="#FFFFFF" size={20} />
+          </TouchableOpacity>
+
+          {/* End Call */}
+          <TouchableOpacity
+            style={styles.callEndBtn}
+            onPress={handleEndCall}
+            activeOpacity={0.8}
+            accessibilityLabel="إنهاء المكالمة"
+          >
+            <PhoneOff color="#FFFFFF" size={22} />
+          </TouchableOpacity>
         </View>
       </View>
-    </>
+    </View>
   );
 }
 
+function getGiftIconComponent(name: string) {
+  if (name?.includes('تاج')) return Crown;
+  if (name?.includes('صاروخ')) return Rocket;
+  if (name?.includes('ماس') || name?.includes('جوهر')) return Gem;
+  if (name?.includes('قلب') || name?.includes('ورد')) return Heart;
+  return Gift;
+}
+
+function getGiftColor(name: string) {
+  if (name?.includes('تاج')) return '#F59E0B';
+  if (name?.includes('صاروخ')) return '#3B82F6';
+  if (name?.includes('ماس') || name?.includes('جوهر')) return '#8B5CF6';
+  if (name?.includes('قلب') || name?.includes('ورد')) return '#FE3C72';
+  return Colors.primary;
+}
 
 export default function MatchScreenWeb() {
   const navigation = useNavigation();
-  const { user } = useAuthStore();
-  const { filterGender, filterRegion, setFilterGender, setFilterRegion } = useAppStore();
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const regions = ['العالم', 'الشرق الأوسط', 'الخليج العربي', 'شمال أفريقيا', 'أوروبا', 'أمريكا الشمالية', 'آسيا'];
-  const genderOptions = [
-    { key: 'all', label: 'الكل', emoji: '👥' },
-    { key: 'female', label: 'إناث', emoji: '👩' },
-    { key: 'male', label: 'ذكور', emoji: '👨' },
-  ] as const;
+  const insets = useSafeAreaInsets();
+  const { user, checkAuth } = useAuthStore();
+  const { filterGender, filterRegion, setFilterGender, setFilterRegion, setIsMatchMode } = useAppStore();
+
+  // Instant Camera State
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
+  // Matchmaking & LiveKit State
   const [isSearching, setIsSearching] = useState(false);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
   const [remotePeer, setRemotePeer] = useState<any | null>(null);
+  const [isBoosted, setIsBoosted] = useState(false);
 
+  // Snapchat-style Streaks & Snap Capture State
+  const [snapPreviewVisible, setSnapPreviewVisible] = useState(false);
+  const [sendSheetVisible, setSendSheetVisible] = useState(false);
+  const [snapMediaUri, setSnapMediaUri] = useState<string | null>(null);
+  const [snapMediaType, setSnapMediaType] = useState<'image' | 'video'>('image');
+  const [snapCaption, setSnapCaption] = useState('');
+  const [isRecordingSnap, setIsRecordingSnap] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const pressTimerRef = useRef<any>(null);
+  const recordIntervalRef = useRef<any>(null);
+  const isPressHoldingRef = useRef<boolean>(false);
+
+  // Filters Sheet Modal State
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const closeFilters = () => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      (document.activeElement as HTMLElement)?.blur?.();
+    }
+    setFiltersOpen(false);
+  };
+  const subRegions = ['الشرق الأوسط', 'الخليج العربي', 'شمال أفريقيا', 'أوروبا', 'أمريكا الشمالية', 'آسيا'];
+  const genderOptions = [
+    { key: 'all', label: 'الكل', icon: Users },
+    { key: 'female', label: 'إناث', icon: UserCheck },
+    { key: 'male', label: 'ذكور', icon: User },
+  ] as const;
+
+  // Gift Sheet Modal State
   const [giftsOpen, setGiftsOpen] = useState(false);
-  const [sentGift, setSentGift] = useState<string | null>(null);
+  const closeGifts = () => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      (document.activeElement as HTMLElement)?.blur?.();
+    }
+    setGiftsOpen(false);
+  };
+  const [sentGift, setSentGift] = useState<any | null>(null);
   const [gifts, setGifts] = useState<any[]>([
-    { id: 1, name: 'وردة', emoji: '🌹', coinCost: 10 },
-    { id: 2, name: 'تاج', emoji: '👑', coinCost: 50 },
-    { id: 3, name: 'صاروخ', emoji: '🚀', coinCost: 100 },
-    { id: 4, name: 'ماسة', emoji: '💎', coinCost: 500 },
-  ]);
-  const [messages, setMessages] = useState<{sender: string, text: string, type?: 'chat'|'system'}[]>([
-    { sender: 'النظام', text: 'المكالمة متصلة الآن ومؤمنة التشفير', type: 'system' }
+    { id: '11111111-0000-0000-0000-000000000002', name: 'قلب', icon: Heart, iconColor: '#FE3C72', coinCost: 20 },
+    { id: '11111111-0000-0000-0000-000000000003', name: 'تاج', icon: Crown, iconColor: '#F59E0B', coinCost: 50 },
+    { id: '11111111-0000-0000-0000-000000000008', name: 'صاروخ', icon: Rocket, iconColor: '#3B82F6', coinCost: 150 },
+    { id: '11111111-0000-0000-0000-000000000004', name: 'الماس', icon: Gem, iconColor: '#8B5CF6', coinCost: 100 },
   ]);
 
+  const [messages, setMessages] = useState<{ sender: string; text: string; type?: 'chat' | 'system' }[]>([
+    { sender: 'النظام', text: 'المكالمة متصلة الآن ومؤمنة التشفير', type: 'system' },
+  ]);
+
+  // Animated Arrow for Swipe Guide Pill
+  const swipeAnim = useRef(new Animated.Value(0)).current;
+
+  // Radar Animation for Searching State
+  const radarAnim1 = useRef(new Animated.Value(0)).current;
+  const radarAnim2 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const swipeLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(swipeAnim, {
+          toValue: -8,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+        Animated.timing(swipeAnim, {
+          toValue: 0,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    swipeLoop.start();
+    return () => swipeLoop.stop();
+  }, [swipeAnim]);
+
+  useEffect(() => {
+    if (isSearching) {
+      const createRadarLoop = (anim: Animated.Value, delay: number) =>
+        Animated.loop(
+          Animated.sequence([
+            Animated.delay(delay),
+            Animated.timing(anim, {
+              toValue: 1,
+              duration: 2000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim, {
+              toValue: 0,
+              duration: 0,
+              useNativeDriver: true,
+            }),
+          ])
+        );
+
+      const r1 = createRadarLoop(radarAnim1, 0);
+      const r2 = createRadarLoop(radarAnim2, 1000);
+      r1.start();
+      r2.start();
+
+      return () => {
+        r1.stop();
+        r2.stop();
+        radarAnim1.setValue(0);
+        radarAnim2.setValue(0);
+      };
+    }
+  }, [isSearching, radarAnim1, radarAnim2]);
+
+  // Initialize Native Web Camera Viewport
+  const initCamera = useCallback(
+    async (facing: 'user' | 'environment' = facingMode) => {
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+        setHasCameraPermission(false);
+        setCameraError('الكاميرا غير مدعومة في هذا المتصفح');
+        return;
+      }
+
+      try {
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+        }
+
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: facing },
+            audio: true,
+          });
+        } catch (audioErr) {
+          // Fallback to video only if mic is blocked or unavailable
+          console.warn('getUserMedia audio fallback to video only:', audioErr);
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: facing },
+          });
+        }
+
+        setMediaStream(stream);
+        setHasCameraPermission(true);
+        setCameraError(null);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch((e) => console.warn('Preview video play warning:', e));
+        }
+      } catch (err: any) {
+        console.error('Camera permission or device access failed:', err);
+        setHasCameraPermission(false);
+        setCameraError(err.message || 'تم حظر إذن الكاميرا');
+      }
+    },
+    [facingMode, mediaStream]
+  );
+
+  const setVideoRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      videoRef.current = el;
+      if (el && mediaStream) {
+        el.srcObject = mediaStream;
+        el.play().catch((e) => console.warn('Video preview play warning:', e));
+      }
+    },
+    [mediaStream]
+  );
+
+  // ── Snap Photo Capture ───────────────────────────────────────────────
+  const capturePhoto = useCallback(() => {
+    if (!videoRef.current) return;
+    try {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 1080;
+      canvas.height = video.videoHeight || 1920;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      if (facingMode === 'user') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      setSnapMediaUri(dataUrl);
+      setSnapMediaType('image');
+      setSnapPreviewVisible(true);
+    } catch (e) {
+      console.error('Failed to capture snap photo frame', e);
+    }
+  }, [facingMode]);
+
+  // ── Snap Video Recording (Up to 10s) ─────────────────────────────────
+  const stopRecordingVideo = useCallback(() => {
+    if (recordIntervalRef.current) {
+      clearInterval(recordIntervalRef.current);
+      recordIntervalRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (e) {
+        console.warn('MediaRecorder stop warning', e);
+      }
+    }
+  }, []);
+
+  const startRecordingVideo = useCallback(() => {
+    if (!mediaStream) return;
+    try {
+      recordedChunksRef.current = [];
+      let mimeType = 'video/webm';
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
+          mimeType = 'video/webm;codecs=vp9,opus';
+        } else if (MediaRecorder.isTypeSupported('video/webm')) {
+          mimeType = 'video/webm';
+        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+          mimeType = 'video/mp4';
+        }
+      }
+
+      const recorder = new MediaRecorder(mediaStream, { mimeType });
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: mimeType });
+        const videoUrl = URL.createObjectURL(blob);
+        setSnapMediaUri(videoUrl);
+        setSnapMediaType('video');
+        setSnapPreviewVisible(true);
+        setIsRecordingSnap(false);
+        setRecordingSeconds(0);
+      };
+
+      recorder.start(100);
+      setIsRecordingSnap(true);
+      setRecordingSeconds(0);
+
+      let sec = 0;
+      recordIntervalRef.current = setInterval(() => {
+        sec += 1;
+        setRecordingSeconds(sec);
+        if (sec >= 10) {
+          stopRecordingVideo();
+        }
+      }, 1000);
+    } catch (e) {
+      console.error('Failed to start video recording', e);
+      setIsRecordingSnap(false);
+    }
+  }, [mediaStream, stopRecordingVideo]);
+
+  const handleShutterPressIn = () => {
+    isPressHoldingRef.current = false;
+    pressTimerRef.current = setTimeout(() => {
+      isPressHoldingRef.current = true;
+      startRecordingVideo();
+    }, 350);
+  };
+
+  const handleShutterPressOut = () => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+
+    if (isPressHoldingRef.current) {
+      isPressHoldingRef.current = false;
+      stopRecordingVideo();
+    } else {
+      capturePhoto();
+    }
+  };
+
+  // Camera Lifecycle
+  useEffect(() => {
+    if (!livekitToken) {
+      initCamera(facingMode);
+    } else {
+      // In call: release camera preview stream so LiveKit takes exclusive control
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((t) => t.stop());
+        setMediaStream(null);
+      }
+    }
+
+    return () => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, [facingMode, !!livekitToken]);
+
+  // Refresh User info and Boost status on mount
+  useEffect(() => {
+    checkAuth().catch(() => {});
+    matchSignalR
+      .getBoostStatus()
+      .then((res: any) => {
+        if (res?.isBoosted) setIsBoosted(true);
+      })
+      .catch((err) => console.warn('Boost status warning:', err));
+
+    matchSignalR.setOnBoostActivated(() => {
+      setIsBoosted(true);
+    });
+
+    axiosClient
+      .get('/gifts')
+      .then((res) => {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setGifts(
+            res.data.map((g: any) => ({
+              id: g.id,
+              name: g.name,
+              icon: getGiftIconComponent(g.name),
+              iconColor: getGiftColor(g.name),
+              coinCost: g.coinCost ?? g.coin_cost ?? 10,
+            }))
+          );
+        }
+      })
+      .catch((err) => console.warn('Failed to load gifts:', err));
+  }, []);
+
+  // SignalR Matchmaking Listeners
   useEffect(() => {
     matchSignalR.setOnMatchFound((data: any) => {
       setRoomName(data.roomName);
       setRemotePeer(data.matchedUser);
       setLivekitToken(data.liveKitToken);
       setIsSearching(false);
-      setMessages(prev => [...prev, { sender: data.matchedUser?.name || 'مستخدم', text: 'انضم للمكالمة', type: 'system' }]);
+      setMessages((prev) => [
+        ...prev,
+        { sender: data.matchedUser?.name || 'مستخدم', text: 'انضم للمكالمة', type: 'system' },
+      ]);
     });
 
     matchSignalR.setOnMatchSkipped(() => {
@@ -272,20 +731,27 @@ export default function MatchScreenWeb() {
     };
   }, []);
 
-  const setIsMatchMode = useAppStore(state => state.setIsMatchMode);
-
+  // Sync Bottom Tab Bar Visibility: Docked blur bar sits over camera, hides only during active video call
   useEffect(() => {
-    setIsMatchMode(!!livekitToken || isSearching);
-    // Cleanup when component unmounts
+    setIsMatchMode(!!livekitToken);
     return () => setIsMatchMode(false);
-  }, [livekitToken, isSearching, setIsMatchMode]);
+  }, [livekitToken, setIsMatchMode]);
 
+  // Flip Camera handler
+  const handleToggleCameraFacing = () => {
+    const nextFacing = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(nextFacing);
+    initCamera(nextFacing);
+  };
+
+  // Matchmaking Actions
   const handleStartSearch = async () => {
+    if (isSearching || livekitToken) return;
     setIsSearching(true);
     setLivekitToken(null);
     setRemotePeer(null);
     try {
-      const g = filterGender === 'all' ? undefined : (filterGender === 'female' ? 2 : 1);
+      const g = filterGender === 'all' ? undefined : filterGender === 'female' ? 2 : 1;
       await matchSignalR.joinQueue({ GenderPref: g, CallType: 'video' });
     } catch (e) {
       console.error('Search failed', e);
@@ -298,6 +764,7 @@ export default function MatchScreenWeb() {
     setLivekitToken(null);
     setRemotePeer(null);
     await matchSignalR.leaveQueue();
+    checkAuth().catch(() => {});
   };
 
   const handleSkip = async () => {
@@ -309,6 +776,7 @@ export default function MatchScreenWeb() {
   };
 
   const handleAddFriend = async () => {
+    if (!remotePeer?.id) return;
     try {
       await axiosClient.post(`/friends/request/${remotePeer.id}`);
       alert('تم إرسال طلب الصداقة بنجاح!');
@@ -323,133 +791,87 @@ export default function MatchScreenWeb() {
     if (remotePeer) {
       router.push({
         pathname: `/chat/${remotePeer.id}`,
-        params: { name: remotePeer.name, image: remotePeer.profileImageUrl }
+        params: { name: remotePeer.name, image: remotePeer.profileImageUrl },
       });
     }
   };
 
   const handleSendGift = async (gift: any) => {
-    setSentGift(gift.emoji);
+    setSentGift(gift);
     setGiftsOpen(false);
     setTimeout(() => setSentGift(null), 3000);
     try {
       if (remotePeer) {
         await axiosClient.post('/gifts/send', { giftId: gift.id, receiverId: remotePeer.id });
-        setMessages(prev => [...prev, { sender: 'أنت', text: `أرسلت ${gift.name} ${gift.emoji}`, type: 'system' }]);
+        setMessages((prev) => [...prev, { sender: 'أنت', text: `أرسلت هدية (${gift.name})`, type: 'system' }]);
+        checkAuth().catch(() => {});
       }
     } catch (e) {
       console.error('Gift sending failed', e);
     }
   };
 
-  if (!isSearching && !livekitToken) {
-    return (
-      <View style={styles.centerContainer}>
-        {/* Top bar: Notifications + Wallet */}
-        <View style={styles.homeTopBar}>
-          <Text style={styles.homeTitle}>قابل</Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <TouchableOpacity style={styles.homeTopIconBtn} onPress={() => router.push('/notifications' as any)}>
-              <Bell color={Colors.textMuted} size={22} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.homeTopIconBtn} onPress={() => router.push('/(tabs)/wallet' as any)}>
-              <Wallet color={Colors.primary} size={22} />
-            </TouchableOpacity>
-          </View>
-        </View>
+  // Azar-style Horizontal Swipe-to-Match Gesture
+  const swipePanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        // Swipe left: dx is negative
+        if (gestureState.dx < -35 || gestureState.vx < -0.3) {
+          if (!isSearching && !livekitToken) {
+            handleStartSearch();
+          }
+        }
+      },
+    })
+  ).current;
 
-        {/* Filter icon */}
-        <TouchableOpacity style={styles.filterIconBtn} onPress={() => setFiltersOpen(true)}>
-          <SlidersHorizontal color="#fff" size={24} />
-        </TouchableOpacity>
+  // Web Touch / Drag handler for instant gesture response
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
-        <View style={styles.radarRing} />
-        <View style={[styles.radarRing, { width: 300, height: 300, opacity: 0.05 }]} />
-        <GlassCard style={{ alignItems: 'center', padding: 40 }} >
-          <Text style={styles.logo}>✨</Text>
-          <Text style={{ color: Colors.text, fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold', marginVertical: 10 }}>مكالمة حية - قابل</Text>
-          <Text style={{ color: Colors.textMuted, textAlign: 'center', marginBottom: 30 }}>تواصل بالفيديو مع أصدقاء جدد حول العالم.</Text>
-          <GlassButton 
-            title="ابدأ البحث" 
-            variant="primary" 
-            onPress={handleStartSearch} 
-            style={{ width: '100%' }}
-          />
-        </GlassCard>
+  const onTouchStartWeb = (e: any) => {
+    if (e.touches && e.touches[0]) {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
 
-        <Modal visible={filtersOpen} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity style={{flex: 1}} onPress={() => setFiltersOpen(false)} />
-            <View style={styles.filterTray}>
-              <View style={styles.trayHeader}>
-                <Text style={styles.trayTitle}>فلاتر البحث</Text>
-                <TouchableOpacity onPress={() => setFiltersOpen(false)}>
-                  <X color={Colors.text} size={24} />
-                </TouchableOpacity>
-              </View>
-              
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Users color={Colors.cyan} size={18} />
-                  <Text style={styles.sectionTitle}>الجنس</Text>
-                </View>
-                <View style={styles.optionsRow}>
-                  {genderOptions.map(opt => (
-                    <TouchableOpacity
-                      key={opt.key}
-                      style={[styles.optionBtn, filterGender === opt.key && styles.optionBtnActive]}
-                      onPress={() => setFilterGender(opt.key)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.optionEmoji}>{opt.emoji}</Text>
-                      <Text style={[styles.optionLabel, filterGender === opt.key && styles.optionLabelActive]}>
-                        {opt.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
+  const onTouchEndWeb = (e: any) => {
+    if (touchStartX.current !== null && e.changedTouches && e.changedTouches[0]) {
+      const diffX = e.changedTouches[0].clientX - touchStartX.current;
+      const diffY = e.changedTouches[0].clientY - (touchStartY.current ?? 0);
+      if (diffX < -35 && Math.abs(diffX) > Math.abs(diffY)) {
+        if (!isSearching && !livekitToken) {
+          handleStartSearch();
+        }
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
 
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Globe color={Colors.secondary} size={18} />
-                  <Text style={styles.sectionTitle}>المنطقة الجغرافية</Text>
-                </View>
-                <View style={styles.regionsGrid}>
-                  {regions.map(r => (
-                    <TouchableOpacity
-                      key={r}
-                      style={[styles.regionBtn, filterRegion === r && styles.regionBtnActive]}
-                      onPress={() => setFilterRegion(r)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.regionText, filterRegion === r && styles.regionTextActive]}>{r}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      </View>
-    );
-  }
+  const genderLabel = filterGender === 'female' ? 'إناث' : filterGender === 'male' ? 'ذكور' : 'الكل';
+  const regionLabel = filterRegion === 'العالم' ? 'العالم' : filterRegion;
+  const filterLabel = `${genderLabel} · ${regionLabel}`;
 
-  if (isSearching) {
-    return (
-      <View style={styles.centerContainer}>
-        <View style={[styles.radarRing, styles.pulsing]} />
-        <View style={[styles.radarRing, { width: 300, height: 300, opacity: 0.1 }]} />
-        <Search color={Colors.primary} size={60} style={{ marginBottom: 20 }} />
-        <Text style={{ color: Colors.primary, fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold' }}>جارٍ البحث...</Text>
-        <Text style={{ color: Colors.textMuted, marginTop: 10, marginBottom: 40 }}>يتم الآن التوصيل بشخص مناسب لك</Text>
-        <GlassButton title="إلغاء البحث" variant="outline" onPress={() => setIsSearching(false)} />
-      </View>
-    );
-  }
+  // Radar pulse animations
+  const radarScale1 = radarAnim1.interpolate({ inputRange: [0, 1], outputRange: [0.8, 2.2] });
+  const radarOpacity1 = radarAnim1.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0.55, 0.35, 0] });
+  const radarScale2 = radarAnim2.interpolate({ inputRange: [0, 1], outputRange: [0.8, 2.2] });
+  const radarOpacity2 = radarAnim2.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0.55, 0.35, 0] });
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      {...swipePanResponder.panHandlers}
+      onTouchStart={onTouchStartWeb}
+      onTouchEnd={onTouchEndWeb}
+    >
+      {/* ── Active LiveKit Video Call State ─────────────────────────────── */}
       {livekitToken ? (
         <LiveKitRoom
           serverUrl={LIVEKIT_URL}
@@ -457,9 +879,9 @@ export default function MatchScreenWeb() {
           connect={true}
           audio={true}
           video={true}
-          style={{ width: '100%', height: '100%', position: 'absolute' }}
+          style={StyleSheet.absoluteFillObject}
         >
-          <CallInterface 
+          <CallInterface
             remotePeer={remotePeer}
             handleEndCall={handleEndCall}
             handleSkip={handleSkip}
@@ -471,130 +893,1296 @@ export default function MatchScreenWeb() {
           />
         </LiveKitRoom>
       ) : (
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#111' }]} />
+        <>
+          {/* ── Snapchat-style Instant Camera Viewport on Launch ─────────── */}
+          <View style={StyleSheet.absoluteFillObject}>
+            {React.createElement('video', {
+              ref: setVideoRef,
+              autoPlay: true,
+              playsInline: true,
+              muted: true,
+              style: {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
+                backgroundColor: '#07090E',
+              },
+            })}
+          </View>
+
+          {/* Gentle Ambient Vignette for HUD readability */}
+          <LinearGradient
+            colors={['rgba(0,0,0,0.45)', 'transparent', 'rgba(0,0,0,0.6)']}
+            style={[StyleSheet.absoluteFillObject, { pointerEvents: 'none' }]}
+          />
+
+          {/* ── Camera Permission Dialog (Frosted Glass) ───────────────── */}
+          {hasCameraPermission === false && (
+            <View style={styles.permissionBackdrop}>
+              <View style={styles.permissionCard}>
+                <LinearGradient colors={Colors.gradPrimary} style={styles.permissionBadge}>
+                  <Camera size={30} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={styles.permissionTitle}>الكاميرا مطلوبة لبدء المطابقة</Text>
+                <Text style={styles.permissionDesc}>يرجى السماح بالوصول للكاميرا لبدء المطابقة الفورية</Text>
+                <TouchableOpacity
+                  style={styles.permissionBtn}
+                  onPress={() => initCamera(facingMode)}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient colors={Colors.gradPrimary} style={styles.permissionBtnGradient}>
+                    <Text style={styles.permissionBtnText}>السماح بالكاميرا وإعادة المحاولة</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* ── Floating Frosted Glass HUD Controls ─────────────────────── */}
+          <View style={[styles.hudTopBar, { paddingTop: Math.max(insets.top, 22) }]}>
+            {/* Top Left: Brand Title */}
+            <View style={styles.hudBrandCapsule}>
+              <View style={styles.hudBrandLiveDot} />
+              <Text style={styles.hudBrandText}>قابلنى</Text>
+            </View>
+
+            {/* Top Right: Actions */}
+            <View style={styles.hudActionsRow}>
+              {/* Filter Capsule */}
+              <TouchableOpacity
+                style={[
+                  styles.hudCapsule,
+                  (filterGender !== 'all' || filterRegion !== 'العالم') && styles.hudCapsuleActive,
+                ]}
+                onPress={() => setFiltersOpen(true)}
+                activeOpacity={0.8}
+                accessibilityLabel="تفضيلات البحث"
+              >
+                <SlidersHorizontal size={14} color="#FFFFFF" />
+                <Text style={styles.hudCapsuleText}>{filterLabel}</Text>
+              </TouchableOpacity>
+
+              {/* Coins Balance Capsule */}
+              <TouchableOpacity
+                style={styles.hudCapsule}
+                onPress={() => router.push('/(tabs)/wallet' as any)}
+                activeOpacity={0.8}
+                accessibilityLabel="الرصيد والمحفظة"
+              >
+                <Coins size={14} color="#F59E0B" />
+                <Text style={styles.hudCoinsText}>{user?.coins?.toLocaleString() || '0'}</Text>
+              </TouchableOpacity>
+
+              {/* Nearby / Snap Map Capsule */}
+              <TouchableOpacity
+                style={[styles.hudCapsule, { borderColor: 'rgba(254, 60, 114, 0.45)', backgroundColor: 'rgba(254, 60, 114, 0.2)' }]}
+                onPress={() => router.push('/(tabs)/map' as any)}
+                activeOpacity={0.8}
+                accessibilityLabel="خريطة القريبين منك"
+              >
+                <Compass size={14} color="#FE3C72" />
+                <Text style={[styles.hudCapsuleText, { color: '#FFFFFF', fontWeight: '700' }]}>القريبين</Text>
+              </TouchableOpacity>
+
+              {/* Boost Status Pill */}
+              <TouchableOpacity
+                style={[styles.hudCapsule, isBoosted && styles.hudBoostCapsuleActive]}
+                onPress={() => router.push('/boost' as any)}
+                activeOpacity={0.8}
+                accessibilityLabel="ميزة البوست"
+              >
+                <Zap size={14} color={isBoosted ? '#FFD700' : '#FFFFFF'} fill={isBoosted ? '#FFD700' : 'none'} />
+                {isBoosted ? (
+                  <Text style={styles.hudBoostTextActive}>مفعّل</Text>
+                ) : (
+                  <Text style={styles.hudCapsuleText}>بوست</Text>
+                )}
+              </TouchableOpacity>
+
+              {/* Flip Camera Button */}
+              <TouchableOpacity
+                style={styles.hudCircleBtn}
+                onPress={handleToggleCameraFacing}
+                activeOpacity={0.8}
+                accessibilityLabel="قلب الكاميرا"
+              >
+                <SwitchCamera size={17} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* ── Azar-style Floating Guide Pill above Docked Bottom Nav ──── */}
+          {!isSearching && (
+            <Animated.View
+              style={[
+                styles.guidePillWrapper,
+                {
+                  bottom: Math.max(insets.bottom + 184, 204),
+                  transform: [{ translateX: swipeAnim }],
+                },
+              ]}
+            >
+              <TouchableOpacity
+                style={styles.guidePillTouchable}
+                onPress={handleStartSearch}
+                activeOpacity={0.85}
+                accessibilityLabel="اسحب للشمال للمطابقة الفورية"
+              >
+                <LinearGradient
+                  colors={['rgba(254, 60, 114, 0.96)', 'rgba(255, 101, 132, 0.96)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.guidePillGradient}
+                >
+                  <Text style={styles.guideArrow}>←</Text>
+                  <Text style={styles.guideText}>اسحب للشمال للمطابقة الفورية</Text>
+                  <Sparkles size={16} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+
+          {/* ── Snapchat-style Frosted Shutter Button for Streaks ──────── */}
+          {!isSearching && (
+            <View
+              style={[
+                styles.shutterWrapper,
+                { bottom: Math.max(insets.bottom + 84, 100) },
+              ]}
+            >
+              {/* Recording badge */}
+              {isRecordingSnap && (
+                <View style={styles.recBadge}>
+                  <View style={styles.recDot} />
+                  <Text style={styles.recText}>
+                    00:{recordingSeconds < 10 ? `0${recordingSeconds}` : recordingSeconds} / 00:10
+                  </Text>
+                </View>
+              )}
+
+              {/* Frosted Shutter Trigger */}
+              <TouchableOpacity
+                style={[
+                  styles.shutterOuter,
+                  isRecordingSnap && styles.shutterOuterRecording,
+                ]}
+                onPressIn={handleShutterPressIn}
+                onPressOut={handleShutterPressOut}
+                activeOpacity={0.9}
+                accessibilityLabel="نقرة لالتقاط سناب، أو ضغطة مطولة لتسجيل فيديو ستريك"
+              >
+                {/* Dynamic SVG Countdown Progress Ring */}
+                {isRecordingSnap && (
+                  <View style={styles.shutterSvgWrapper}>
+                    <Svg width={96} height={96}>
+                      <Circle
+                        cx={48}
+                        cy={48}
+                        r={43}
+                        stroke="#FE3C72"
+                        strokeWidth={4.5}
+                        fill="none"
+                        strokeDasharray={`${2 * Math.PI * 43} ${2 * Math.PI * 43}`}
+                        strokeDashoffset={
+                          2 * Math.PI * 43 - (recordingSeconds / 10) * (2 * Math.PI * 43)
+                        }
+                        strokeLinecap="round"
+                        transform="rotate(-90 48 48)"
+                      />
+                    </Svg>
+                  </View>
+                )}
+
+                {/* Shutter Center Core */}
+                <View
+                  style={[
+                    styles.shutterInner,
+                    isRecordingSnap && styles.shutterInnerRecording,
+                  ]}
+                />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* ── Searching State: Sleek Frosted Overlay over Live Camera ── */}
+          {isSearching && (
+            <View style={styles.searchingOverlay}>
+              {/* Soft Visual Radar Pulse Waves */}
+              <Animated.View
+                style={[
+                  styles.radarRing,
+                  { width: 140, height: 140, transform: [{ scale: radarScale1 }], opacity: radarOpacity1 },
+                ]}
+              />
+              <Animated.View
+                style={[
+                  styles.radarRing,
+                  { width: 230, height: 230, transform: [{ scale: radarScale2 }], opacity: radarOpacity2 },
+                ]}
+              />
+              <Animated.View
+                style={[
+                  styles.radarRing,
+                  { width: 330, height: 330, transform: [{ scale: radarScale1 }], opacity: radarOpacity2 },
+                ]}
+              />
+
+              {/* Pulsing Search Center Badge */}
+              <View style={styles.searchCenterBadge}>
+                <LinearGradient colors={Colors.gradPrimary} style={styles.searchCenterGradient}>
+                  <Search size={32} color="#FFFFFF" strokeWidth={2.4} />
+                </LinearGradient>
+              </View>
+
+              <Text style={styles.searchTitle}>جاري البحث عن صديق متوافق...</Text>
+              <Text style={styles.searchSubtitle}>انتظر لحظات، نحن نوصلك بأفضل تطابق حسب اهتماماتك</Text>
+
+              {/* Clear Cancel Button */}
+              <TouchableOpacity
+                style={styles.searchCancelBtn}
+                onPress={() => {
+                  setIsSearching(false);
+                  matchSignalR.leaveQueue();
+                }}
+                activeOpacity={0.8}
+                accessibilityLabel="إلغاء البحث"
+              >
+                <X size={18} color="#FFFFFF" />
+                <Text style={styles.searchCancelText}>إلغاء البحث</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
       )}
 
-      {/* Gift Tray Bottom Sheet */}
+      {/* ── Filter Bottom Sheet Modal ────────────────────────────────────── */}
+      <Modal visible={filtersOpen} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={closeFilters} />
+          <View style={styles.filterTray}>
+            <View style={styles.modalHandle} />
+            <View style={styles.trayHeader}>
+              <Text style={styles.trayTitle}>تفضيلات البحث</Text>
+              <TouchableOpacity style={styles.trayCloseBtn} onPress={closeFilters}>
+                <X color={Colors.textSecondary} size={20} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Gender Preference */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Users color={Colors.primary} size={18} />
+                <Text style={styles.sectionTitle}>الجنس المفضل</Text>
+              </View>
+              <View style={styles.genderRow}>
+                {genderOptions.map((opt) => {
+                  const IconComp = opt.icon;
+                  const isActive = filterGender === opt.key;
+                  return (
+                    <TouchableOpacity
+                      key={opt.key}
+                      style={[styles.genderCard, isActive && styles.genderCardActive]}
+                      onPress={() => setFilterGender(opt.key)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.genderIconWrap, isActive && styles.genderIconWrapActive]}>
+                        <IconComp size={22} color={isActive ? Colors.primary : Colors.textSecondary} />
+                      </View>
+                      <Text style={[styles.genderLabel, isActive && styles.genderLabelActive]}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Geographic Region */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Globe color={Colors.primary} size={18} />
+                <Text style={styles.sectionTitle}>المنطقة الجغرافية</Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.allRegionsBtn, filterRegion === 'العالم' && styles.allRegionsBtnActive]}
+                onPress={() => setFilterRegion('العالم')}
+                activeOpacity={0.7}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Globe size={18} color={filterRegion === 'العالم' ? Colors.primary : Colors.textSecondary} />
+                  <Text style={[styles.allRegionsText, filterRegion === 'العالم' && styles.allRegionsTextActive]}>
+                    العالم (جميع المناطق)
+                  </Text>
+                </View>
+                {filterRegion === 'العالم' && <Check size={18} color={Colors.primary} />}
+              </TouchableOpacity>
+
+              <View style={styles.regionsGrid2Col}>
+                {subRegions.map((r) => {
+                  const isActive = filterRegion === r;
+                  return (
+                    <TouchableOpacity
+                      key={r}
+                      style={[styles.regionChip, isActive && styles.regionChipActive]}
+                      onPress={() => setFilterRegion(r)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.regionChipText, isActive && styles.regionChipTextActive]}>
+                        {r}
+                      </Text>
+                      {isActive && <Check size={14} color={Colors.primary} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            <GlassButton
+              title="تطبيق الفلاتر"
+              variant="primary"
+              onPress={closeFilters}
+              style={{ width: '100%', marginTop: 8 }}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Gift Tray Bottom Sheet Modal ─────────────────────────────────── */}
       <Modal visible={giftsOpen} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <TouchableOpacity style={{flex: 1}} onPress={() => setGiftsOpen(false)} />
+          <TouchableOpacity style={{ flex: 1 }} onPress={closeGifts} />
           <View style={styles.giftTray}>
             <View style={styles.trayHeader}>
               <Text style={styles.trayTitle}>إرسال هدية</Text>
               <View style={styles.coinBadge}>
-                <Text style={styles.coinIcon}>🪙</Text>
-                <Text style={styles.coinCount}>1,250</Text>
+                <Coins size={16} color="#F59E0B" />
+                <Text style={styles.coinCount}>{user?.coins?.toLocaleString() || '0'}</Text>
               </View>
             </View>
-            
+
             <View style={styles.giftsGrid}>
-              {gifts.map((g) => (
-                <TouchableOpacity key={g.id} style={styles.giftItem} onPress={() => handleSendGift(g)}>
-                  <View style={styles.giftEmojiBox}>
-                    <Text style={styles.giftEmoji}>{g.emoji}</Text>
-                  </View>
-                  <Text style={styles.giftName}>{g.name}</Text>
-                  <Text style={styles.giftCostText}>🪙 {g.coinCost}</Text>
-                </TouchableOpacity>
-              ))}
+              {gifts.map((g) => {
+                const IconComp = g.icon || Gift;
+                return (
+                  <TouchableOpacity key={g.id} style={styles.giftItem} onPress={() => handleSendGift(g)}>
+                    <View style={styles.giftEmojiBox}>
+                      <IconComp size={28} color={g.iconColor || Colors.primary} />
+                    </View>
+                    <Text style={styles.giftName}>{g.name}</Text>
+                    <View style={styles.giftCostRow}>
+                      <Coins size={12} color="#F59E0B" />
+                      <Text style={styles.giftCostText}>{g.coinCost}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
-            
-            <TouchableOpacity style={styles.closeTrayBtn} onPress={() => setGiftsOpen(false)}>
+
+            <TouchableOpacity style={styles.closeTrayBtn} onPress={closeGifts}>
               <Text style={styles.closeTrayText}>إغلاق</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
+
+      {/* ── Snap Preview Modal ────────────────────────────────────────── */}
+      <SnapPreviewModal
+        visible={snapPreviewVisible}
+        mediaUri={snapMediaUri}
+        mediaType={snapMediaType}
+        onClose={() => {
+          setSnapPreviewVisible(false);
+          setSnapMediaUri(null);
+        }}
+        onOpenSendSheet={(caption) => {
+          setSnapCaption(caption);
+          setSnapPreviewVisible(false);
+          setSendSheetVisible(true);
+        }}
+      />
+
+      {/* ── Send-To Bottom Sheet ──────────────────────────────────────── */}
+      <SendStreakSheet
+        visible={sendSheetVisible}
+        mediaUri={snapMediaUri}
+        mediaType={snapMediaType}
+        caption={snapCaption}
+        onClose={() => {
+          setSendSheetVisible(false);
+          setSnapMediaUri(null);
+        }}
+        onSuccess={() => {
+          setSendSheetVisible(false);
+          setSnapMediaUri(null);
+        }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  centerContainer: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  radarRing: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: Colors.primary, opacity: 0.1 },
-  pulsing: { opacity: 0.2 },
-  logo: { fontSize: 60, marginBottom: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+    overflow: 'hidden',
+  },
 
-  // Top Nav
-  topNav: { position: 'absolute', top: 40, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 30 },
-  navIconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  liveBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.danger, marginRight: 8 },
-  liveText: { color: '#fff', fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14, marginRight: 8 },
-  timeText: { color: 'rgba(255,255,255,0.8)', fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 },
+  // ── Frosted Shutter Button for Streaks ──────────────────────────────
+  shutterWrapper: {
+    position: 'absolute',
+    alignSelf: 'center',
+    alignItems: 'center',
+    zIndex: 26,
+  },
+  recBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(254, 60, 114, 0.5)',
+  },
+  recDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FE3C72',
+  },
+  recText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  shutterOuter: {
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(16px)',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+      } as any,
+    }),
+  },
+  shutterOuterRecording: {
+    borderColor: '#FE3C72',
+    backgroundColor: 'rgba(254, 60, 114, 0.2)',
+    transform: [{ scale: 1.08 }],
+  },
+  shutterInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFFFFF',
+  },
+  shutterInnerRecording: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#FE3C72',
+  },
+  shutterSvgWrapper: {
+    position: 'absolute',
+    top: -11,
+    left: -11,
+    width: 96,
+    height: 96,
+    pointerEvents: 'none',
+  },
 
-  // PIP Local Video
-  pipContainer: { position: 'absolute', top: 100, right: 20, width: 100, height: 150, borderRadius: 20, overflow: 'hidden', borderWidth: 2, borderColor: '#fff', backgroundColor: '#000', zIndex: 30, shadowColor: '#000', shadowOffset: {width: 0, height: 8}, shadowOpacity: 0.4, shadowRadius: 12 },
-  pipMicIcon: { position: 'absolute', bottom: 6, left: 6, backgroundColor: 'rgba(0,0,0,0.5)', padding: 4, borderRadius: 12 },
+  // ── Floating Frosted Glass HUD Controls ─────────────────────────────
+  hudTopBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    zIndex: 30,
+  },
+  hudBrandCapsule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: 'rgba(0, 0, 0, 0.42)',
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+      } as any,
+    }),
+  },
+  hudBrandLiveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+  },
+  hudBrandText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    letterSpacing: -0.3,
+  },
+  hudActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  hudCapsule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.42)',
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+      } as any,
+    }),
+  },
+  hudCapsuleActive: {
+    borderColor: 'rgba(254, 60, 114, 0.65)',
+    backgroundColor: 'rgba(254, 60, 114, 0.25)',
+  },
+  hudCapsuleText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+  hudCoinsText: {
+    color: '#F59E0B',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  hudBoostCapsuleActive: {
+    backgroundColor: 'rgba(245, 158, 11, 0.25)',
+    borderColor: 'rgba(245, 158, 11, 0.6)',
+  },
+  hudBoostTextActive: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  hudCircleBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(0, 0, 0, 0.42)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+      } as any,
+    }),
+  },
 
-  // Gift float
-  giftFloat: { position: 'absolute', top: '40%', alignSelf: 'center', zIndex: 100 },
-  giftFloatEmoji: { fontSize: 100, textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: {width: 0, height: 10}, textShadowRadius: 20 },
+  // ── Azar-style Swipe Guide Pill ─────────────────────────────────────
+  guidePillWrapper: {
+    position: 'absolute',
+    alignSelf: 'center',
+    zIndex: 25,
+  },
+  guidePillTouchable: {
+    borderRadius: 100,
+    overflow: 'hidden',
+    shadowColor: '#FE3C72',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 8px 24px rgba(254, 60, 114, 0.35)',
+      } as any,
+    }),
+  },
+  guidePillGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 100,
+  },
+  guideArrow: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+  },
+  guideText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    letterSpacing: 0.2,
+  },
 
-  // Bottom Overlay
-  bottomOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 24, zIndex: 40 },
-  
-  // Chat
-  chatStream: { height: 100, justifyContent: 'flex-end', marginBottom: 12 },
-  chatMessageRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  chatAvatarPlaceholder: { width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 6 },
-  chatSender: { color: 'rgba(255,255,255,0.7)', fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', marginRight: 4 },
-  chatText: { color: '#fff', fontSize: 13, fontFamily: 'PlusJakartaSans_500Medium' },
-  systemMessageBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  systemMessageText: { color: '#fff', fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold', marginLeft: 6 },
+  // ── Searching Frosted Overlay ────────────────────────────────────────
+  searchingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(8, 10, 16, 0.72)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 50,
+    paddingHorizontal: 24,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      } as any,
+    }),
+  },
+  radarRing: {
+    position: 'absolute',
+    borderRadius: 9999,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(254, 60, 114, 0.08)',
+  },
+  searchCenterBadge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    overflow: 'hidden',
+    marginBottom: 24,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 10px 30px rgba(254, 60, 114, 0.45)',
+      } as any,
+    }),
+  },
+  searchCenterGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  searchSubtitle: {
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    textAlign: 'center',
+    marginBottom: 36,
+    maxWidth: 320,
+    lineHeight: 22,
+  },
+  searchCancelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+      } as any,
+    }),
+  },
+  searchCancelText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
 
-  // Side Controls
-  sideControls: { position: 'absolute', right: 20, top: '40%', gap: 15, zIndex: 40, alignItems: 'center' },
-  
-  // Controls Row
-  controlsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  leftControls: { flexDirection: 'row', gap: 8 },
-  glassBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
-  
-  primaryActions: { flexDirection: 'row', gap: 10 },
-  skipBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,255,255,0.15)', borderWidth: 1, borderColor: Colors.cyan, alignItems: 'center', justifyContent: 'center' },
-  giftBtn: { width: 50, height: 50, borderRadius: 25, overflow: 'hidden', shadowColor: Colors.secondary, shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.4, shadowRadius: 10 },
-  giftBtnGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  endCallBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: Colors.danger, alignItems: 'center', justifyContent: 'center', shadowColor: Colors.danger, shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.4, shadowRadius: 10 },
+  // ── Camera Permission Dialog ────────────────────────────────────────
+  permissionBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(8, 10, 16, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 45,
+    paddingHorizontal: 24,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+      } as any,
+    }),
+  },
+  permissionCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 28,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    ...Platform.select({
+      web: {
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.25)',
+      } as any,
+    }),
+  },
+  permissionBadge: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  permissionTitle: {
+    color: Colors.text,
+    fontSize: 19,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  permissionDesc: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  permissionBtn: {
+    width: '100%',
+    borderRadius: 100,
+    overflow: 'hidden',
+  },
+  permissionBtnGradient: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+  },
+  permissionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
 
-  // Gift Tray
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-  giftTray: { backgroundColor: 'rgba(255,255,255,0.95)', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
-  trayHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  trayTitle: { fontSize: 20, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text },
-  coinBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  coinIcon: { fontSize: 16, marginRight: 4 },
-  coinCount: { fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.text },
-  giftsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  giftItem: { width: '23%', alignItems: 'center', marginBottom: 20 },
-  giftEmojiBox: { width: 64, height: 64, borderRadius: 32, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: {width:0,height:2}, shadowOpacity: 0.1, shadowRadius: 4 },
-  giftEmoji: { fontSize: 32 },
-  giftName: { fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', color: Colors.text },
-  giftCostText: { color: Colors.textMuted, fontSize: 12, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 4 },
-  closeTrayBtn: { marginTop: 16, alignItems: 'center', padding: 12, backgroundColor: Colors.surface, borderRadius: 16 },
-  closeTrayText: { color: Colors.text, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16 },
+  // ── Azar-style Video Call Layout (CallInterface) ────────────────────
+  callRoot: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  pipContainer: {
+    position: 'absolute',
+    top: 75,
+    right: 18,
+    width: 105,
+    height: 145,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: '#111319',
+    zIndex: 35,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
+      } as any,
+    }),
+  },
+  pipMicIcon: {
+    position: 'absolute',
+    bottom: 6,
+    left: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    padding: 4,
+    borderRadius: 10,
+  },
+  callTopBar: {
+    position: 'absolute',
+    top: 0,
+    left: 18,
+    right: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 30,
+  },
+  peerInfoCapsule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    maxWidth: '65%',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+      } as any,
+    }),
+  },
+  peerAvatarCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  peerAvatarInitial: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  peerNameText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  peerLocationText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_500Medium',
+  },
+  callDurationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+      } as any,
+    }),
+  },
+  callLiveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: Colors.danger,
+  },
+  callDurationText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
 
-  // Home screen top bar
-  homeTopBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 48, paddingHorizontal: 20, zIndex: 20 },
-  homeTitle: { fontSize: 26, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text },
-  homeTopIconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright, alignItems: 'center', justifyContent: 'center' },
+  // ── Floating Call Action Dock ───────────────────────────────────────
+  callDockContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    zIndex: 40,
+  },
+  callSwipeHint: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+      } as any,
+    }),
+  },
+  callSwipeHintText: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+  callDockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 36,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      } as any,
+    }),
+  },
+  callActionBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  callActionBtnDisabled: {
+    backgroundColor: 'rgba(239, 68, 68, 0.35)',
+    borderColor: Colors.danger,
+  },
+  callSkipBtn: {
+    backgroundColor: 'rgba(16, 185, 129, 0.25)',
+    borderColor: '#10B981',
+  },
+  callGiftActionBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+  },
+  callGiftGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  callEndBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: Colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.danger,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+  },
 
-  // Filters UI
-  filterIconBtn: { position: 'absolute', top: 108, right: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primaryDim, borderWidth: 1, borderColor: Colors.primary, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
-  filterTray: { backgroundColor: '#1E1E1E', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
-  section: { marginBottom: 24, width: '100%' },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-  sectionTitle: { fontSize: 18, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text, flex: 1 },
-  optionsRow: { flexDirection: 'row', gap: 10, width: '100%' },
-  optionBtn: { flex: 1, alignItems: 'center', gap: 8, paddingVertical: 16, borderRadius: 24, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright },
-  optionBtnActive: { backgroundColor: Colors.cyanDim, borderColor: Colors.cyan },
-  optionEmoji: { fontSize: 28 },
-  optionLabel: { fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', color: Colors.textSecondary },
-  optionLabelActive: { color: Colors.cyan },
-  regionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  regionBtn: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 100, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright },
-  regionBtnActive: { backgroundColor: Colors.secondaryDim, borderColor: Colors.secondary },
-  regionText: { fontSize: 14, color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_700Bold' },
-  regionTextActive: { color: Colors.secondary },
+  // ── Floating Gift Animation ─────────────────────────────────────────
+  giftFloat: {
+    position: 'absolute',
+    top: '38%',
+    alignSelf: 'center',
+    zIndex: 100,
+  },
+  giftFloatBadge: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 28,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.7)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(16px)',
+        boxShadow: '0 12px 36px rgba(0,0,0,0.25)',
+      } as any,
+    }),
+  },
+  giftFloatTitle: {
+    marginTop: 8,
+    fontSize: 16,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: Colors.text,
+  },
+
+  // ── Modals & Bottom Sheets (Filters & Gifts) ────────────────────────
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    ...Platform.select({
+      web: { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } as any,
+    }),
+  },
+  filterTray: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 24,
+    paddingTop: 14,
+    paddingBottom: Platform.OS === 'ios' ? 44 : 28,
+    borderTopWidth: 1,
+    borderColor: Colors.glassBorder,
+    ...Platform.select({
+      web: { boxShadow: '0px -8px 32px rgba(0, 0, 0, 0.12)' } as any,
+    }),
+  },
+  modalHandle: {
+    width: 44,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E2E8F0',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  trayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  trayTitle: {
+    fontSize: 20,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: Colors.text,
+  },
+  trayCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F3F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  section: {
+    marginBottom: 20,
+    width: '100%',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: Colors.text,
+    flex: 1,
+  },
+  genderRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  genderCard: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#EAECEF',
+  },
+  genderCardActive: {
+    backgroundColor: Colors.primaryDim,
+    borderColor: Colors.primary,
+  },
+  genderIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F8F9FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  genderIconWrapActive: {
+    backgroundColor: 'rgba(254, 60, 114, 0.12)',
+  },
+  genderLabel: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: Colors.textSecondary,
+  },
+  genderLabelActive: {
+    color: Colors.primary,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  allRegionsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#EAECEF',
+    marginBottom: 10,
+  },
+  allRegionsBtnActive: {
+    backgroundColor: Colors.primaryDim,
+    borderColor: Colors.primary,
+  },
+  allRegionsText: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: Colors.textSecondary,
+  },
+  allRegionsTextActive: {
+    color: Colors.primary,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  regionsGrid2Col: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 10,
+  },
+  regionChip: {
+    width: '48.5%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#EAECEF',
+  },
+  regionChipActive: {
+    backgroundColor: Colors.primaryDim,
+    borderColor: Colors.primary,
+  },
+  regionChipText: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    textAlign: 'center',
+  },
+  regionChipTextActive: {
+    color: Colors.primary,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+
+  // ── Gift Tray Sheet ─────────────────────────────────────────────────
+  giftTray: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    borderTopWidth: 1,
+    borderColor: Colors.glassBorder,
+    ...Platform.select({
+      web: { boxShadow: '0px -8px 32px rgba(0,0,0,0.1)' } as any,
+    }),
+  },
+  coinBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+  },
+  coinCount: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: Colors.text,
+  },
+  giftsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  giftItem: {
+    width: '23%',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  giftEmojiBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F8F9FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+  },
+  giftName: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: Colors.text,
+  },
+  giftCostRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  giftCostText: {
+    color: Colors.textMuted,
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+  closeTrayBtn: {
+    marginTop: 16,
+    alignItems: 'center',
+    padding: 14,
+    backgroundColor: '#F1F3F5',
+    borderRadius: 100,
+  },
+  closeTrayText: {
+    color: Colors.text,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 15,
+  },
 });

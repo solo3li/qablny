@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, Image, Modal, TouchableOpacity, Animated, Easing,
+  View, Text, StyleSheet, Image, Modal, TouchableOpacity, Animated, Easing, Platform,
 } from 'react-native';
 import { useCallStore } from '../src/store/callStore';
 import { LiveKitHandler } from './LiveKitHandler';
@@ -8,9 +8,17 @@ import { GiftModal } from './GiftModal';
 import { Colors } from '../constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  PhoneOff, Mic, MicOff, Volume2, VolumeX,
-  Camera, CameraOff, RotateCcw, Minimize2, Gift
+  PhoneOff, Phone, Video, Mic, MicOff, Volume2, VolumeX,
+  Camera, CameraOff, RotateCcw, Minimize2, Gift, Crown, Rocket, Gem, Heart
 } from 'lucide-react-native';
+
+function getGiftVector(name?: string) {
+  if (name?.includes('تاج')) return <Crown size={54} color="#F59E0B" />;
+  if (name?.includes('صاروخ')) return <Rocket size={54} color="#3B82F6" />;
+  if (name?.includes('ماس') || name?.includes('جوهر')) return <Gem size={54} color="#8B5CF6" />;
+  if (name?.includes('قلب') || name?.includes('ورد')) return <Heart size={54} color="#FE3C72" />;
+  return <Gift size={54} color={Colors.primary} />;
+}
 import { axiosClient } from '../src/api/axiosClient';
 
 interface CallModalProps {
@@ -48,9 +56,9 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
   useEffect(() => {
     if (incomingGift) {
       Animated.sequence([
-        Animated.spring(giftScale, { toValue: 1.5, friction: 3, useNativeDriver: true }),
+        Animated.spring(giftScale, { toValue: 1.5, friction: 3, useNativeDriver: Platform.OS !== 'web' }),
         Animated.delay(1500),
-        Animated.timing(giftScale, { toValue: 0, duration: 500, useNativeDriver: true })
+        Animated.timing(giftScale, { toValue: 0, duration: 500, useNativeDriver: Platform.OS !== 'web' })
       ]).start();
     }
   }, [incomingGift]);
@@ -69,8 +77,8 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(anim, { toValue: 1.8, duration: 1200, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-          Animated.timing(anim, { toValue: 1, duration: 0, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 1.8, duration: 1200, easing: Easing.out(Easing.ease), useNativeDriver: Platform.OS !== 'web' }),
+          Animated.timing(anim, { toValue: 1, duration: 0, useNativeDriver: Platform.OS !== 'web' }),
         ])
       ).start();
     };
@@ -106,9 +114,9 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
   };
 
   const handleSendGift = async (gift: any) => {
-    setSentGift(gift.emoji);
+    setSentGift(gift);
     setGiftsOpen(false);
-    setTimeout(() => setSentGift(null), 2000);
+    setTimeout(() => setSentGift(null), 2500);
     try {
       await axiosClient.post('/gifts/send', { giftId: gift.id, receiverId: activeCall?.friendId });
     } catch (e) {
@@ -148,9 +156,16 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
           <TouchableOpacity style={styles.minimizeBtn} onPress={handleEnd}>
             <Minimize2 color={Colors.textSecondary} size={20} />
           </TouchableOpacity>
-          <Text style={styles.callTypeLabel}>
-            {callType === 'video' ? '📹 مكالمة فيديو' : '📞 مكالمة صوتية'}
-          </Text>
+          <View style={styles.callTypeWrap}>
+            {callType === 'video' ? (
+              <Video color={Colors.textSecondary} size={15} />
+            ) : (
+              <Phone color={Colors.textSecondary} size={15} />
+            )}
+            <Text style={styles.callTypeLabel}>
+              {callType === 'video' ? 'مكالمة فيديو' : 'مكالمة صوتية'}
+            </Text>
+          </View>
           <View style={{ width: 40 }} />
         </View>
 
@@ -264,16 +279,22 @@ export function CallModal({ visible, onClose, friend, callType }: CallModalProps
 
         {sentGift && (
           <View style={[styles.giftFloat, { top: '30%' }]}>
-            <Text style={styles.giftFloatEmoji}>{sentGift}</Text>
+            <View style={styles.giftFloatBadge}>
+              {getGiftVector(sentGift.name || '')}
+              <Text style={styles.giftFloatTitle}>{sentGift.name || 'هدية'}</Text>
+            </View>
           </View>
         )}
 
         {/* Incoming Gift Animation */}
         {incomingGift && (
           <Animated.View style={[styles.giftFloat, { transform: [{ scale: giftScale }] }]}>
-            <Text style={[styles.giftFloatEmoji, { fontSize: 120, textShadowColor: Colors.primaryContainer, textShadowRadius: 20 }]}>
-              {incomingGift}
-            </Text>
+            <View style={styles.giftFloatBadge}>
+              {getGiftVector(typeof incomingGift === 'object' ? incomingGift.name : String(incomingGift))}
+              <Text style={styles.giftFloatTitle}>
+                {typeof incomingGift === 'object' ? incomingGift.name : 'هدية جديدة'}
+              </Text>
+            </View>
           </Animated.View>
         )}
 
@@ -298,9 +319,29 @@ const styles = StyleSheet.create({
 
   topBar: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingHorizontal: 20, paddingBottom: 10 },
   minimizeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorder, alignItems: 'center', justifyContent: 'center' },
+  callTypeWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   callTypeLabel: { color: Colors.textSecondary, fontSize: 14, fontFamily: 'PlusJakartaSans_600SemiBold' },
   giftFloat: { position: 'absolute', top: '40%', alignSelf: 'center', zIndex: 100 },
-  giftFloatEmoji: { fontSize: 80 },
+  giftFloatBadge: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: '#EAECEF',
+    ...Platform.select({
+      web: { boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)' } as any,
+      default: { elevation: 12 },
+    }),
+  },
+  giftFloatTitle: {
+    color: Colors.text,
+    fontSize: 16,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    marginTop: 8,
+  },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
 

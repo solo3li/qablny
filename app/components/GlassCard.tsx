@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
   cardWrapper: {
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: Colors.glassBorderBright,
+    borderColor: Colors.glassBorder,
     overflow: 'hidden',
     ...Platform.select({
       default: {

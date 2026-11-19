@@ -1,5 +1,5 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'https://api.46.101.172.175.nip.io/api', // Adjust as needed for production/dev
+  baseURL: process.env.EXPO_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname.includes('nip.io') ? `${window.location.protocol}//api-qablny.169.58.32.179.nip.io/api` : 'https://api-qablny.169.58.32.179.nip.io/api'),
 });

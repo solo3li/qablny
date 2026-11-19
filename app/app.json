@@ -5,11 +5,11 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0A0E17"
+      "backgroundColor": "#F8F9FA"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -22,7 +22,7 @@
       "package": "com.qablny.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0A0E17"
+        "backgroundColor": "#F8F9FA"
       },
       "permissions": [
         "android.permission.ACCESS_NETWORK_STATE",

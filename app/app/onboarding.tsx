@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, Animated, Dimensions, Platform } from 'react-native';
 import { router } from 'expo-router';
+import { Video, Search, Globe, Gift } from 'lucide-react-native';
 import { GlassButton } from '../components/GlassButton';
 import { GlassCard } from '../components/GlassCard';
 import { Colors } from '../constants/Colors';
@@ -10,26 +11,30 @@ const { width } = Dimensions.get('window');
 
 const slides = [
   {
-    id: '1', emoji: '🎥',
+    id: '1',
+    icon: Video,
     title: 'تواصل فيديو فوري',
     desc: 'تحدث وجهاً لوجه مع أشخاص حقيقيين من كل أنحاء العالم بلمسة واحدة.',
     color: Colors.cyan,
   },
   {
-    id: '2', emoji: '🔍',
+    id: '2',
+    icon: Search,
     title: 'ابحث بذكاء',
     desc: 'فلترة دقيقة حسب الجنس والمنطقة الجغرافية لمطابقة تناسب ذوقك.',
     color: Colors.primary,
   },
   {
-    id: '3', emoji: '🌐',
+    id: '3',
+    icon: Globe,
     title: 'ترجمة لحظية',
     desc: 'تجاوز حاجز اللغة مع ترجمة فورية للرسائل لأكثر من 50 لغة.',
     color: Colors.secondary,
   },
   {
-    id: '4', emoji: '🎁',
-    title: 'أرسل هدايا ✨',
+    id: '4',
+    icon: Gift,
+    title: 'أرسل هدايا',
     desc: 'عبّر عن مشاعرك بهدايا افتراضية مبهرة وارتقِ إلى مستوى VIP.',
     color: Colors.primaryContainer,
   },
@@ -60,22 +65,25 @@ export default function OnboardingScreen() {
         showsHorizontalScrollIndicator={false}
         keyExtractor={i => i.id}
         onMomentumScrollEnd={e => setActiveIdx(Math.round(e.nativeEvent.contentOffset.x / width))}
-        renderItem={({ item }) => (
-          <View style={styles.slide}>
-            <View style={[
-              styles.emojiCircle, 
-              { borderColor: item.color + '55' },
-              Platform.select({
-                web: { boxShadow: `0px 0px 30px ${item.color}` } as any,
-                default: { shadowColor: item.color }
-              })
-            ]}>
-              <Text style={styles.emoji}>{item.emoji}</Text>
+        renderItem={({ item }) => {
+          const IconComp = item.icon;
+          return (
+            <View style={styles.slide}>
+              <View style={[
+                styles.emojiCircle, 
+                { borderColor: item.color + '55' },
+                Platform.select({
+                  web: { boxShadow: `0px 0px 30px ${item.color}` } as any,
+                  default: { shadowColor: item.color }
+                })
+              ]}>
+                <IconComp size={56} color={item.color} />
+              </View>
+              <Text style={[styles.title, { color: item.color }]}>{item.title}</Text>
+              <Text style={styles.desc}>{item.desc}</Text>
             </View>
-            <Text style={[styles.title, { color: item.color }]}>{item.title}</Text>
-            <Text style={styles.desc}>{item.desc}</Text>
-          </View>
-        )}
+          );
+        }}
       />
 
       {/* Dots */}
@@ -87,7 +95,7 @@ export default function OnboardingScreen() {
 
       <View style={styles.footer}>
         <GlassButton
-          title={activeIdx === slides.length - 1 ? 'ابدأ الآن 🚀' : 'التالي'}
+          title={activeIdx === slides.length - 1 ? 'ابدأ الآن' : 'التالي'}
           variant={activeIdx === slides.length - 1 ? 'primary' : 'outline'}
           onPress={next}
           style={styles.btn}
@@ -110,8 +118,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 36,
     ...Platform.select({
-      web: { boxShadow: '0px 0px 30px rgba(0, 0, 0, 0.4)' } as any,
-      default: { shadowOpacity: 0.4, shadowRadius: 30, shadowOffset: { width: 0, height: 0 } }
+      web: { boxShadow: Colors.shadowCard } as any,
+      default: { shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 4 } }
     })
   },
   emoji: { fontSize: 62 },

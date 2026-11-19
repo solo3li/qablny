@@ -1,21 +1,23 @@
-# ── Build Stage ───────────────────────────────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+FROM python:3.12-slim
 
-COPY Qablny.API.csproj .
-RUN dotnet restore
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
 
-COPY . .
-RUN dotnet publish Qablny.API.csproj -c Release -o /publish --no-restore
-
-# ── Runtime Stage ─────────────────────────────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-COPY --from=build /publish .
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV ASPNETCORE_URLS=http://+:8080
-ENV ASPNETCORE_ENVIRONMENT=Production
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+COPY . .
+RUN python manage.py collectstatic --noinput || true
+
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "Qablny.API.dll"]
+CMD ["uvicorn", "qablny.asgi:application", "--host", "0.0.0.0", "--port", "8080", "--workers", "2", "--proxy-headers", "--forwarded-allow-ips=*"]

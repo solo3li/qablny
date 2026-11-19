@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Image, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, Image, Animated, Easing, Platform } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { Phone, PhoneOff } from 'lucide-react-native';
 import { useCallStore } from '../src/store/callStore';
@@ -15,8 +15,8 @@ export function IncomingCallModal() {
     if (incomingCall) {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(pulse, { toValue: 1.2, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-          Animated.timing(pulse, { toValue: 1, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulse, { toValue: 1.2, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: Platform.OS !== 'web' }),
+          Animated.timing(pulse, { toValue: 1, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: Platform.OS !== 'web' }),
         ])
       ).start();
     } else {

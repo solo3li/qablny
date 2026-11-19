@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, RefreshContr
 import { Colors } from '../../constants/Colors';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { Video, Users, Sparkles, Play } from 'lucide-react-native';
+import { Video, Users, Play } from 'lucide-react-native';
 import { axiosClient as api } from '../../src/api/axiosClient';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -62,8 +62,8 @@ export default function LiveRoomsScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <LinearGradient colors={['rgba(255,95,61,0.1)', 'transparent']} style={styles.emptyIconBg}>
-              <Sparkles size={48} color={Colors.primary} strokeWidth={1.5} />
+            <LinearGradient colors={['rgba(254,60,114,0.1)', 'transparent']} style={styles.emptyIconBg}>
+              <Video size={48} color={Colors.primary} strokeWidth={1.5} />
             </LinearGradient>
             <Text style={styles.emptyText}>No live streams right now</Text>
             <Text style={styles.emptySubText}>Be the first to share your moments!</Text>

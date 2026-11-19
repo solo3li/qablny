@@ -1,43 +1,57 @@
 export const Colors = {
-  // --- Vibe Live Connect Theme ---
-  
+  // --- Clean Light Modern Theme (Hinge / Apple inspired) ---
+
   // Backgrounds
-  bg: '#f8f9fa',         // Surface Bright
-  bgDeep: '#edeeef',     // Surface Container
-  surface: '#ffffff',    // Surface Container Lowest
-  surfaceHover: '#f3f4f5',// Surface Container Low
+  bg: '#F8F9FA',            // Pure warm off-white surface
+  background: '#F8F9FA',
+  bgDeep: '#EEF0F3',        // Soft container fill
+  surface: '#FFFFFF',       // Clean white card surface
+  surfaceHover: '#F4F5F7',  // Interactive hover/press state
+  surfaceLight: '#F1F3F5',
 
-  // Accents & Buttons (Vibrant Gradients)
-  primary: '#b3290b',    // Primary
-  primaryDim: '#ffb4a4', // Primary Fixed Dim
-  primaryContainer: '#ff5f3d',
-  secondary: '#b40064',  // Secondary
-  secondaryDim: '#ffb0ca',
-  cyan: '#006b5b',       // Tertiary
-  cyanDim: '#00dfc1',
+  // Signature Accent & Harmonious Tints
+  primary: '#FE3C72',       // Signature elegant Coral/Rose primary
+  primaryDim: 'rgba(254, 60, 114, 0.08)', // Subtle tint fill for active chips/cards
+  primaryContainer: '#FE3C72',
+  primaryLight: '#FF6584',
+  secondary: '#FF5A79',     // Cohesive soft rose-pink accent (no clashing neon magenta)
+  secondaryDim: 'rgba(254, 60, 114, 0.12)',
+  cyan: '#0E9F6E',          // Refined emerald/teal accent
+  cyanDim: 'rgba(14, 159, 110, 0.08)',
 
-  // Text
-  text: '#191c1d',       // On Surface
-  textSecondary: '#5a413b', // On Surface Variant
-  textMuted: '#8e7069',  // Outline
+  // Crisp High-Contrast Typography
+  text: '#1A1D1E',          // Crisp near-black heading & primary copy
+  textSecondary: '#6C757D', // Neutral clean slate subtitle
+  textMuted: '#9CA3AF',     // Gentle placeholder & metadata gray
 
-  // Borders
-  glassBorder: '#e1e3e4',// Surface Variant
-  glassBorderBright: '#ffffff',
-  glassBg: 'rgba(255, 255, 255, 0.7)',
+  // Refined Borders
+  glassBorder: '#EAECEF',   // Subtle elegant border
+  glassBorderBright: '#FFFFFF',
+  glassBg: 'rgba(255, 255, 255, 0.85)',
+  border: '#EAECEF',
+  glassmorphism: 'rgba(255, 255, 255, 0.85)',
 
-  // Shadows
-  shadowLight: '0px 4px 20px rgba(0, 0, 0, 0.05)',
-  shadowGlow: '0px 10px 24px rgba(255, 95, 61, 0.3)',
+  // Subtle Modern Shadows
+  shadowLight: '0px 2px 12px rgba(0, 0, 0, 0.04)',
+  shadowGlow: '0px 8px 24px rgba(254, 60, 114, 0.22)',
+  shadowCard: '0px 4px 20px rgba(0, 0, 0, 0.06)',
 
-  // Gradients
-  gradMain: ['#ffffff', '#f8f9fa'] as const,
-  gradPrimary: ['#ff5f3d', '#b40064'] as const, // Coral to Pink
-  gradSecondary: ['#b40064', '#006b5b'] as const, // Pink to Teal
-  gradCard: ['#ffffff', '#ffffff'] as string[],
+  // Clean Gradients
+  gradMain: ['#FFFFFF', '#F8F9FA'] as const,
+  gradPrimary: ['#FE3C72', '#FF6584'] as const, // Subtle warm coral to rose gradient
+  gradSecondary: ['#FF6584', '#FE3C72'] as const, // Cohesive smooth gradient
+  gradCard: ['#FFFFFF', '#FFFFFF'] as string[],
 
   // States
-  online: '#00a790',     // Tertiary Container (Teal)
-  danger: '#ba1a1a',     // Error
-  success: '#006b5b',
+  online: '#10B981',        // Fresh emerald green for online indicators
+  danger: '#EF4444',        // Clean modern red
+  error: '#EF4444',
+  success: '#10B981',       // Emerald success
+  warning: '#F59E0B',
 };
+
+export const Layout = {
+  borderRadius: 16,
+  padding: 20,
+};
+

@@ -18,10 +18,10 @@ interface ReplyBarProps {
 
 function getPreviewText(reply: ReplyData): string {
   if (reply.type === 'text' && reply.text) return reply.text;
-  if (reply.type === 'voice') return '🎵 رسالة صوتية';
-  if (reply.type === 'image') return '📷 صورة';
-  if (reply.type === 'video') return '🎬 فيديو';
-  if (reply.type === 'location') return '📍 موقع';
+  if (reply.type === 'voice') return 'رسالة صوتية';
+  if (reply.type === 'image') return 'صورة';
+  if (reply.type === 'video') return 'فيديو';
+  if (reply.type === 'location') return 'موقع';
   return 'رسالة';
 }
 

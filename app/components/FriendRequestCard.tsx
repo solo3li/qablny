@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Animated, Platform } from 'react-native';
 import { Check, X, UserPlus } from 'lucide-react-native';
 import { Colors } from '../constants/Colors';
 
@@ -24,8 +24,8 @@ export function FriendRequestCard({ request, onAccept, onReject, loading }: Frie
 
   const pulse = () => {
     Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.97, duration: 80, useNativeDriver: true }),
-      Animated.timing(scaleAnim, { toValue: 1, duration: 80, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 0.97, duration: 80, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 80, useNativeDriver: Platform.OS !== 'web' }),
     ]).start();
   };
 
@@ -44,7 +44,7 @@ export function FriendRequestCard({ request, onAccept, onReject, loading }: Frie
             style={styles.avatar}
           />
           <View style={styles.badgeIcon}>
-            <UserPlus color={Colors.cyan} size={10} />
+            <UserPlus color={Colors.primary} size={10} />
           </View>
         </View>
         <View style={styles.info}>
@@ -75,8 +75,8 @@ export function FriendRequestCard({ request, onAccept, onReject, loading }: Frie
           disabled={loading}
           activeOpacity={0.7}
         >
-          <Check color={Colors.bg} size={16} strokeWidth={2.5} />
-          <Text style={[styles.btnText, { color: Colors.bg }]}>قبول</Text>
+          <Check color="#FFFFFF" size={16} strokeWidth={2.5} />
+          <Text style={[styles.btnText, { color: '#FFFFFF' }]}>قبول</Text>
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: Colors.cyan,
+    backgroundColor: Colors.primary,
   },
   btnText: {
     fontSize: 14,

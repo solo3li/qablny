@@ -211,7 +211,7 @@ export default function LiveRoomScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: '#000', width: '100%', height: Platform.OS === 'web' ? '100vh' : '100%' },
+  wrapper: { flex: 1, backgroundColor: '#000', width: '100%', height: Platform.OS === 'web' ? ('100vh' as any) : '100%' },
   container: { flex: 1, width: '100%', height: '100%', position: 'relative' },
   video: { width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, objectFit: 'cover' as any },
   waitingContainer: { ...StyleSheet.absoluteFillObject, backgroundColor: '#111', justifyContent: 'center', alignItems: 'center' },

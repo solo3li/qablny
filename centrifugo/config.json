@@ -1,0 +1,44 @@
+{
+  "token_hmac_secret_key": "qablny-centrifugo-hmac-secret-key-super-secure-2026",
+  "admin_password": "qablny-admin-pass-2026",
+  "admin_secret": "qablny-admin-secret-2026",
+  "api_key": "qablny-centrifugo-api-key-2026-very-secure",
+  "admin": true,
+  "health": true,
+  "http_stream": true,
+  "sse": true,
+  "allowed_origins": [
+    "*"
+  ],
+  "namespaces": [
+    {
+      "name": "users",
+      "allow_subscribe_for_client": true,
+      "presence": true,
+      "history_size": 100,
+      "history_ttl": "300s",
+      "force_recovery": true
+    },
+    {
+      "name": "tickets",
+      "allow_subscribe_for_client": true,
+      "presence": true,
+      "history_size": 100,
+      "history_ttl": "300s",
+      "force_recovery": true
+    },
+    {
+      "name": "match",
+      "allow_subscribe_for_client": true,
+      "presence": true
+    },
+    {
+      "name": "rooms",
+      "allow_subscribe_for_client": true,
+      "presence": true,
+      "history_size": 100,
+      "history_ttl": "300s",
+      "force_recovery": true
+    }
+  ]
+}

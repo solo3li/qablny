@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Modal, TextInput } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../constants/Colors';
 import { useAuthStore } from '../../src/store/authStore';
 import { axiosClient } from '../../src/api/axiosClient';
 import { GlassCard } from '../../components/GlassCard';
 import { GlassButton } from '../../components/GlassButton';
 import { router, Link } from 'expo-router';
-import { LogOut, Star, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle, Wallet, Edit2 } from 'lucide-react-native';
+import { LogOut, Crown, Coins, Users, Video, ChevronRight, Bell, Shield, HelpCircle, Wallet, Edit2, MapPin, Check, Zap } from 'lucide-react-native';
 
 export default function ProfileScreen() {
   const { user, logout, checkAuth } = useAuthStore();
@@ -83,16 +84,17 @@ export default function ProfileScreen() {
             <Image source={{ uri: user.profileImageUrl || 'https://i.pravatar.cc/300' }} style={[styles.avatar, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]} />
             {user.isVip && (
               <View style={[styles.vipRing, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
-                <Star size={14} color={Colors.primary} fill={Colors.primary} />
+                <Crown size={14} color="#F59E0B" />
               </View>
             )}
           </View>
           <Text style={styles.name}>{user.name}</Text>
           <Text style={styles.bio}>{(user as any).bio}</Text>
           <View style={styles.locationRow}>
-            <Text style={styles.locationText}>📍 {(user as any).location}</Text>
+            <MapPin size={14} color={Colors.textMuted} />
+            <Text style={styles.locationText}>{(user as any).location || 'غير محدد'}</Text>
             <Text style={styles.dot}>·</Text>
-            <Text style={styles.locationText}>{(user as any).age} سنة</Text>
+            <Text style={styles.locationText}>{(user as any).age ? `${(user as any).age} سنة` : ''}</Text>
           </View>
 
           {/* Interests */}
@@ -107,39 +109,51 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Stats */}
-        <GlassCard style={styles.statsCard} tint="light">
-          {[
-            { label: 'عملات', value: user.coins?.toLocaleString() || '0', emoji: '🪙' },
-          ].map((s, i) => (
-            <React.Fragment key={s.label}>
-              <View style={styles.stat}>
-                <Text style={styles.statEmoji}>{s.emoji}</Text>
-                <Text style={styles.statValue}>{s.value}</Text>
-                <Text style={styles.statLabel}>{s.label}</Text>
-              </View>
-              {i < 2 && <View style={styles.statDiv} />}
-            </React.Fragment>
-          ))}
-        </GlassCard>
-
-        {/* VIP section */}
-        {!user.isVip ? (
-          <GlassCard style={styles.vipBanner} tint="primary">
-            <View style={styles.vipBannerContent}>
-              <Text style={styles.vipBannerEmoji}>👑</Text>
-              <View>
-                <Text style={styles.vipBannerTitle}>ترقية إلى VIP</Text>
-                <Text style={styles.vipBannerSub}>احصل على مميزات حصرية</Text>
-              </View>
+        {/* Fluid Open Stats (No Boxy Card) */}
+        <View style={styles.fluidStatsRow}>
+          <View style={styles.fluidStatItem}>
+            <View style={styles.fluidStatIconBox}>
+              <Coins size={22} color="#F59E0B" />
             </View>
-            <GlassButton title="اشترك" variant="primary" onPress={() => setShowVip(!showVip)} style={{ height: 40, paddingHorizontal: 16 }} />
-          </GlassCard>
+            <Text style={styles.fluidStatValue}>{user.coins?.toLocaleString() || '0'}</Text>
+            <Text style={styles.fluidStatLabel}>رصيد العملات</Text>
+          </View>
+        </View>
+
+        {/* Fluid Seamless VIP Banner (No boxed borders) */}
+        {!user.isVip ? (
+          <View style={styles.fluidVipBanner}>
+            <LinearGradient
+              colors={['rgba(254, 60, 114, 0.08)', 'rgba(255, 101, 132, 0.03)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.fluidVipGradient}
+            >
+              <View style={styles.fluidVipContent}>
+                <View style={styles.vipCrownBadge}>
+                  <Crown size={22} color="#FE3C72" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fluidVipTitle}>عضوية VIP المتميزة</Text>
+                  <Text style={styles.fluidVipSub}>أولوية اتصال ومميزات حصرية</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.fluidVipBtn}
+                onPress={() => setShowVip(!showVip)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.fluidVipBtnText}>{showVip ? 'إغلاق' : 'ترقية الآن'}</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
         ) : (
-          <GlassCard style={styles.vipActiveBanner} tint="primary">
-            <Star size={18} color={Colors.primary} fill={Colors.primary} />
-            <Text style={styles.vipActiveText}>أنت مشترك في VIP ✨</Text>
-          </GlassCard>
+          <View style={styles.fluidVipActiveBanner}>
+            <View style={styles.vipCrownBadgeActive}>
+              <Crown size={18} color="#F59E0B" />
+            </View>
+            <Text style={styles.fluidVipActiveText}>عضويتك VIP نشطة ومفعّلة</Text>
+          </View>
         )}
 
         {/* VIP Plans */}
@@ -152,7 +166,12 @@ export default function ProfileScreen() {
                 <Text style={styles.planPrice}>{plan.price} ر.س</Text>
                 <Text style={styles.planPeriod}>/ {plan.period}</Text>
                 <View style={styles.planFeatures}>
-                  {plan.features.map((f: string) => <Text key={f} style={styles.planFeature}>✓ {f}</Text>)}
+                  {(plan.features || []).map((f: string) => (
+                    <View key={f} style={styles.featureItemRow}>
+                      <Check size={13} color={Colors.primary} />
+                      <Text style={styles.planFeature}>{f}</Text>
+                    </View>
+                  ))}
                 </View>
                 <GlassButton title="اشترك" variant={plan.isBest ? 'primary' : 'outline'} style={{ marginTop: 12, height: 40, width: '100%' }} onPress={() => handleSubscribe(plan.id)} />
               </GlassCard>
@@ -160,8 +179,8 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Settings menu */}
-        <GlassCard style={styles.menuCard} tint="light">
+        {/* Fluid Settings Menu (Seamless borderless list with subtle 0.5px dividers) */}
+        <View style={styles.fluidMenuList}>
           {menuItems.map((item, i) => {
             const handlePress = () => {
               if (item.href) {
@@ -173,9 +192,13 @@ export default function ProfileScreen() {
 
             return (
               <React.Fragment key={item.label}>
-                <TouchableOpacity style={styles.menuItem} onPress={handlePress}>
+                <TouchableOpacity 
+                  style={styles.fluidMenuItem} 
+                  onPress={handlePress}
+                  activeOpacity={0.7}
+                >
                   <View style={styles.menuLeft}>
-                    <View style={[styles.menuIcon, Platform.OS === 'web' ? { boxShadow: Colors.shadowLight } as any : null]}>
+                    <View style={styles.fluidMenuIcon}>
                       {item.icon}
                     </View>
                     <View>
@@ -185,11 +208,11 @@ export default function ProfileScreen() {
                   </View>
                   <ChevronRight color={Colors.textMuted} size={18} />
                 </TouchableOpacity>
-                {i < menuItems.length - 1 && <View style={styles.menuDiv} />}
+                {i < menuItems.length - 1 && <View style={styles.fluidMenuDivider} />}
               </React.Fragment>
             );
           })}
-        </GlassCard>
+        </View>
 
         {/* Logout */}
         <GlassButton
@@ -231,31 +254,143 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   header: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24, paddingBottom: 24 },
   profileTopIcons: { flexDirection: 'row', gap: 10, alignSelf: 'flex-end', marginBottom: 12, marginTop: -10 },
-  profileTopIconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.glassBorderBright, alignItems: 'center', justifyContent: 'center' },
+  profileTopIconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#EAECEF', alignItems: 'center', justifyContent: 'center' },
   avatarWrap: { position: 'relative', marginBottom: 16 },
   avatar: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: '#FFFFFF' },
-  vipRing: { position: 'absolute', bottom: 0, right: 0, backgroundColor: Colors.surface, borderRadius: 100, padding: 8, borderWidth: 1, borderColor: Colors.glassBorderBright },
+  vipRing: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#FFFFFF', borderRadius: 100, padding: 8, borderWidth: 1, borderColor: '#EAECEF' },
   name: { fontSize: 28, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text, marginBottom: 6 },
   bio: { fontSize: 16, color: Colors.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: 10, fontFamily: 'PlusJakartaSans_500Medium' },
   locationRow: { flexDirection: 'row', gap: 6, alignItems: 'center', marginBottom: 16 },
   locationText: { fontSize: 14, color: Colors.textMuted, fontFamily: 'PlusJakartaSans_700Bold' },
   dot: { color: Colors.textMuted },
   interests: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  interestTag: { backgroundColor: Colors.surface, borderRadius: 100, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: Colors.glassBorderBright },
+  interestTag: { backgroundColor: '#FFFFFF', borderRadius: 100, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: '#EAECEF' },
   interestText: { color: Colors.textSecondary, fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold' },
-  statsCard: { flexDirection: 'row', marginHorizontal: 24, marginBottom: 24, padding: 20 },
-  stat: { flex: 1, alignItems: 'center', gap: 4 },
-  statEmoji: { fontSize: 28 },
-  statValue: { fontSize: 24, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text },
-  statLabel: { fontSize: 14, color: Colors.textMuted, fontFamily: 'PlusJakartaSans_700Bold' },
-  statDiv: { width: 2, backgroundColor: Colors.glassBorder, borderRadius: 2 },
-  vipBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 24, marginBottom: 24, padding: 20 },
-  vipBannerContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  vipBannerEmoji: { fontSize: 32 },
-  vipBannerTitle: { fontSize: 18, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text },
-  vipBannerSub: { fontSize: 14, color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_600SemiBold' },
-  vipActiveBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 24, marginBottom: 24, padding: 20 },
-  vipActiveText: { fontSize: 16, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text },
+  // Fluid Open Stats
+  fluidStatsRow: {
+    marginHorizontal: 24,
+    marginBottom: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fluidStatItem: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  fluidStatIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAECEF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+    ...Platform.select({
+      web: { boxShadow: Colors.shadowLight } as any,
+      default: { elevation: 2, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6 },
+    }),
+  },
+  fluidStatValue: {
+    fontSize: 28,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: Colors.text,
+    letterSpacing: -0.5,
+  },
+  fluidStatLabel: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+
+  // Fluid VIP Banner
+  fluidVipBanner: {
+    marginHorizontal: 24,
+    marginBottom: 28,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(254, 60, 114, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(254, 60, 114, 0.12)',
+  },
+  fluidVipGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 18,
+    gap: 12,
+  },
+  fluidVipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  vipCrownBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(254, 60, 114, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vipCrownBadgeActive: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fluidVipTitle: {
+    fontSize: 16,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: Colors.text,
+  },
+  fluidVipSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    marginTop: 2,
+  },
+  fluidVipBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 100,
+    backgroundColor: Colors.primary,
+    ...Platform.select({
+      web: { boxShadow: '0 4px 12px rgba(254, 60, 114, 0.25)' } as any,
+      default: { elevation: 3 },
+    }),
+  },
+  fluidVipBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  fluidVipActiveBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 24,
+    marginBottom: 28,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.2)',
+  },
+  fluidVipActiveText: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: Colors.text,
+  },
+  featureItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   plansRow: { flexDirection: 'row', gap: 10, marginHorizontal: 24, marginBottom: 24 },
   planCard: { flex: 1, padding: 16, alignItems: 'center' },
   planBest: { borderColor: Colors.primary },
@@ -266,13 +401,56 @@ const styles = StyleSheet.create({
   planPeriod: { fontSize: 13, color: Colors.textMuted, marginBottom: 12, fontFamily: 'PlusJakartaSans_600SemiBold' },
   planFeatures: { gap: 6, width: '100%', alignItems: 'center' },
   planFeature: { fontSize: 12, color: Colors.textSecondary, fontFamily: 'PlusJakartaSans_600SemiBold' },
-  menuCard: { marginHorizontal: 24, marginBottom: 24, overflow: 'hidden', padding: 0 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20 },
-  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  menuIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
-  menuLabel: { fontSize: 16, fontFamily: 'PlusJakartaSans_800ExtraBold', color: Colors.text },
-  menuSub: { fontSize: 13, color: Colors.textMuted, marginTop: 2, fontFamily: 'PlusJakartaSans_600SemiBold' },
-  menuDiv: { height: 2, backgroundColor: Colors.glassBorder, marginHorizontal: 20 },
+
+  // Fluid Settings Menu
+  fluidMenuList: {
+    marginHorizontal: 24,
+    marginBottom: 28,
+    backgroundColor: 'transparent',
+  },
+  fluidMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    borderRadius: 14,
+  },
+  menuLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  fluidMenuIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAECEF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      web: { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)' } as any,
+      default: { elevation: 1 },
+    }),
+  },
+  menuLabel: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: Colors.text,
+  },
+  menuSub: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginTop: 2,
+    fontFamily: 'PlusJakartaSans_500Medium',
+  },
+  fluidMenuDivider: {
+    height: 0.5,
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
+    marginHorizontal: 8,
+  },
   logoutBtn: { marginHorizontal: 24 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 24 },
   modalContent: { padding: 24, alignItems: 'center' },
